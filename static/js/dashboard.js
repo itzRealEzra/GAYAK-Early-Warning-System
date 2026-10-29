@@ -44,6 +44,18 @@
   }
   function levelName(v) { return v == null ? DASH : (v ? "HIGH" : "LOW"); }
 
+  // Icon node for rows built in JS; references the sprite in index.html.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  function makeIcon(name) {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "icon");
+    svg.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS(SVG_NS, "use");
+    use.setAttribute("href", "#i-" + name);
+    svg.appendChild(use);
+    return svg;
+  }
+
   /* ---------- Smoothly animated numbers ---------- */
   // Each tween eases the shown number toward the latest target every frame.
   const tweens = [];
@@ -352,8 +364,8 @@
     tBase.target = r.mq2_baseline;
     tDelta.target = r.mq2_delta;
 
-    setText($("metaTemp"), r.temperature == null ? "Sensor unavailable" : "Live");
-    setText($("metaHum"), r.humidity == null ? "Sensor unavailable" : "Live");
+    setText($("metaTemp"), r.temperature == null ? "Sensor unavailable" : "");
+    setText($("metaHum"), r.humidity == null ? "Sensor unavailable" : "");
     setText($("metaHi"), r.heat_status || DASH);
     setCardState($("cardHi"), heatKind(r.heat_status));
 
@@ -379,17 +391,17 @@
     const haveFlame = r.flame_pin != null;
     if (fire) {
       setText($("valFire"), "FIRE");
-      setText($("metaFire"), "Flame detected");
+      setText($("metaFire"), "");
       setCardState($("cardFire"), "bad");
       setPill($("flamePill"), "Fire", "bad");
     } else if (haveFlame || state) {
       setText($("valFire"), "Clear");
-      setText($("metaFire"), "No flame detected");
+      setText($("metaFire"), "");
       setCardState($("cardFire"), "ok");
       setPill($("flamePill"), "Clear", "ok");
     } else {
       setText($("valFire"), DASH);
-      setText($("metaFire"), DASH);
+      setText($("metaFire"), "");
       setCardState($("cardFire"), "");
       setPill($("flamePill"), DASH, "");
     }
@@ -404,11 +416,9 @@
     applyLed();
 
     /* Diagnostics */
-    setText($("diagState"), gasStateText(state));
     setText($("flamePin"), levelName(r.flame_pin));
     setText($("flameIdle"), levelName(r.flame_idle));
     setText($("flameFire"), r.flame_idle == null ? DASH : levelName(r.flame_idle ? 0 : 1));
-    setText($("flameState"), haveFlame ? (fire ? "FIRE" : "Idle") : DASH);
 
     /* Alert events: rebuilt only when the list really changed */
     const sig = events.map((e) => e.t + e.kind).join("|");
@@ -423,12 +433,12 @@
           const time = document.createElement("span");
           time.className = "event-time";
           time.textContent = fmtTime(e.t);
+          const isFire = e.kind === "fire";
           const tag = document.createElement("span");
-          tag.className = "event-tag " + (e.kind === "fire" ? "fire" : "smoke");
-          tag.textContent = e.kind === "fire" ? "FIRE" : "SMOKE";
-          const msg = document.createElement("span");
-          msg.textContent = e.message || "Alert";
-          row.append(time, tag, msg);
+          tag.className = "event-tag " + (isFire ? "fire" : "smoke");
+          tag.append(makeIcon(isFire ? "flame" : "smoke"),
+                     document.createTextNode(isFire ? "Fire alert" : "Gas / smoke alert"));
+          row.append(time, tag);
           list.appendChild(row);
         });
       } else {

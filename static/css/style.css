@@ -107,8 +107,9 @@ body {
 .banner-smoke { background: var(--orange-soft); border-color: rgba(255, 149, 0, 0.45); color: #7a4600; }
 .banner-icon {
   flex: none; width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 18px;
+  display: grid; place-items: center; color: #fff;
 }
+.banner-icon .icon { width: 20px; height: 20px; }
 .banner-fire .banner-icon { background: var(--red); }
 .banner-smoke .banner-icon { background: var(--orange); }
 .banner-text { display: grid; gap: 1px; }
@@ -117,6 +118,14 @@ body {
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
   50% { box-shadow: 0 0 0 5px rgba(255, 59, 48, 0.12); }
+}
+
+/* ---------- Icons (inline SVG sprite) ---------- */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon {
+  width: 1.15em; height: 1.15em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 
 /* ---------- Cards ---------- */
@@ -129,7 +138,25 @@ body {
   padding: 14px 16px 12px;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
+.card-head { display: flex; align-items: center; gap: 10px; }
 .card-title { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.6px; }
+.card-icon {
+  flex: none; width: 30px; height: 30px; border-radius: 9px;
+  display: grid; place-items: center;
+  color: var(--accent, var(--text-2)); background: var(--accent-soft, var(--gray-soft));
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.card-icon .icon { width: 18px; height: 18px; }
+.card--temp { --accent: #ff9500; --accent-soft: var(--orange-soft); }
+.card--hum  { --accent: var(--blue); --accent-soft: #e5f1ff; }
+.card--hi   { --accent: #ff6a3d; --accent-soft: #ffece6; }
+.card--gas  { --accent: #af52de; --accent-soft: #f5eafc; }
+.card--fire { --accent: #ff6a3d; --accent-soft: #ffece6; }
+/* Alert/OK state recolours the icon, same signal as the card text */
+.card.state-ok   { --accent: var(--green);  --accent-soft: var(--green-soft); }
+.card.state-warn { --accent: #b86e00;       --accent-soft: var(--orange-soft); }
+.card.state-bad  { --accent: #d70015;       --accent-soft: var(--red-soft); }
+
 .card-value {
   margin-top: 6px; font-size: 30px; font-weight: 600; letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums; transition: color 0.3s ease;
@@ -137,7 +164,7 @@ body {
 }
 .card-value .unit { font-size: 15px; font-weight: 500; color: var(--text-2); margin-left: 2px; letter-spacing: 0; }
 .card-value.unavailable { color: var(--text-3); }
-.card-meta { margin-top: 4px; font-size: 12px; color: var(--text-2); }
+.card-meta { margin-top: 4px; font-size: 12px; color: var(--text-2); min-height: 1.4em; }
 
 .card.state-ok .card-meta { color: var(--green); }
 .card.state-warn { background: #fffaf0; border-color: rgba(255, 149, 0, 0.4); }
@@ -155,7 +182,8 @@ body {
   padding: 14px 16px 16px;
 }
 .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.panel-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.panel-head h2 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.panel-head h2 .icon { width: 18px; height: 18px; color: var(--text-2); }
 .panel-note { font-size: 12px; color: var(--text-2); }
 
 .pill {
@@ -167,7 +195,7 @@ body {
 .pill-warn { background: var(--orange-soft); color: #b86e00; }
 .pill-bad { background: var(--red-soft); color: #d70015; }
 
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; }
 .stats > div { background: var(--window); border-radius: 8px; padding: 8px 10px; min-width: 0; }
 .stats dt { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
 .stats dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -176,7 +204,9 @@ body {
 .panel-history { flex: 1; display: flex; flex-direction: column; min-height: 240px; }
 .charts { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); grid-auto-rows: minmax(150px, 1fr); gap: 14px; min-height: 0; }
 .chart { margin: 0; display: flex; flex-direction: column; min-height: 0; }
-.chart figcaption { font-size: 12px; color: var(--text-2); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.chart figcaption { font-size: 12px; color: var(--text-2); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+.chart figcaption .cap { display: inline-flex; align-items: center; gap: 6px; }
+.chart figcaption .cap .icon { width: 16px; height: 16px; }
 .chart figcaption b { color: var(--text); font-variant-numeric: tabular-nums; }
 .chart canvas { flex: 1; width: 100%; min-height: 0; display: block; border-radius: 8px; background: var(--window); }
 
@@ -186,7 +216,8 @@ body {
 .event-row { display: flex; align-items: center; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); }
 .event-row:last-child { border-bottom: 0; }
 .event-time { color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 78px; }
-.event-tag { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+.event-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px 2px 7px; border-radius: 999px; }
+.event-tag .icon { width: 13px; height: 13px; }
 .event-tag.fire { background: var(--red-soft); color: #d70015; }
 .event-tag.smoke { background: var(--orange-soft); color: #b86e00; }
 .empty { color: var(--text-3); padding: 4px 2px; }
@@ -199,7 +230,6 @@ body {
   .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
   .chips { order: 3; flex-basis: 100%; justify-content: flex-start; }
   .content { padding: 12px 12px 4px; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
   .brand span { display: none; }
   .led-chip { order: 2; }
   .clock { margin-left: auto; }

@@ -8,6 +8,41 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+
+<!-- Icon sprite: inline SVG, inherits colour via currentColor, fully offline.
+     Use as: <svg class="icon"><use href="#i-name"/></svg> -->
+<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-thermometer" viewBox="0 0 24 24">
+    <path d="M10 14.3V5a2 2 0 1 1 4 0v9.3a4 4 0 1 1-4 0z"/>
+    <path d="M12 9.5v6.5"/>
+  </symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24">
+    <path d="M12 3.5c3.4 4.1 6 7.1 6 10.6a6 6 0 0 1-12 0c0-3.5 2.6-6.5 6-10.6z"/>
+    <path d="M9.2 14.4a3 3 0 0 0 2.3 2.7"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>
+  </symbol>
+  <symbol id="i-smoke" viewBox="0 0 24 24">
+    <path d="M7 20c-1.8-1.7 1.8-3.1 0-4.9S5.2 11.4 7 9.7"/>
+    <path d="M12 20c-1.8-1.7 1.8-3.1 0-4.9S10.2 11.4 12 9.7"/>
+    <path d="M17 20c-1.8-1.7 1.8-3.1 0-4.9S15.2 11.4 17 9.7"/>
+    <path d="M9.5 6.5c-1-1 1-1.8 0-2.8M14.5 6.5c-1-1 1-1.8 0-2.8"/>
+  </symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24">
+    <path d="M12 2.8c.5 3.2 5.2 5.5 5.2 10.6a5.2 5.2 0 0 1-10.4 0c0-2 .9-3.4 2-4.5.1 1.5.6 2.3 1.4 2.7C10 8.6 10.3 5.4 12 2.8z"/>
+    <path d="M12 21c-1.5 0-2.6-1.1-2.6-2.5 0-1.5 1.6-2.3 2.6-4 1 1.7 2.6 2.5 2.6 4 0 1.4-1.1 2.5-2.6 2.5z"/>
+  </symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24">
+    <path d="M3 12.5h4l2.4-6.5 4.2 12 2.4-5.5H21"/>
+  </symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24">
+    <path d="M6 16.5v-5.2a6 6 0 0 1 12 0v5.2l1.6 2H4.4z"/>
+    <path d="M10 21a2.2 2.2 0 0 0 4 0"/>
+  </symbol>
+</svg>
+
 <div class="app">
 
   <!-- Status bar -->
@@ -32,7 +67,7 @@
 
     <!-- Alert banners -->
     <div id="fireBanner" class="banner banner-fire hidden" role="alert">
-      <div class="banner-icon">!</div>
+      <div class="banner-icon"><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg></div>
       <div class="banner-text">
         <strong>FIRE ALERT</strong>
         <span>Flame detected &mdash; evacuate now.</span>
@@ -40,7 +75,7 @@
       </div>
     </div>
     <div id="smokeBanner" class="banner banner-smoke hidden" role="alert">
-      <div class="banner-icon">!</div>
+      <div class="banner-icon"><svg class="icon" aria-hidden="true"><use href="#i-smoke"/></svg></div>
       <div class="banner-text">
         <strong>GAS / SMOKE ALERT</strong>
         <span>Elevated MQ-2 reading &mdash; evacuate now.</span>
@@ -50,28 +85,28 @@
 
     <!-- Reading cards -->
     <section class="cards">
-      <article class="card" id="cardTemp">
-        <div class="card-title">Temperature</div>
+      <article class="card card--temp" id="cardTemp">
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-thermometer"/></svg></span><span class="card-title">Temperature</span></div>
         <div class="card-value" id="valTemp">&#8212;</div>
         <div class="card-meta" id="metaTemp">Sensor unavailable</div>
       </article>
-      <article class="card" id="cardHum">
-        <div class="card-title">Humidity</div>
+      <article class="card card--hum" id="cardHum">
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-droplet"/></svg></span><span class="card-title">Humidity</span></div>
         <div class="card-value" id="valHum">&#8212;</div>
         <div class="card-meta" id="metaHum">Sensor unavailable</div>
       </article>
-      <article class="card" id="cardHi">
-        <div class="card-title">Heat Index</div>
+      <article class="card card--hi" id="cardHi">
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="card-title">Heat Index</span></div>
         <div class="card-value" id="valHi">&#8212;</div>
         <div class="card-meta" id="metaHi">&#8212;</div>
       </article>
-      <article class="card" id="cardGas">
-        <div class="card-title">Gas / Smoke</div>
+      <article class="card card--gas" id="cardGas">
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-smoke"/></svg></span><span class="card-title">Gas / Smoke</span></div>
         <div class="card-value" id="valGas">&#8212;</div>
         <div class="card-meta" id="metaGas">&#8212;</div>
       </article>
-      <article class="card" id="cardFire">
-        <div class="card-title">Flame</div>
+      <article class="card card--fire" id="cardFire">
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg></span><span class="card-title">Flame</span></div>
         <div class="card-value" id="valFire">&#8212;</div>
         <div class="card-meta" id="metaFire">&#8212;</div>
       </article>
@@ -81,26 +116,24 @@
     <section class="panels">
       <div class="panel">
         <div class="panel-head">
-          <h2>MQ-2 Diagnostics</h2>
+          <h2><svg class="icon" aria-hidden="true"><use href="#i-smoke"/></svg>MQ-2 Diagnostics</h2>
           <span id="diagStatePill" class="pill">&#8212;</span>
         </div>
         <dl class="stats">
           <div><dt>Raw ADC</dt><dd id="diagRaw">&#8212;</dd></div>
           <div><dt>Baseline</dt><dd id="diagBaseline">&#8212;</dd></div>
           <div><dt>Delta</dt><dd id="diagDelta">&#8212;</dd></div>
-          <div><dt>State</dt><dd id="diagState">&#8212;</dd></div>
         </dl>
       </div>
       <div class="panel">
         <div class="panel-head">
-          <h2>Flame Sensor</h2>
+          <h2><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg>Flame Sensor</h2>
           <span id="flamePill" class="pill">&#8212;</span>
         </div>
         <dl class="stats">
           <div><dt>Pin (D3)</dt><dd id="flamePin">&#8212;</dd></div>
           <div><dt>Idle Level</dt><dd id="flameIdle">&#8212;</dd></div>
           <div><dt>Fire Level</dt><dd id="flameFire">&#8212;</dd></div>
-          <div><dt>State</dt><dd id="flameState">&#8212;</dd></div>
         </dl>
       </div>
     </section>
@@ -109,19 +142,19 @@
     <section class="panel panel-history">
       <div class="panel-head">
         <h2>History</h2>
-        <span class="panel-note">Last 2 minutes &middot; live</span>
+        <span class="panel-note">Last 2 minutes</span>
       </div>
       <div class="charts">
-        <figure class="chart"><figcaption>Temperature <b id="curTemp"></b></figcaption><canvas id="chartTemp"></canvas></figure>
-        <figure class="chart"><figcaption>Humidity <b id="curHum"></b></figcaption><canvas id="chartHum"></canvas></figure>
-        <figure class="chart"><figcaption>Heat Index <b id="curHi"></b></figcaption><canvas id="chartHi"></canvas></figure>
-        <figure class="chart"><figcaption>MQ-2 Delta <b id="curDelta"></b></figcaption><canvas id="chartDelta"></canvas></figure>
+        <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-thermometer"/></svg>Temperature</span><b id="curTemp"></b></figcaption><canvas id="chartTemp"></canvas></figure>
+        <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-droplet"/></svg>Humidity</span><b id="curHum"></b></figcaption><canvas id="chartHum"></canvas></figure>
+        <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg>Heat Index</span><b id="curHi"></b></figcaption><canvas id="chartHi"></canvas></figure>
+        <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>MQ-2 Delta</span><b id="curDelta"></b></figcaption><canvas id="chartDelta"></canvas></figure>
       </div>
     </section>
 
     <!-- Events -->
     <section class="panel panel-events">
-      <div class="panel-head"><h2>Alert Events</h2></div>
+      <div class="panel-head"><h2><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>Alert Events</h2></div>
       <div id="eventsList" class="events"><div class="empty">No alert events recorded.</div></div>
     </section>
 
