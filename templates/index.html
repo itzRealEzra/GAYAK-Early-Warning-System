@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAYAK — Hazard Monitoring System</title>
+<link rel="icon" id="favicon" href="data:,">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app">
+
+  <!-- Status bar -->
+  <header class="toolbar">
+    <div class="brand">GAYAK <span>Hazard Monitoring</span></div>
+    <div class="led-chip" title="Mirrors the status LEDs on the Arduino">
+      <span class="lamps" aria-hidden="true">
+        <i class="lamp lamp-red" id="lampRed"></i><i class="lamp lamp-yellow" id="lampYellow"></i><i class="lamp lamp-green" id="lampGreen"></i>
+      </span>
+      <span id="ledLabel" class="led-label">No signal</span>
+    </div>
+    <div class="chips">
+      <div class="chip"><span class="chip-label">System</span><span class="chip-value"><i class="dot dot-off" id="sysDot"></i><span id="sysStatus">Offline</span></span></div>
+      <div class="chip"><span class="chip-label">Arduino USB</span><span class="chip-value"><i class="dot dot-off" id="usbDot"></i><span id="arduinoStatus">Disconnected</span></span></div>
+      <div class="chip"><span class="chip-label">Live Feed</span><span class="chip-value"><i class="dot dot-off" id="feedDot"></i><span id="feedStatus">Connecting</span></span></div>
+      <div class="chip"><span class="chip-label">Last Update</span><span class="chip-value" id="lastUpdate">&#8212;</span></div>
+    </div>
+    <div class="clock" id="pcTime">&#8212;</div>
+  </header>
+
+  <main class="content">
+
+    <!-- Alert banners -->
+    <div id="fireBanner" class="banner banner-fire hidden" role="alert">
+      <div class="banner-icon">!</div>
+      <div class="banner-text">
+        <strong>FIRE ALERT</strong>
+        <span>Flame detected &mdash; evacuate now.</span>
+        <small id="fireStarted"></small>
+      </div>
+    </div>
+    <div id="smokeBanner" class="banner banner-smoke hidden" role="alert">
+      <div class="banner-icon">!</div>
+      <div class="banner-text">
+        <strong>GAS / SMOKE ALERT</strong>
+        <span>Elevated MQ-2 reading &mdash; evacuate now.</span>
+        <small id="smokeStarted"></small>
+      </div>
+    </div>
+
+    <!-- Reading cards -->
+    <section class="cards">
+      <article class="card" id="cardTemp">
+        <div class="card-title">Temperature</div>
+        <div class="card-value" id="valTemp">&#8212;</div>
+        <div class="card-meta" id="metaTemp">Sensor unavailable</div>
+      </article>
+      <article class="card" id="cardHum">
+        <div class="card-title">Humidity</div>
+        <div class="card-value" id="valHum">&#8212;</div>
+        <div class="card-meta" id="metaHum">Sensor unavailable</div>
+      </article>
+      <article class="card" id="cardHi">
+        <div class="card-title">Heat Index</div>
+        <div class="card-value" id="valHi">&#8212;</div>
+        <div class="card-meta" id="metaHi">&#8212;</div>
+      </article>
+      <article class="card" id="cardGas">
+        <div class="card-title">Gas / Smoke</div>
+        <div class="card-value" id="valGas">&#8212;</div>
+        <div class="card-meta" id="metaGas">&#8212;</div>
+      </article>
+      <article class="card" id="cardFire">
+        <div class="card-title">Flame</div>
+        <div class="card-value" id="valFire">&#8212;</div>
+        <div class="card-meta" id="metaFire">&#8212;</div>
+      </article>
+    </section>
+
+    <!-- Diagnostics -->
+    <section class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>MQ-2 Diagnostics</h2>
+          <span id="diagStatePill" class="pill">&#8212;</span>
+        </div>
+        <dl class="stats">
+          <div><dt>Raw ADC</dt><dd id="diagRaw">&#8212;</dd></div>
+          <div><dt>Baseline</dt><dd id="diagBaseline">&#8212;</dd></div>
+          <div><dt>Delta</dt><dd id="diagDelta">&#8212;</dd></div>
+          <div><dt>State</dt><dd id="diagState">&#8212;</dd></div>
+        </dl>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Flame Sensor</h2>
+          <span id="flamePill" class="pill">&#8212;</span>
+        </div>
+        <dl class="stats">
+          <div><dt>Pin (D3)</dt><dd id="flamePin">&#8212;</dd></div>
+          <div><dt>Idle Level</dt><dd id="flameIdle">&#8212;</dd></div>
+          <div><dt>Fire Level</dt><dd id="flameFire">&#8212;</dd></div>
+          <div><dt>State</dt><dd id="flameState">&#8212;</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="panel panel-history">
+      <div class="panel-head">
+        <h2>History</h2>
+        <span class="panel-note">Last 2 minutes &middot; live</span>
+      </div>
+      <div class="charts">
+        <figure class="chart"><figcaption>Temperature <b id="curTemp"></b></figcaption><canvas id="chartTemp"></canvas></figure>
+        <figure class="chart"><figcaption>Humidity <b id="curHum"></b></figcaption><canvas id="chartHum"></canvas></figure>
+        <figure class="chart"><figcaption>Heat Index <b id="curHi"></b></figcaption><canvas id="chartHi"></canvas></figure>
+        <figure class="chart"><figcaption>MQ-2 Delta <b id="curDelta"></b></figcaption><canvas id="chartDelta"></canvas></figure>
+      </div>
+    </section>
+
+    <!-- Events -->
+    <section class="panel panel-events">
+      <div class="panel-head"><h2>Alert Events</h2></div>
+      <div id="eventsList" class="events"><div class="empty">No alert events recorded.</div></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    GAYAK &middot; Local only &middot; Not a certified smoke alarm, gas or fire detector &middot; Press F for full screen
+  </footer>
+</div>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
