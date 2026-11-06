@@ -1,4 +1,6 @@
-# Physical Wiring, PCB Assembly and Battery Safety
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
+
+The GY-521 MPU-6050 is used for **intense shaking and acceleration** measurement. Mount it securely to the observed structure so loose wiring or handling does not dominate the acceleration signal. Its filtered acceleration levels do not identify earthquake magnitude or origin.
 
 **Read this before assembly.** Use a USB-powered Arduino Uno for classroom development. This document describes electrical intent and necessary additional protections; it is **not a certified battery-pack design or a complete manufacturing schematic**.
 

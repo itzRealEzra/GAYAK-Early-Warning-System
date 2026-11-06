@@ -1,4 +1,4 @@
-# GAYAK Tutorials — Wokwi, Arduino and Local Dashboard
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 ## 1. Wokwi simulation
 
@@ -10,7 +10,7 @@
 6. Click **DHT22** to change temperature and humidity. DHT22 is polled about every **2.2 seconds**, and LCD panels rotate about every **1.8 seconds**.
 7. Click **MQ-2** and change the simulated ppm after ~5 seconds warming + ~3 seconds calibration. A sustained increase should eventually trigger **D8** and the yellow LED. A change isn't always instant because noise filtering and confirmation are intentional.
 8. Click **photoresistor** and increase lux above its digital switching threshold (nominal ~100 lux) to simulate a *fire input*. It drives **D3 LOW** and triggers **D10 → D8 → D9**. Lower lux to clear. **This is not real fire simulation.**
-9. Click **MPU-6050** and repeatedly change acceleration on X or Y to simulate shaking; the red LED should blink and **D9** pulse. Leave readings steady for the alert to clear. The module filters gravity, so one static acceleration step is not the same as sustained vibration.
+9. Click **MPU-6050** and repeatedly change acceleration on X or Y to simulate **intense shaking and acceleration**; the red LED should blink and **D9** pulse. Leave readings steady for the alert to clear. The module filters gravity, so one static acceleration step is not the same as sustained vibration.
 10. In Serial Monitor at **115200 baud**, look for separate `DATA,...` and `QUAKE,...` records.
 11. Stop/Start Wokwi to reset sensors and calibration. No extra test buttons or power switch are in this revision.
 
@@ -54,10 +54,10 @@ The firmware emits two machine-readable records:
 
 ```text
 DATA,temp,humidity,heat_index,heat_status,mq2_raw,mq2_baseline,mq2_delta,mq2_state,mq2_alert,fire_alert,flame_pin,flame_idle
-QUAKE,online,alert,filtered_motion_rms_g
+QUAKE,online,alert,filtered_acceleration_rms_g,motion_level
 ```
 
-Do not assume the sample labels above are an actual measurement. Fields may be `null` when a sensor is not ready. The dashboard displays both records without changing the existing `DATA` layout.
+Do not assume the sample labels above are an actual measurement. The motion level is `STABLE`, `MOTION`, `STRONG`, `INTENSE` or `null`; the desktop parser also accepts older four-field `QUAKE` messages. Levels describe filtered local acceleration, **not earthquake magnitude**. Fields may be `null` when a sensor is not ready. The dashboard displays both records without changing the existing `DATA` layout.
 
 **Only one program can own the COM port.** Close Arduino Serial Monitor and Serial Plotter before launching the Flask app. If Flask port 5000 is busy, set `GAYAK_PORT=5001`. Use **Ctrl+C** in the terminal to stop the server.
 

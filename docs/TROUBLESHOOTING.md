@@ -1,4 +1,4 @@
-# Troubleshooting — GAYAK
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 Work from the simplest fault first: **power → ground → pins → libraries → sensor warm-up → firmware settings → dashboard**. Never troubleshoot by shorting a lithium cell or removing its protection.
 
@@ -14,7 +14,8 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 | MPU-6050 offline | I2C pin conflict, VCC/GND issue, AD0, wrong address, level issue | Check A4/A5, default address 0x68, 3.3V logic and compatible pullups |
 | Earthquake alert stays active | Repeated acceleration changes, filtered-motion hold time, setup disturbance | Stop moving MPU, leave acceleration steady; wait for programmed hold and clear intervals |
 | Shaking never triggers | One static adjustment absorbed by gravity filter, insufficient sustained motion | Repeatedly change X/Y acceleration in Wokwi across confirmation period |
-| “Magnitude” not displayed | MPU-6050 does not measure seismic magnitude | Report vibration in `g` only; do not invent Richter values |
+| “Magnitude” not displayed | MPU-6050 does not measure seismic magnitude | Report filtered acceleration in `g` and STABLE/MOTION/STRONG/INTENSE local states, never Richter values |
+| STRONG or INTENSE appears before buzzer | Instantaneous filtered-motion state changes before sustained-alarm confirmation | Keep controlled shaking above the trigger for `QUAKE_CONFIRM_MS` and review clear/hold timings |
 | Fire proxy doesn't trigger in Wokwi | Photoresistor lux too low, wrong D3, old pushbutton sketch | Increase **lux** on the photoresistor until its DO changes LOW; use current sketch |
 | Physical flame module false alarms | Sensitivity too high, sunlight, mislearned idle polarity | Shade module and calibrate comparator; check `FLAME_ACTIVE_LOW` |
 | MQ-2 reports warming up | Expected startup state | Wokwi ~5 s + 3 s baseline; real firmware ~180 s + 20 s |

@@ -1,4 +1,4 @@
-# GAYAK — Wokwi clean wiring (sensor-driven, no extra buttons)
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 Original hosted project: https://wokwi.com/projects/478926664159746049
 
@@ -20,7 +20,7 @@ The updated **`diagram.json` + `sketch.ino` + `libraries.txt`** are in this fold
 2. **Temperature/humidity**: click DHT22, change temperature or humidity, then observe the temperature, humidity, or heat-index LCD panel when it rotates. DHT22 polls at 2.2 s intervals.
 3. **Smoke**: keep initial gas at 400 ppm until calibration is finished, then select MQ-2 and raise the displayed simulated gas concentration. After the ADC-delta threshold and confirmation period, the yellow LED and **D8** smoke buzzer should activate. Return it to baseline to test clearing.
 4. **Fire input**: click the photoresistor proxy and increase **lux** above its ~100 lux digital threshold. It pulls D3 LOW, triggering the simulated fire alarm: red LED and **D10 → D8 → D9**. Reduce lux below threshold to clear after the programmed delay. This tests logic only; light sensing does not prove flame detection.
-5. **Shaking**: click MPU-6050 and repeatedly adjust X or Y acceleration (e.g., between 0 and 0.4 g) over the confirmation interval. The red LED should blink fast and **D9** should beep rapidly. Return to steady acceleration to allow the alert to clear. A single static change may be absorbed by the gravity baseline.
+5. **Shaking / acceleration**: repeatedly change MPU-6050 X/Y acceleration. Compare STABLE, MOTION, STRONG and INTENSE levels; the levels reflect filtered motion, not raw input values. Keep shaking sustained long enough to meet the confirmation interval. The red LED should blink fast and **D9** should beep rapidly. Return to steady acceleration to allow the alert to clear. A single static change may be absorbed by the gravity baseline.
 6. **Normal**: after all hazards clear and sensors are ready, green LED should be steady and all buzzers silent.
 7. Read Serial Monitor at **115200 baud** for `DATA,...` and `QUAKE,...` lines.
 
