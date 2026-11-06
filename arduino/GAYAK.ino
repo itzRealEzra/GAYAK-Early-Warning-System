@@ -28,7 +28,7 @@
 
 // GAYAK Early Warning System - MPU-6050 + alternating active buzzers
 // Arduino Uno R3. LED pins corrected: D5=GREEN, D6=YELLOW, D7=RED.
-// Prototype vibration detection only; not a certified earthquake alarm.
+// Prototype intense shaking/acceleration detection, not a certified seismic alarm.
 // LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
 // Validate voltage levels: MPU6050 chip uses 3.3V I2C logic.
 // Keep DATA CSV intact; supplemental QUAKE CSV at 1 Hz.
@@ -74,8 +74,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 const unsigned long PANEL_INTERVAL  = 3000UL;
 const unsigned long SENSOR_INTERVAL = 2500UL;
 
-// ================ EARTHQUAKE/VIBRATION SETTINGS ================
-// PROTOTYPE ONLY: These are vibration thresholds, NOT earthquake magnitude.
+// ================ MPU-6050 ACCELERATION / SHAKING SETTINGS ================
+// Experimental local motion levels; NOT earthquake magnitude or official intensity.
 // Secure the MPU firmly to the structure being monitored.
 const unsigned long MPU_SAMPLE_MS       = 20UL;    // target 50 Hz
 const unsigned long MPU_RETRY_MS        = 5000UL;
@@ -85,7 +85,9 @@ const unsigned long QUAKE_CLEAR_MS      = 2500UL;  // must be quiet to clear
 const unsigned long QUAKE_MIN_HOLD_MS   = 5000UL;  // minimum alert duration
 const unsigned long QUAKE_SERIAL_MS     = 1000UL;
 
-const float QUAKE_TRIGGER_RMS_G = 0.12f;  // change after testing
+const float MOTION_NOTICE_RMS_G = 0.04f;   // unconfirmed movement indication
+const float QUAKE_TRIGGER_RMS_G = 0.12f;  // sustained STRONG shaking threshold
+const float INTENSE_SHAKING_RMS_G = 0.30f; // intense filtered acceleration (not Richter)
 const float QUAKE_CLEAR_RMS_G   = 0.06f;
 const float MPU_GRAVITY_ALPHA   = 0.005f; // slow-moving gravity baseline
 const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
@@ -152,6 +154,9 @@ bool lastSentSmoke = false;   // alert state in the last DATA record
 bool lastSentFlame = false;
 
 // ================ MPU-6050 STATE ================
+// Local filtered acceleration in g; not a seismic intensity classification.
+enum MotionLevel { MOTION_STABLE, MOTION_NOTICE, MOTION_STRONG, MOTION_INTENSE };
+
 bool mpuReady = false;
 bool quakeAlert = false;
 bool quakeCandidate = false;
@@ -257,7 +262,7 @@ int flameConfirmCount = 0;
 bool flameAlert = false;    // true = fire alert active
 int flameIdleLevel = HIGH;  // pin level that means "no fire"
 
-// ================ MPU-6050 EARTHQUAKE / VIBRATION ================
+// ================ MPU-6050 ACCELERATION / INTENSE SHAKING ================
 
 bool writeMPURegister(byte reg, byte value) {
   Wire.beginTransmission(MPU_ADDR);
@@ -349,7 +354,7 @@ void updateMPU(unsigned long now) {
     if (++mpuConsecutiveFails >= 3) {
       mpuReady = false;
       quakeAlert = false;                // no false "safe" indication on LCD
-      Serial.println(F("MPU6050 LOST - earthquake monitor OFFLINE"));
+      Serial.println(F("MPU6050 LOST - acceleration monitor OFFLINE"));
       lastMPURetry = now;
     }
     return;
@@ -403,8 +408,27 @@ void updateMPU(unsigned long now) {
   }
 }
 
+// Derived local motion levels; alerts still require sustained shaking.
+MotionLevel classifyMotion() {
+  if (!mpuReady || millis() - mpuStartTime < MPU_SETTLE_MS) return MOTION_STABLE;
+  if (quakeRmsG >= INTENSE_SHAKING_RMS_G) return MOTION_INTENSE;
+  if (quakeRmsG >= QUAKE_TRIGGER_RMS_G) return MOTION_STRONG;
+  if (quakeRmsG >= MOTION_NOTICE_RMS_G) return MOTION_NOTICE;
+  return MOTION_STABLE;
+}
+
+const char* motionLevelName(MotionLevel level) {
+  switch (level) {
+    case MOTION_INTENSE: return "INTENSE";
+    case MOTION_STRONG:  return "STRONG";
+    case MOTION_NOTICE:  return "MOTION";
+    default:             return "STABLE";
+  }
+}
+
 // A separate record preserves the original dashboard DATA CSV field count.
-// QUAKE,<online:0/1>,<alert:0/1>,<vibration RMS g or null>
+// QUAKE,<online:0/1>,<alert:0/1>,<filtered acceleration RMS g>,<level>
+// The optional fifth field is ignored by older readers.
 void sendQuakeData(unsigned long now) {
   bool changed = quakeAlert != lastSentQuake;
   if (!changed && now - lastQuakeSerial < QUAKE_SERIAL_MS) return;
@@ -415,8 +439,13 @@ void sendQuakeData(unsigned long now) {
   Serial.print(F(","));
   Serial.print(quakeAlert ? 1 : 0);
   Serial.print(F(","));
-  if (mpuReady) Serial.println(quakeRmsG, 3);
-  else Serial.println(F("null"));
+  if (mpuReady) {
+    Serial.print(quakeRmsG, 3);
+    Serial.print(F(","));
+    Serial.println(motionLevelName(classifyMotion()));
+  } else {
+    Serial.println(F("null,null"));
+  }
 }
 
 // ================ HEAT STATUS ================
@@ -1064,7 +1093,8 @@ void showPanel() {
   }
 
   if (mode == MODE_QUAKE) {
-    printLineP(0, F("SHAKING DETECTED"));
+    printLineP(0, classifyMotion() == MOTION_INTENSE
+                  ? F("INTENSE SHAKING") : F("STRONG SHAKING"));
     printLineP(1, F("DROP COVER HOLD"));
     return;
   }
@@ -1081,8 +1111,9 @@ void showPanel() {
       char vibration[10];
       char line[17];
       dtostrf(quakeRmsG, 4, 2, vibration);
-      printLineP(0, F("QUAKE MONITOR"));
-      snprintf_P(line, sizeof(line), PSTR("VIB:%sg STABLE"), vibration);
+      printLineP(0, F("MPU ACCELERATION"));
+      snprintf_P(line, sizeof(line), PSTR("%s %sg"),
+                 motionLevelName(classifyMotion()), vibration);
       printLine(1, line);
     }
     return;

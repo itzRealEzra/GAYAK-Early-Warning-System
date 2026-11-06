@@ -108,8 +108,9 @@ def build_payload(include_history: bool = True) -> dict:
 
         quake_now = bool(readings.get("quake_alert")) and readings.get("quake_online") is True
         if quake_now and not _last_quake_state:
-            alert_events.append({"t": now, "kind": "quake",
-                                 "message": "SHAKING DETECTED"})
+            detail = ("INTENSE SHAKING" if readings.get("quake_level") == "INTENSE"
+                      else "STRONG SHAKING")
+            alert_events.append({"t": now, "kind": "quake", "message": detail})
         _last_quake_state = quake_now
 
         hist = list(history)[-HISTORY_SEND:] if include_history else None

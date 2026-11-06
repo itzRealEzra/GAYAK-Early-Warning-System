@@ -79,6 +79,7 @@ class SerialReader:
             "quake_online": None,
             "quake_alert": False,
             "quake_rms_g": None,
+            "quake_level": None,
         }
         # Bumped on every new record so streaming clients wake up at once.
         self._cond = threading.Condition()
@@ -162,6 +163,7 @@ class SerialReader:
                 "quake_online": None,
                 "quake_alert": False,
                 "quake_rms_g": None,
+                "quake_level": None,
             }
         self._quake_at = None
         self._notify()
@@ -234,13 +236,17 @@ class SerialReader:
         # LOG lines and any other diagnostics are intentionally ignored.
 
     def _parse_quake(self, text: str) -> None:
-        # Separate MPU-6050 state. Legacy DATA records are unchanged.
+        # Accept both four-field legacy and five-field motion-state records.
         parts = text.split(",")
-        if len(parts) != 4 or parts[1] not in ("0", "1") or parts[2] not in ("0", "1"):
+        if len(parts) not in (4, 5) or parts[1] not in ("0", "1") or parts[2] not in ("0", "1"):
             return
         online = parts[1] == "1"
         rms = self._to_float(parts[3]) if online else None
+        level = parts[4].strip().upper() if online and len(parts) == 5 else None
+        if level not in (None, "STABLE", "MOTION", "STRONG", "INTENSE"):
+            return
         with self._data_lock:
+            self.latest["quake_level"] = level
             self.latest["quake_online"] = online
             self.latest["quake_alert"] = online and parts[2] == "1"
             self.latest["quake_rms_g"] = rms
@@ -321,6 +327,7 @@ class SerialReader:
             latest["quake_online"] = None
             latest["quake_alert"] = False
             latest["quake_rms_g"] = None
+            latest["quake_level"] = None
         stale = last_update is None or (now - last_update) > self.stale_threshold
         return {
             "connection_state": self.connection_state,

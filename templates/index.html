@@ -85,7 +85,7 @@
 
     <div id="quakeBanner" class="banner banner-quake hidden" role="alert">
       <div class="banner-icon"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></div>
-      <div class="banner-text"><strong>SHAKING DETECTED</strong><span>Prototype vibration alert — verify your surroundings.</span><small id="quakeStarted"></small></div>
+      <div class="banner-text"><strong id="quakeBannerTitle">STRONG SHAKING</strong><span>Local intense movement / acceleration warning — verify your surroundings.</span><small id="quakeStarted"></small></div>
     </div>
 
     <!-- Reading cards -->
@@ -116,7 +116,7 @@
         <div class="card-meta" id="metaFire">&#8212;</div>
       </article>
       <article class="card card--quake" id="cardQuake">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></span><span class="card-title">MPU-6050 Motion</span></div>
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></span><span class="card-title">MPU-6050 Acceleration</span></div>
         <div class="card-value" id="valQuake">—</div>
         <div class="card-meta" id="metaQuake">Sensor unavailable</div>
       </article>
@@ -149,8 +149,8 @@
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>MPU-6050 Vibration</h2><span id="mpuPill" class="pill">—</span></div>
-      <dl class="stats"><div><dt>Filtered motion (RMS g)</dt><dd id="mpuRms">—</dd></div><div><dt>Classification</dt><dd>Prototype vibration only</dd></div></dl>
+      <div class="panel-head"><h2><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>MPU-6050 Shaking &amp; Acceleration</h2><span id="mpuPill" class="pill">—</span></div>
+      <dl class="stats"><div><dt>Filtered acceleration (RMS g)</dt><dd id="mpuRms">—</dd></div><div><dt>Classification</dt><dd>Local motion level, not earthquake magnitude</dd></div></dl>
     </section>
 
     <!-- Charts -->

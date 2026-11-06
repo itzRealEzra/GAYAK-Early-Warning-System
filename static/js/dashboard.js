@@ -412,16 +412,33 @@
     /* Separate QUAKE records: experimental vibration, not magnitude. */
     const quake = !!r.quake_alert && r.quake_online === true;
     const quakeOnline = r.quake_online;
-    setText($("valQuake"), quake ? "SHAKING" : (quakeOnline === true ? "STABLE" : (quakeOnline === false ? "OFFLINE" : DASH)));
-    setText($("metaQuake"), quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g).toFixed(3) + " g filtered vibration" : "Sensor unavailable");
-    setCardState($("cardQuake"), quake ? "bad" : quakeOnline === true ? "ok" : "warn");
-    setPill($("mpuPill"), quakeOnline === true ? (quake ? "Shaking" : "Monitoring") : quakeOnline === false ? "Offline" : DASH, quake ? "bad" : quakeOnline === true ? "ok" : "warn");
-    setText($("mpuRms"), quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g).toFixed(3) + " g" : DASH);
+    const rms = quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g) : null;
+    // Local acceleration classes are experimental; they are not earthquake magnitudes.
+    // For old 4-field QUAKE records, derive the level from the received value.
+    const motionLevel = quakeOnline !== true ? null : (r.quake_level ||
+      (rms == null ? "STABLE" : rms >= 0.30 ? "INTENSE" : rms >= 0.12 ? "STRONG" : rms >= 0.04 ? "MOTION" : "STABLE"));
+    const motionLabel = motionLevel === "INTENSE" ? "INTENSE SHAKING" :
+                        motionLevel === "STRONG" ? "STRONG SHAKING" :
+                        motionLevel === "MOTION" ? "MOTION DETECTED" :
+                        motionLevel === "STABLE" ? "STABLE" :
+                        quakeOnline === false ? "OFFLINE" : DASH;
+    setText($("valQuake"), motionLabel);
+    setText($("metaQuake"), rms != null ? rms.toFixed(3) + " g filtered acceleration" : "Sensor unavailable");
+    setCardState($("cardQuake"), quake || motionLevel === "INTENSE" ? "bad" :
+      motionLevel === "STRONG" || motionLevel === "MOTION" ? "warn" :
+      quakeOnline === true ? "ok" : "");
+    setPill($("mpuPill"), motionLabel,
+      quake || motionLevel === "INTENSE" ? "bad" :
+      motionLevel === "STRONG" || motionLevel === "MOTION" ? "warn" :
+      quakeOnline === true ? "ok" : "");
+    setText($("mpuRms"), rms != null ? rms.toFixed(3) + " g" : DASH);
 
     /* Banners */
     setClass($("fireBanner"), "hidden", !fire);
     setClass($("smokeBanner"), "hidden", !smoke);
     setClass($("quakeBanner"), "hidden", !quake);
+    if (quake) setText($("quakeBannerTitle"), motionLevel === "INTENSE" ?
+      "INTENSE SHAKING" : "STRONG SHAKING");
     if (fire) { const t = latestEventTime(events, "fire"); setText($("fireStarted"), t ? "Active since " + fmtTime(t) : ""); }
     if (smoke) { const t = latestEventTime(events, "smoke"); setText($("smokeStarted"), t ? "Active since " + fmtTime(t) : ""); }
     if (quake) { const t = latestEventTime(events, "quake"); setText($("quakeStarted"), t ? "Active since " + fmtTime(t) : ""); }

@@ -17,13 +17,14 @@ class SerialReaderTests(unittest.TestCase):
         self.reader._handle_line(
             "DATA,29.5,65,33.0,CAUTION,410,390.5,20,MONITORING,0,0,1,1"
         )
-        self.reader._handle_line("QUAKE,1,1,0.185")
+        self.reader._handle_line("QUAKE,1,1,0.185,STRONG")
         readings = self.reader.get_snapshot()["readings"]
         self.assertEqual(readings["temperature"], 29.5)
         self.assertEqual(readings["mq2_baseline"], 390.5)
         self.assertEqual(readings["quake_online"], True)
         self.assertEqual(readings["quake_alert"], True)
         self.assertAlmostEqual(readings["quake_rms_g"], 0.185)
+        self.assertEqual(readings["quake_level"], "STRONG")
 
         # DATA does not overwrite the independently updated MPU fields.
         self.reader._handle_line(
@@ -33,12 +34,25 @@ class SerialReaderTests(unittest.TestCase):
         self.assertEqual(readings["temperature"], 30.0)
         self.assertEqual(readings["quake_alert"], True)
 
+    def test_legacy_four_field_quake_record(self):
+        self.reader._handle_line("QUAKE,1,0,0.030")
+        readings = self.reader.get_snapshot()["readings"]
+        self.assertTrue(readings["quake_online"])
+        self.assertIsNone(readings["quake_level"])
+
+    def test_intense_acceleration_classification(self):
+        self.reader._handle_line("QUAKE,1,1,0.420,INTENSE")
+        readings = self.reader.get_snapshot()["readings"]
+        self.assertEqual(readings["quake_level"], "INTENSE")
+        self.assertTrue(readings["quake_alert"])
+
     def test_offline_quake(self):
         self.reader._handle_line("QUAKE,0,0,null")
         readings = self.reader.get_snapshot()["readings"]
         self.assertFalse(readings["quake_online"])
         self.assertFalse(readings["quake_alert"])
         self.assertIsNone(readings["quake_rms_g"])
+        self.assertIsNone(readings["quake_level"])
 
     def test_bad_quake_ignored(self):
         self.reader._handle_line("QUAKE,notvalid,1,0.7")
