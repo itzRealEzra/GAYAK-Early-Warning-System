@@ -104,6 +104,7 @@ body {
   animation: pulse 1.6s ease-in-out infinite;
 }
 .banner-fire { background: var(--red-soft); border-color: rgba(255, 59, 48, 0.4); color: #8c1d18; }
+.banner-quake { background: var(--orange-soft); border-color: rgba(255, 149, 0, 0.45); color: #7a4600; }
 .banner-smoke { background: var(--orange-soft); border-color: rgba(255, 149, 0, 0.45); color: #7a4600; }
 .banner-icon {
   flex: none; width: 34px; height: 34px; border-radius: 50%;
@@ -111,6 +112,7 @@ body {
 }
 .banner-icon .icon { width: 20px; height: 20px; }
 .banner-fire .banner-icon { background: var(--red); }
+.banner-quake .banner-icon { background: var(--orange); }
 .banner-smoke .banner-icon { background: var(--orange); }
 .banner-text { display: grid; gap: 1px; }
 .banner-text strong { font-size: 15px; letter-spacing: 0.3px; }
@@ -151,6 +153,7 @@ body {
 .card--hum  { --accent: var(--blue); --accent-soft: #e5f1ff; }
 .card--hi   { --accent: #ff6a3d; --accent-soft: #ffece6; }
 .card--gas  { --accent: #af52de; --accent-soft: #f5eafc; }
+.card--quake { --accent: #af52de; --accent-soft: #f5eafc; }
 .card--fire { --accent: #ff6a3d; --accent-soft: #ffece6; }
 /* Alert/OK state recolours the icon, same signal as the card text */
 .card.state-ok   { --accent: var(--green);  --accent-soft: var(--green-soft); }
@@ -219,6 +222,7 @@ body {
 .event-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px 2px 7px; border-radius: 999px; }
 .event-tag .icon { width: 13px; height: 13px; }
 .event-tag.fire { background: var(--red-soft); color: #d70015; }
+.event-tag.quake { background: var(--orange-soft); color: #b86e00; }
 .event-tag.smoke { background: var(--orange-soft); color: #b86e00; }
 .empty { color: var(--text-3); padding: 4px 2px; }
 

@@ -262,10 +262,12 @@
   let led = { color: "off", blink: false, label: "No signal", title: "Offline" };
   let ledKey = "";
 
-  function ledFor(conn, stale, state, smoke, fire) {
+  function ledFor(conn, stale, state, smoke, fire, quake, quakeOnline) {
     if (conn !== "CONNECTED" || stale) return { color: "off", blink: false, label: "No signal", title: "Offline" };
     if (fire)  return { color: "red",    blink: false, label: "Fire alert",   title: "FIRE ALERT" };
     if (smoke) return { color: "yellow", blink: false, label: "Smoke alert",  title: "SMOKE ALERT" };
+    if (quake) return { color: "red", blink: true, label: "Shaking detected", title: "SHAKING" };
+    if (quakeOnline === false) return { color: "yellow", blink: true, label: "MPU offline", title: "MPU offline" };
     if (state === "WARMING_UP")  return { color: "red",    blink: true,  label: "Warming up",  title: "Warming up" };
     if (state === "CALIBRATING") return { color: "yellow", blink: true,  label: "Calibrating", title: "Calibrating" };
     if (state === "MONITORING")  return { color: "green",  blink: false, label: "Working",     title: "Monitoring" };
@@ -407,12 +409,23 @@
     }
     setClass($("valFire"), "unavailable", !fire && !haveFlame && !state);
 
+    /* Separate QUAKE records: experimental vibration, not magnitude. */
+    const quake = !!r.quake_alert && r.quake_online === true;
+    const quakeOnline = r.quake_online;
+    setText($("valQuake"), quake ? "SHAKING" : (quakeOnline === true ? "STABLE" : (quakeOnline === false ? "OFFLINE" : DASH)));
+    setText($("metaQuake"), quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g).toFixed(3) + " g filtered vibration" : "Sensor unavailable");
+    setCardState($("cardQuake"), quake ? "bad" : quakeOnline === true ? "ok" : "warn");
+    setPill($("mpuPill"), quakeOnline === true ? (quake ? "Shaking" : "Monitoring") : quakeOnline === false ? "Offline" : DASH, quake ? "bad" : quakeOnline === true ? "ok" : "warn");
+    setText($("mpuRms"), quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g).toFixed(3) + " g" : DASH);
+
     /* Banners */
     setClass($("fireBanner"), "hidden", !fire);
     setClass($("smokeBanner"), "hidden", !smoke);
+    setClass($("quakeBanner"), "hidden", !quake);
     if (fire) { const t = latestEventTime(events, "fire"); setText($("fireStarted"), t ? "Active since " + fmtTime(t) : ""); }
     if (smoke) { const t = latestEventTime(events, "smoke"); setText($("smokeStarted"), t ? "Active since " + fmtTime(t) : ""); }
-    led = ledFor(conn, stale, state, smoke, fire);
+    if (quake) { const t = latestEventTime(events, "quake"); setText($("quakeStarted"), t ? "Active since " + fmtTime(t) : ""); }
+    led = ledFor(conn, stale, state, smoke, fire, quake, quakeOnline);
     applyLed();
 
     /* Diagnostics */
@@ -434,10 +447,11 @@
           time.className = "event-time";
           time.textContent = fmtTime(e.t);
           const isFire = e.kind === "fire";
+          const isQuake = e.kind === "quake";
           const tag = document.createElement("span");
-          tag.className = "event-tag " + (isFire ? "fire" : "smoke");
-          tag.append(makeIcon(isFire ? "flame" : "smoke"),
-                     document.createTextNode(isFire ? "Fire alert" : "Gas / smoke alert"));
+          tag.className = "event-tag " + (isFire ? "fire" : isQuake ? "quake" : "smoke");
+          tag.append(makeIcon(isFire ? "flame" : isQuake ? "pulse" : "smoke"),
+                     document.createTextNode(isFire ? "Fire alert" : isQuake ? "Shaking detected" : "Gas / smoke alert"));
           row.append(time, tag);
           list.appendChild(row);
         });
@@ -454,7 +468,7 @@
     setText($("sysStatus"), "Offline");           setDot($("sysDot"), "off");
     setText($("arduinoStatus"), "Unreachable");   setDot($("usbDot"), "off");
     setClass(document.body, "stale", true);
-    led = ledFor("DISCONNECTED", true, null, false, false);
+    led = ledFor("DISCONNECTED", true, null, false, false, false, null);
     applyLed();
   }
 

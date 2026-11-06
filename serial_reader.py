@@ -76,12 +76,16 @@ class SerialReader:
             "fire_alert": False,
             "flame_pin": None,
             "flame_idle": None,
+            "quake_online": None,
+            "quake_alert": False,
+            "quake_rms_g": None,
         }
         # Bumped on every new record so streaming clients wake up at once.
         self._cond = threading.Condition()
         self.version = 0
         self.last_update: Optional[float] = None
         self.connection_state = "DISCONNECTED"  # DISCONNECTED | CONNECTED | ERROR
+        self._quake_at: Optional[float] = None
 
     # ------------------------------------------------------------------ #
     # Lifecycle
@@ -155,7 +159,11 @@ class SerialReader:
                 "fire_alert": False,
                 "flame_pin": None,
                 "flame_idle": None,
+                "quake_online": None,
+                "quake_alert": False,
+                "quake_rms_g": None,
             }
+        self._quake_at = None
         self._notify()
 
     def _notify(self) -> None:
@@ -221,7 +229,23 @@ class SerialReader:
     def _handle_line(self, text: str) -> None:
         if text.startswith("DATA,"):
             self._parse_data(text)
+        elif text.startswith("QUAKE,"):
+            self._parse_quake(text)
         # LOG lines and any other diagnostics are intentionally ignored.
+
+    def _parse_quake(self, text: str) -> None:
+        # Separate MPU-6050 state. Legacy DATA records are unchanged.
+        parts = text.split(",")
+        if len(parts) != 4 or parts[1] not in ("0", "1") or parts[2] not in ("0", "1"):
+            return
+        online = parts[1] == "1"
+        rms = self._to_float(parts[3]) if online else None
+        with self._data_lock:
+            self.latest["quake_online"] = online
+            self.latest["quake_alert"] = online and parts[2] == "1"
+            self.latest["quake_rms_g"] = rms
+            self._quake_at = time.time()
+        self._notify()
 
     def _parse_data(self, text: str) -> None:
         parts = text.split(",")
@@ -252,7 +276,7 @@ class SerialReader:
             return
 
         with self._data_lock:
-            self.latest = readings
+            self.latest.update(readings)  # Keep independent QUAKE telemetry
             self.last_update = time.time()
         self._notify()
 
@@ -290,8 +314,13 @@ class SerialReader:
         with self._data_lock:
             latest = dict(self.latest)
             last_update = self.last_update
+            quake_at = self._quake_at
 
         now = time.time()
+        if quake_at is None or now - quake_at > 3.0:
+            latest["quake_online"] = None
+            latest["quake_alert"] = False
+            latest["quake_rms_g"] = None
         stale = last_update is None or (now - last_update) > self.stale_threshold
         return {
             "connection_state": self.connection_state,

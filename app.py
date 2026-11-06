@@ -57,6 +57,7 @@ alert_events: Deque[dict] = deque(maxlen=ALERT_EVENTS_MAX)
 _history_lock = threading.Lock()
 _last_smoke_state = False
 _last_fire_state = False
+_last_quake_state = False
 _last_history_stamp = None   # last_update of the record already in history
 _last_history_t = 0.0        # time of the last stored history point
 
@@ -66,7 +67,7 @@ def build_payload(include_history: bool = True) -> dict:
 
     The stream sends history only in its first frame; the browser appends the
     new points itself, so each live frame stays tiny."""
-    global _last_smoke_state, _last_fire_state, _last_history_stamp, _last_history_t
+    global _last_smoke_state, _last_fire_state, _last_quake_state, _last_history_stamp, _last_history_t
 
     snapshot = reader.get_snapshot()
     readings = snapshot["readings"]
@@ -104,6 +105,12 @@ def build_payload(include_history: bool = True) -> dict:
             alert_events.append({"t": now, "kind": "fire",
                                  "message": "FIRE ALERT"})
         _last_fire_state = fire_now
+
+        quake_now = bool(readings.get("quake_alert")) and readings.get("quake_online") is True
+        if quake_now and not _last_quake_state:
+            alert_events.append({"t": now, "kind": "quake",
+                                 "message": "SHAKING DETECTED"})
+        _last_quake_state = quake_now
 
         hist = list(history)[-HISTORY_SEND:] if include_history else None
         events = list(alert_events)[-ALERT_EVENTS_SEND:]
