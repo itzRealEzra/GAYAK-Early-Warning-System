@@ -4,10 +4,10 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 
 | Symptom | Likely cause | Check |
 | --- | --- | --- |
-| Wokwi wiring looks cluttered | Old `diagram.json` still in hosted project | **Save a Copy** and replace `diagram.json` with current `wokwi/diagram.json`; GitHub does not automatically sync Wokwi |
-| Old extra buttons still appear | Old Wokwi diagram | Replace both Wokwi `diagram.json` **and** `sketch.ino` |
+| Wokwi wiring looks cluttered | Old or unorganized connections | Rearrange wires manually according to [Wokwi wiring guide](../wokwi/README.md); no imported diagram is necessary |
+| Old extra buttons still appear | Legacy controls remain in your Wokwi copy | Delete those parts and their wires manually; use updated `wokwi/sketch.ino` with no button controls |
 | Green/red LEDs swapped | Firmware or wires still have previous pin assignment | Current order is **D5 Green, D6 Yellow, D7 Red** |
-| LEDs dark or wrong status | Reversed LED, wrong pin, MQ-2 calibrating or MPU offline | LED anode→resistor→Arduino; cathode→GND. Read status output |
+| LEDs dark or wrong status | Reversed LED, wrong pin, MQ-2 calibrating or MPU offline | Check **D5 Green, D6 Yellow, D7 Red**, each with **220Ω series resistor** toward the LED anode; cathode→GND. Read status output |
 | Wokwi piezo makes no noise | Running physical active-buzzer sketch, browser muted or disconnected pin | Use **wokwi/sketch.ino** with `tone()` and verify D8/D9/D10→piezo pin 2, pin 1→GND |
 | Physical active buzzer weak or silent | Voltage starved by 1kΩ in series, insufficient GPIO current or bad driver | Use regulated supply and correctly rated MOSFET driver; measure current |
 | LCD backlight on but no text | Wrong I2C address/contrast/library/wiring | Confirm 0x27 or scan I2C, SDA=A4 SCL=A5, adjust contrast on real backpack |
@@ -39,4 +39,4 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 7. For I2C, separately check LCD and MPU addresses and voltage compatibility.
 8. For physical batteries/buzzers, stop and ask the instructor to inspect driver and power wiring instead of bypassing limits.
 
-When reporting a bug, include: screenshot, sketch filename, `diagram.json` commit/hash, expected behavior, observed behavior, timing, and the relevant serial lines.
+When reporting a bug, include: screenshot of your **manually wired** circuit, sketch revision/commit, expected and actual behavior, timing, and relevant serial lines.
