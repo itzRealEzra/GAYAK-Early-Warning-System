@@ -11,14 +11,13 @@ dashboard through Flask on http://127.0.0.1:5000.
 No Wi-Fi, no internet, no cloud services, no database and no external network
 module are required. Everything runs on your PC.
 
-HARDWARE (wiring preserved)
----------------------------
-Arduino Uno R3
-  * DHT22   DATA  -> D2   (temperature + humidity)
-  * MQ-2    AO    -> A0   (gas/smoke, analog)
-  * Flame   DO    -> D3   (fire, digital)
-  * I2C LCD 0x27  SDA -> A4, SCL -> A5
-  * LEDs    Green -> D5, Yellow -> D6, Red -> D7 (each via 220-330 ohm to GND)
+HARDWARE (current Arduino Uno R3)
+---------------------------------
+DHT22 DATA D2, Flame DO D3, MQ-2 AO A0
+RED LED D5, YELLOW LED D6, GREEN LED D7
+Smoke active buzzer D8, Quake active buzzer D9, SFM-27 fire buzzer D10
+LCD 0x27 and GY-521 MPU-6050 0x68: SDA=A4, SCL=A5 (shared I2C)
+D4, D12 and A1 in the Wokwi project are simulator-only controls.
 
 SOFTWARE DEPENDENCIES (PC)
 --------------------------
@@ -130,3 +129,25 @@ The page mirrors the Arduino LEDs so you can watch it from another tab:
   Fire         red solid         No signal    grey
 The tab title and tab icon change colour (e.g. "green GAYAK - Monitoring"),
 and the lamps in the top bar light the same way.
+
+
+NOVEMBER 2026: MPU-6050 AND 3-BUZZER UPDATE
+--------------------------------------------
+* Physical firmware: arduino/GAYAK.ino; calibrated vibration thresholds must
+  be tested in place. This is motion detection, NOT Richter magnitude.
+* Wokwi simulation: wokwi/diagram.json, sketch.ino, libraries.txt and README.md.
+  The hosted Wokwi circuit is not auto-updated by this GitHub repository.
+* LED pins: D5 RED / D6 YELLOW / D7 GREEN.
+* Alarms: FIRE D10 -> D8 -> D9 alternating; SMOKE D8; SHAKING D9.
+* The original DATA serial format is preserved for the existing Flask web
+  dashboard; MPU data is emitted separately as QUAKE,online,alert,rms_g.
+  The present dashboard does not yet show QUAKE telemetry.
+* The Wokwi sketch uses tone() for simulated piezo buzzers; do NOT substitute
+  it for the real active-buzzer sketch which uses HIGH/LOW outputs.
+* Prototype 1kΩ buzzer test wiring limits current but may be too quiet for an
+  actual alarm. Verify currents and use rated transistor/MOSFET drivers.
+* Use proper 3.3V I2C level shifting as necessary with the physical GY-521.
+* The TP4056 is a single-cell/1S charger, not a 5V regulator. Do not connect
+  a two-cell series 18650 holder to it. Use a compatible protected 1S battery
+  system, a suitable boost regulator, fuse, isolation and safe power path.
+* GAYAK is not a certified fire, smoke, gas, or earthquake warning system.

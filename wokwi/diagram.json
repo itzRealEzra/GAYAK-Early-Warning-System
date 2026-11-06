@@ -1,0 +1,867 @@
+{
+  "version": 1,
+  "author": "GAYAK / neat wiring v2",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "left": -635,
+      "top": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-breadboard-half",
+      "id": "pcb",
+      "left": 680,
+      "top": 715,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht",
+      "left": -640,
+      "top": -355,
+      "attrs": {
+        "temperature": "29",
+        "humidity": "65"
+      }
+    },
+    {
+      "type": "wokwi-gas-sensor",
+      "id": "gas",
+      "left": -400,
+      "top": -355,
+      "attrs": {
+        "ppm": "400"
+      }
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd",
+      "left": -100,
+      "top": -355,
+      "attrs": {
+        "pins": "i2c",
+        "i2cAddress": "0x27"
+      }
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "mpu",
+      "left": 350,
+      "top": -355,
+      "attrs": {
+        "accelX": "0",
+        "accelY": "0",
+        "accelZ": "1"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "flame",
+      "left": -610,
+      "top": 450,
+      "attrs": {
+        "color": "red",
+        "label": "FLAME TEST (DO)",
+        "key": "F"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "ack",
+      "left": -415,
+      "top": 450,
+      "attrs": {
+        "color": "blue",
+        "label": "ACK / MUTE 5s",
+        "key": "A"
+      }
+    },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "flameAO",
+      "left": 20,
+      "top": 450,
+      "attrs": {
+        "value": "512",
+        "travelLength": "30"
+      }
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "power",
+      "left": -210,
+      "top": 450,
+      "attrs": {
+        "value": "",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_red",
+      "left": 405,
+      "top": 180,
+      "attrs": {
+        "color": "red",
+        "label": "RED D5"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_led_red",
+      "left": 409,
+      "top": 78,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_yellow",
+      "left": 690,
+      "top": 180,
+      "attrs": {
+        "color": "yellow",
+        "label": "YELLOW D6"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_led_yellow",
+      "left": 694,
+      "top": 78,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_green",
+      "left": 975,
+      "top": 180,
+      "attrs": {
+        "color": "green",
+        "label": "GREEN D7"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_led_green",
+      "left": 979,
+      "top": 78,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "smokeB",
+      "left": 405,
+      "top": 458,
+      "attrs": {
+        "mode": "smooth",
+        "volume": "0.4"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_buzz_smoke",
+      "left": 415,
+      "top": 360,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "quakeB",
+      "left": 690,
+      "top": 458,
+      "attrs": {
+        "mode": "smooth",
+        "volume": "0.4"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_buzz_quake",
+      "left": 700,
+      "top": 360,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "fireB",
+      "left": 975,
+      "top": 458,
+      "attrs": {
+        "mode": "smooth",
+        "volume": "0.4"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_buzz_fire",
+      "left": 985,
+      "top": 360,
+      "attrs": {
+        "value": "1000"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-text",
+      "id": "title",
+      "left": -645,
+      "top": -580,
+      "attrs": {
+        "text": "GAYAK  |  ARDUINO UNO R3  |  WOKWI WIRING - CLEAN LAYOUT"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "sensTitle",
+      "left": -645,
+      "top": -466,
+      "attrs": {
+        "text": "01  SENSORS + I2C DISPLAY"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "dhtLabel",
+      "left": -645,
+      "top": -421,
+      "attrs": {
+        "text": "DHT22 / D2"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "gasLabel",
+      "left": -405,
+      "top": -421,
+      "attrs": {
+        "text": "MQ-2 / A0"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "lcdLabel",
+      "left": -105,
+      "top": -421,
+      "attrs": {
+        "text": "16x2 LCD / 0x27"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "mpuLabel",
+      "left": 345,
+      "top": -421,
+      "attrs": {
+        "text": "MPU6050 / 0x68"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "unoLabel",
+      "left": -640,
+      "top": 27,
+      "attrs": {
+        "text": "02  ARDUINO CONTROLLER"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "ledTitle",
+      "left": 395,
+      "top": 20,
+      "attrs": {
+        "text": "03  STATUS LEDS  (1k ohm each)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "redLabel",
+      "left": 395,
+      "top": 140,
+      "attrs": {
+        "text": "RED / D5"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "yellowLabel",
+      "left": 680,
+      "top": 140,
+      "attrs": {
+        "text": "YELLOW / D6"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "greenLabel",
+      "left": 965,
+      "top": 140,
+      "attrs": {
+        "text": "GREEN / D7"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "buzzerTitle",
+      "left": 395,
+      "top": 276,
+      "attrs": {
+        "text": "04  ALARM BUZZERS  (1k ohm series - simulation)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "smokeLabel",
+      "left": 395,
+      "top": 321,
+      "attrs": {
+        "text": "SMOKE / D8"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "quakeLabel",
+      "left": 680,
+      "top": 321,
+      "attrs": {
+        "text": "QUAKE / D9"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "fireLabel",
+      "left": 965,
+      "top": 321,
+      "attrs": {
+        "text": "FIRE SFM-27 / D10"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "ctrlTitle",
+      "left": -640,
+      "top": 386,
+      "attrs": {
+        "text": "05  TEST CONTROLS"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "flameLabel",
+      "left": -615,
+      "top": 421,
+      "attrs": {
+        "text": "FLAME / D3  [F]"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "ackLabel",
+      "left": -420,
+      "top": 421,
+      "attrs": {
+        "text": "MUTE / D12  [A]"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "switchLabel",
+      "left": -220,
+      "top": 421,
+      "attrs": {
+        "text": "SIM POWER / D4"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "sliderLabel",
+      "left": 5,
+      "top": 421,
+      "attrs": {
+        "text": "FLAME LEVEL / A1"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "pcbTitle",
+      "left": 680,
+      "top": 652,
+      "attrs": {
+        "text": "06  PCB TEST BOARD PROXY"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "pcbSubTitle",
+      "left": 680,
+      "top": 676,
+      "attrs": {
+        "text": "BREADBOARD = 5V + GND DISTRIBUTION"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "note1",
+      "left": -640,
+      "top": 948,
+      "attrs": {
+        "text": "SIMULATION: piezo buzzers need tone(); real active buzzers use controlled DC + proper drivers."
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "note2",
+      "left": -640,
+      "top": 985,
+      "attrs": {
+        "text": "BATTERY/TP4056 NOT SIMULATED: never connect unregulated 18650 voltage to Arduino 5V."
+      }
+    }
+  ],
+  "connections": [
+    [
+      "uno:5V",
+      "dht:VCC",
+      "red",
+      [
+        "v85",
+        "h-330",
+        "v-590",
+        "*",
+        "v45"
+      ]
+    ],
+    [
+      "dht:VCC",
+      "gas:VCC",
+      "red",
+      [
+        "v130",
+        "*",
+        "v130"
+      ]
+    ],
+    [
+      "gas:VCC",
+      "lcd:VCC",
+      "red",
+      [
+        "v130",
+        "*",
+        "v130"
+      ]
+    ],
+    [
+      "lcd:VCC",
+      "mpu:VCC",
+      "red",
+      [
+        "v130",
+        "*",
+        "v130"
+      ]
+    ],
+    [
+      "uno:GND.2",
+      "dht:GND",
+      "black",
+      [
+        "v110",
+        "h-380",
+        "v-650",
+        "*",
+        "v80"
+      ]
+    ],
+    [
+      "dht:GND",
+      "gas:GND",
+      "black",
+      [
+        "v168",
+        "*",
+        "v168"
+      ]
+    ],
+    [
+      "gas:GND",
+      "lcd:GND",
+      "black",
+      [
+        "v168",
+        "*",
+        "v168"
+      ]
+    ],
+    [
+      "lcd:GND",
+      "mpu:GND",
+      "black",
+      [
+        "v168",
+        "*",
+        "v168"
+      ]
+    ],
+    [
+      "mpu:AD0",
+      "mpu:GND",
+      "black",
+      []
+    ],
+    [
+      "uno:2",
+      "dht:SDA",
+      "green",
+      [
+        "v-80",
+        "h-105",
+        "*",
+        "v70"
+      ]
+    ],
+    [
+      "gas:AOUT",
+      "uno:A0",
+      "orange",
+      [
+        "v210",
+        "*",
+        "h155",
+        "v-45"
+      ]
+    ],
+    [
+      "lcd:SDA",
+      "uno:A4",
+      "cyan",
+      [
+        "v235",
+        "*",
+        "h120",
+        "v-60"
+      ]
+    ],
+    [
+      "lcd:SCL",
+      "uno:A5",
+      "gold",
+      [
+        "v250",
+        "*",
+        "h140",
+        "v-60"
+      ]
+    ],
+    [
+      "lcd:SDA",
+      "mpu:SDA",
+      "cyan",
+      [
+        "v65",
+        "*",
+        "v65"
+      ]
+    ],
+    [
+      "lcd:SCL",
+      "mpu:SCL",
+      "gold",
+      [
+        "v85",
+        "*",
+        "v85"
+      ]
+    ],
+    [
+      "uno:5",
+      "r_led_red:1",
+      "red",
+      [
+        "v-65",
+        "*",
+        "v-22"
+      ]
+    ],
+    [
+      "r_led_red:2",
+      "led_red:A",
+      "red",
+      []
+    ],
+    [
+      "uno:6",
+      "r_led_yellow:1",
+      "yellow",
+      [
+        "v-50",
+        "*",
+        "v-22"
+      ]
+    ],
+    [
+      "r_led_yellow:2",
+      "led_yellow:A",
+      "yellow",
+      []
+    ],
+    [
+      "uno:7",
+      "r_led_green:1",
+      "limegreen",
+      [
+        "v-35",
+        "*",
+        "v-22"
+      ]
+    ],
+    [
+      "r_led_green:2",
+      "led_green:A",
+      "limegreen",
+      []
+    ],
+    [
+      "led_red:C",
+      "led_yellow:C",
+      "black",
+      [
+        "v62",
+        "*",
+        "v62"
+      ]
+    ],
+    [
+      "led_yellow:C",
+      "led_green:C",
+      "black",
+      [
+        "v62",
+        "*",
+        "v62"
+      ]
+    ],
+    [
+      "led_green:C",
+      "pcb:bn.13",
+      "black",
+      [
+        "h165",
+        "v490",
+        "*",
+        "v-38"
+      ]
+    ],
+    [
+      "uno:8",
+      "r_buzz_smoke:1",
+      "purple",
+      [
+        "v185",
+        "*",
+        "v-28"
+      ]
+    ],
+    [
+      "r_buzz_smoke:2",
+      "smokeB:2",
+      "purple",
+      []
+    ],
+    [
+      "uno:9",
+      "r_buzz_quake:1",
+      "violet",
+      [
+        "v200",
+        "*",
+        "v-28"
+      ]
+    ],
+    [
+      "r_buzz_quake:2",
+      "quakeB:2",
+      "violet",
+      []
+    ],
+    [
+      "uno:10",
+      "r_buzz_fire:1",
+      "blueviolet",
+      [
+        "v215",
+        "*",
+        "v-28"
+      ]
+    ],
+    [
+      "r_buzz_fire:2",
+      "fireB:2",
+      "blueviolet",
+      []
+    ],
+    [
+      "smokeB:1",
+      "quakeB:1",
+      "black",
+      [
+        "v55",
+        "*",
+        "v55"
+      ]
+    ],
+    [
+      "quakeB:1",
+      "fireB:1",
+      "black",
+      [
+        "v55",
+        "*",
+        "v55"
+      ]
+    ],
+    [
+      "fireB:1",
+      "pcb:bn.12",
+      "black",
+      [
+        "h140",
+        "v155",
+        "*",
+        "v-45"
+      ]
+    ],
+    [
+      "flame:1.l",
+      "uno:3",
+      "orange",
+      [
+        "v-54",
+        "*",
+        "v45"
+      ]
+    ],
+    [
+      "ack:1.l",
+      "uno:12",
+      "blue",
+      [
+        "v-62",
+        "*",
+        "v35"
+      ]
+    ],
+    [
+      "power:2",
+      "uno:4",
+      "limegreen",
+      [
+        "v-100",
+        "*",
+        "v70"
+      ]
+    ],
+    [
+      "flame:2.l",
+      "ack:2.l",
+      "black",
+      [
+        "v88",
+        "*",
+        "v88"
+      ]
+    ],
+    [
+      "ack:2.l",
+      "power:1",
+      "black",
+      [
+        "v88",
+        "*",
+        "v88"
+      ]
+    ],
+    [
+      "power:1",
+      "uno:GND.1",
+      "black",
+      [
+        "v102",
+        "*",
+        "v70"
+      ]
+    ],
+    [
+      "flameAO:SIG",
+      "uno:A1",
+      "orange",
+      [
+        "v-62",
+        "*",
+        "v70"
+      ]
+    ],
+    [
+      "flameAO:VCC",
+      "uno:5V",
+      "red",
+      [
+        "v-100",
+        "*",
+        "v65"
+      ]
+    ],
+    [
+      "flameAO:GND",
+      "uno:GND.1",
+      "black",
+      [
+        "v-115",
+        "*",
+        "v85"
+      ]
+    ],
+    [
+      "uno:5V",
+      "pcb:bp.1",
+      "red",
+      [
+        "v500",
+        "*",
+        "v-50"
+      ]
+    ],
+    [
+      "uno:GND.2",
+      "pcb:bn.1",
+      "black",
+      [
+        "v480",
+        "*",
+        "v-45"
+      ]
+    ]
+  ],
+  "serialMonitor": {
+    "display": "always",
+    "newline": "lf"
+  }
+}

@@ -1,3 +1,38 @@
+/*
+ GAYAK - Complete Arduino Uno R3 firmware and three active buzzers
+
+ PROTOTYPE BUZZER WIRING (no transistor, limited sound output):
+   Uno D8  -- 1k ohm series resistor -- (+) 5V active buzzer #1
+   Uno D9  -- 1k ohm series resistor -- (+) 5V active buzzer #2
+   Uno D10 -- 1k ohm series resistor -- (+) SFM-27 3-24V buzzer
+   Each buzzer (-) --------------------- Uno GND
+
+ HIGH switches a buzzer ON. LOW switches it OFF.
+ The 1k series resistors limit current to <5mA, but buzzers may be
+ quieter / unreliable at this current. For a finished warning device,
+ use a properly rated transistor/MOSFET or buzzer driver.
+
+ Pin assignments retained from the current uploaded GAYAK firmware:
+ D2 DHT22, D3 flame DO, D5 red LED, D6 yellow LED, D7 green LED,
+ A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
+ Serial baud: 115200.
+
+ Fire: D10 -> D8 -> D9 (450 ms ON, 150 ms GAP each).
+ Smoke: D8 (550 ms ON, 450 ms GAP).
+ Shaking: D9 (200 ms ON, 150 ms GAP).
+ Alarm priority: FIRE > SMOKE > SHAKING.
+
+ NOTE: This is a laboratory prototype, not a certified life-safety or
+ earthquake warning system. MPU6050 detects motion, not earthquake origin.
+*/
+
+// GAYAK Early Warning System - MPU-6050 + alternating active buzzers
+// Arduino Uno R3. LED pins corrected: D5=RED, D6=YELLOW, D7=GREEN.
+// Prototype vibration detection only; not a certified earthquake alarm.
+// LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
+// Validate voltage levels: MPU6050 chip uses 3.3V I2C logic.
+// Keep DATA CSV intact; supplemental QUAKE CSV at 1 Hz.
+
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
@@ -13,10 +48,21 @@
 #define FLAME_PIN 3
 #define MQ2_PIN A0
 
+// GY-521 MPU-6050; shared I2C with LCD on A4/A5.
+#define MPU_ADDR 0x68
+
 // Status LEDs (each through a 220-330 ohm resistor to GND)
-#define LED_GREEN_PIN  5
+#define LED_RED_PIN    5
 #define LED_YELLOW_PIN 6
-#define LED_RED_PIN    7
+#define LED_GREEN_PIN  7
+
+// Three separate 2-pin active buzzers. Prototype: 1k series resistor
+// from each pin to buzzer (+), each buzzer (-) to GND.
+// Properly rated drivers are recommended for the final deployment.
+// HIGH turns on an active buzzer; LOW turns it off.
+#define BUZZER_SMOKE_PIN 8    // 5V active buzzer #1
+#define BUZZER_QUAKE_PIN 9    // 5V active buzzer #2
+#define BUZZER_FIRE_PIN  10   // SFM-27 (3-24V) active buzzer
 
 // ================ COMPONENTS ================
 
@@ -28,12 +74,44 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 const unsigned long PANEL_INTERVAL  = 3000UL;
 const unsigned long SENSOR_INTERVAL = 2500UL;
 
+// ================ EARTHQUAKE/VIBRATION SETTINGS ================
+// PROTOTYPE ONLY: These are vibration thresholds, NOT earthquake magnitude.
+// Secure the MPU firmly to the structure being monitored.
+const unsigned long MPU_SAMPLE_MS       = 20UL;    // target 50 Hz
+const unsigned long MPU_RETRY_MS        = 5000UL;
+const unsigned long MPU_SETTLE_MS       = 2000UL;  // keep still after startup
+const unsigned long QUAKE_CONFIRM_MS    = 800UL;   // sustained vibration
+const unsigned long QUAKE_CLEAR_MS      = 2500UL;  // must be quiet to clear
+const unsigned long QUAKE_MIN_HOLD_MS   = 5000UL;  // minimum alert duration
+const unsigned long QUAKE_SERIAL_MS     = 1000UL;
+
+const float QUAKE_TRIGGER_RMS_G = 0.12f;  // change after testing
+const float QUAKE_CLEAR_RMS_G   = 0.06f;
+const float MPU_GRAVITY_ALPHA   = 0.005f; // slow-moving gravity baseline
+const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
+
 // Change only after comparing with a reliable thermometer.
 const float TEMP_OFFSET = 0.0;
 
 // LED behaviour
 const unsigned long LED_BLINK_MS = 500UL;   // blink half-period (warm-up / calibrating)
 const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = green solid
+
+// ================ BUZZER PATTERNS ================
+// Fire: SFM-27 (D10), then buzzer #1 (D8), then buzzer #2 (D9), repeat.
+// Only ONE buzzer sounds at a time. Timings are in milliseconds.
+const unsigned long FIRE_ON_MS    = 450UL;
+const unsigned long FIRE_GAP_MS   = 150UL;
+const unsigned long SMOKE_ON_MS   = 550UL;
+const unsigned long SMOKE_GAP_MS  = 450UL;
+const unsigned long QUAKE_ON_MS   = 200UL;
+const unsigned long QUAKE_GAP_MS  = 150UL;
+
+enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE };
+BuzzerAlarm buzzerMode = BUZZER_IDLE;
+byte buzzerSequence = 0;
+bool buzzerSounding = false;
+unsigned long buzzerPhaseStarted = 0;
 
 // MQ-2 smoke detector timing
 const unsigned long MQ2_WARMUP_MS       = 180000UL;  // was 120000UL (longer settle = steadier baseline)
@@ -73,6 +151,25 @@ unsigned long lastSerialSend = 0;
 bool lastSentSmoke = false;   // alert state in the last DATA record
 bool lastSentFlame = false;
 
+// ================ MPU-6050 STATE ================
+bool mpuReady = false;
+bool quakeAlert = false;
+bool quakeCandidate = false;
+byte mpuConsecutiveFails = 0;
+unsigned long lastMPURead = 0;
+unsigned long lastMPURetry = 0;
+unsigned long mpuStartTime = 0;
+unsigned long quakeCandidateSince = 0;
+unsigned long quakeActivatedAt = 0;
+unsigned long quakeClearSince = 0;
+unsigned long lastQuakeSerial = 0;
+bool lastSentQuake = false;
+
+float gravityX = 0.0f, gravityY = 0.0f, gravityZ = 1.0f;
+float quakeEnergy = 0.0f;
+float quakeRmsG = 0.0f;
+float quakePeakG = 0.0f;
+
 // Flame sensor settings
 // Auto-learn reads the pin at boot (no flame in view) and treats that
 // level as "no fire". Fire = the pin leaving that level.
@@ -91,6 +188,7 @@ const int FLAME_CONFIRM_SAMPLES           = 3;
 const byte MODE_NORMAL = 0;
 const byte MODE_SMOKE  = 1;
 const byte MODE_FIRE   = 2;
+const byte MODE_QUAKE  = 3;
 
 byte lastDisplayMode = 255;   // forces a clean first draw
 
@@ -159,6 +257,168 @@ int flameConfirmCount = 0;
 bool flameAlert = false;    // true = fire alert active
 int flameIdleLevel = HIGH;  // pin level that means "no fire"
 
+// ================ MPU-6050 EARTHQUAKE / VIBRATION ================
+
+bool writeMPURegister(byte reg, byte value) {
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(reg);
+  Wire.write(value);
+  return Wire.endTransmission() == 0;
+}
+
+bool readMPUAcceleration(float &x, float &y, float &z) {
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x3B);                         // ACCEL_XOUT_H
+  if (Wire.endTransmission(false) != 0) return false;
+
+  // Only read accelerometer bytes: faster than fetching gyro + temperature.
+  if (Wire.requestFrom((uint8_t)MPU_ADDR, (uint8_t)6,
+                       (uint8_t)true) != 6) return false;
+
+  int16_t rawX = (int16_t)((Wire.read() << 8) | Wire.read());
+  int16_t rawY = (int16_t)((Wire.read() << 8) | Wire.read());
+  int16_t rawZ = (int16_t)((Wire.read() << 8) | Wire.read());
+
+  // ACCEL_CONFIG = 0 means +/-2 g, sensitivity 16384 LSB/g.
+  x = rawX / 16384.0f;
+  y = rawY / 16384.0f;
+  z = rawZ / 16384.0f;
+  return true;
+}
+
+void initializeMPU(unsigned long now) {
+  lastMPURetry = now;
+  mpuReady = false;
+
+  // Verify that a device is present at 0x68 and is an MPU-6050.
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x75);                         // WHO_AM_I
+  if (Wire.endTransmission(false) != 0 ||
+      Wire.requestFrom((uint8_t)MPU_ADDR, (uint8_t)1,
+                       (uint8_t)true) != 1) {
+    Serial.println(F("MPU6050 OFFLINE: check I2C wires"));
+    return;
+  }
+  byte who = Wire.read();
+  if ((who & 0x7E) != 0x68) {
+    Serial.print(F("Unexpected MPU WHO_AM_I: 0x"));
+    Serial.println(who, HEX);
+    return;
+  }
+
+  // Wake sensor, 44 Hz low-pass, 50 Hz sample-rate, +/-2 g range.
+  if (!writeMPURegister(0x6B, 0x01) ||   // PWR_MGMT_1
+      !writeMPURegister(0x1A, 0x03) ||   // CONFIG DLPF
+      !writeMPURegister(0x19, 19) ||     // SMPLRT_DIV
+      !writeMPURegister(0x1C, 0x00)) {  // ACCEL_CONFIG
+    Serial.println(F("MPU6050 setup failed"));
+    return;
+  }
+
+  float ax, ay, az;
+  if (!readMPUAcceleration(ax, ay, az)) {
+    Serial.println(F("MPU6050 initial read failed"));
+    return;
+  }
+  gravityX = ax;
+  gravityY = ay;
+  gravityZ = az;
+  quakeEnergy = 0.0f;
+  quakeRmsG = 0.0f;
+  quakePeakG = 0.0f;
+  quakeAlert = false;
+  quakeCandidate = false;
+  quakeClearSince = 0;
+  mpuConsecutiveFails = 0;
+  mpuStartTime = now;
+  lastMPURead = now;
+  mpuReady = true;
+  Serial.println(F("MPU6050 READY - keep sensor stationary for 2 s"));
+}
+
+void updateMPU(unsigned long now) {
+  if (!mpuReady) {
+    if (now - lastMPURetry >= MPU_RETRY_MS) initializeMPU(now);
+    return;                              // Other GAYAK sensors keep working
+  }
+  if (now - lastMPURead < MPU_SAMPLE_MS) return;
+  lastMPURead = now;
+
+  float ax, ay, az;
+  if (!readMPUAcceleration(ax, ay, az)) {
+    if (++mpuConsecutiveFails >= 3) {
+      mpuReady = false;
+      quakeAlert = false;                // no false "safe" indication on LCD
+      Serial.println(F("MPU6050 LOST - earthquake monitor OFFLINE"));
+      lastMPURetry = now;
+    }
+    return;
+  }
+  mpuConsecutiveFails = 0;
+
+  // Remove slowly varying gravitational acceleration on each axis.
+  float dx = ax - gravityX;
+  float dy = ay - gravityY;
+  float dz = az - gravityZ;
+  gravityX += MPU_GRAVITY_ALPHA * dx;
+  gravityY += MPU_GRAVITY_ALPHA * dy;
+  gravityZ += MPU_GRAVITY_ALPHA * dz;
+
+  float motionSquared = dx * dx + dy * dy + dz * dz;
+  quakeEnergy += MPU_ENERGY_ALPHA * (motionSquared - quakeEnergy);
+  if (quakeEnergy < 0.0f) quakeEnergy = 0.0f;
+  quakeRmsG = sqrtf(quakeEnergy);
+  if (quakeRmsG > quakePeakG) quakePeakG = quakeRmsG;
+
+  // Let the baseline settle before enabling alerts.
+  if (now - mpuStartTime < MPU_SETTLE_MS) return;
+
+  if (!quakeAlert) {
+    if (quakeRmsG >= QUAKE_TRIGGER_RMS_G) {
+      if (!quakeCandidate) {
+        quakeCandidate = true;
+        quakeCandidateSince = now;
+      } else if (now - quakeCandidateSince >= QUAKE_CONFIRM_MS) {
+        quakeAlert = true;
+        quakeCandidate = false;
+        quakeActivatedAt = now;
+        quakeClearSince = 0;
+        Serial.println(F("!!! SUSTAINED SHAKING DETECTED !!!"));
+      }
+    } else {
+      quakeCandidate = false;
+    }
+  } else {
+    if (quakeRmsG <= QUAKE_CLEAR_RMS_G) {
+      if (quakeClearSince == 0) quakeClearSince = now;
+      if (now - quakeClearSince >= QUAKE_CLEAR_MS &&
+          now - quakeActivatedAt >= QUAKE_MIN_HOLD_MS) {
+        quakeAlert = false;
+        quakeClearSince = 0;
+        Serial.println(F("Shaking stopped - returning to monitoring"));
+      }
+    } else {
+      quakeClearSince = 0;
+    }
+  }
+}
+
+// A separate record preserves the original dashboard DATA CSV field count.
+// QUAKE,<online:0/1>,<alert:0/1>,<vibration RMS g or null>
+void sendQuakeData(unsigned long now) {
+  bool changed = quakeAlert != lastSentQuake;
+  if (!changed && now - lastQuakeSerial < QUAKE_SERIAL_MS) return;
+  lastQuakeSerial = now;
+  lastSentQuake = quakeAlert;
+  Serial.print(F("QUAKE,"));
+  Serial.print(mpuReady ? 1 : 0);
+  Serial.print(F(","));
+  Serial.print(quakeAlert ? 1 : 0);
+  Serial.print(F(","));
+  if (mpuReady) Serial.println(quakeRmsG, 3);
+  else Serial.println(F("null"));
+}
+
 // ================ HEAT STATUS ================
 
 const __FlashStringHelper* getHeatStatus(int hiTenths) {
@@ -177,7 +437,7 @@ void setLeds(bool green, bool yellow, bool red) {
   digitalWrite(LED_RED_PIN,    red    ? HIGH : LOW);
 }
 
-// Priority: fire > smoke > MQ-2 sensor state.
+// Priority: fire > smoke > shaking > MQ-2 state > MPU offline.
 //   FIRE            = RED solid
 //   SMOKE           = YELLOW solid
 //   WARMING UP      = RED blinking
@@ -190,12 +450,88 @@ void updateLeds(unsigned long now) {
     setLeds(false, false, true);
   } else if (mq2Alert) {
     setLeds(false, true, false);
+  } else if (quakeAlert) {
+    // Distinctive fast red blink for vibration/shaking.
+    setLeds(false, false, ((now / 250UL) % 2UL) == 0UL);
   } else if (mq2State == MQ2_WARMING_UP) {
     setLeds(false, false, blinkOn);
   } else if (mq2State == MQ2_CALIBRATING) {
     setLeds(false, blinkOn, false);
+  } else if (!mpuReady) {
+    // Do not show a green all-clear while the quake sensor is unavailable.
+    setLeds(false, blinkOn, false);
   } else {
     setLeds(GREEN_BLINK_WHEN_READY ? blinkOn : true, false, false);
+  }
+}
+
+// ================ ACTIVE BUZZER ALTERNATION ================
+
+void allBuzzersOff() {
+  digitalWrite(BUZZER_SMOKE_PIN, LOW);
+  digitalWrite(BUZZER_QUAKE_PIN, LOW);
+  digitalWrite(BUZZER_FIRE_PIN, LOW);
+}
+
+byte selectedBuzzerPin(BuzzerAlarm mode, byte sequence) {
+  if (mode == BUZZER_FIRE) {
+    // FIRE FIRST, followed by the other two buzzers, repeating.
+    if (sequence == 0) return BUZZER_FIRE_PIN;
+    if (sequence == 1) return BUZZER_SMOKE_PIN;
+    return BUZZER_QUAKE_PIN;
+  }
+  if (mode == BUZZER_SMOKE) return BUZZER_SMOKE_PIN;
+  return BUZZER_QUAKE_PIN;
+}
+
+// Call every loop; never use delay(), so all sensors keep updating.
+// Alarm priority: FIRE > SMOKE > SHAKING > QUIET.
+void updateBuzzers(unsigned long now) {
+  BuzzerAlarm requested = BUZZER_IDLE;
+  if (flameAlert)      requested = BUZZER_FIRE;
+  else if (mq2Alert)   requested = BUZZER_SMOKE;
+  else if (quakeAlert) requested = BUZZER_QUAKE;
+
+  // Start the appropriate pattern immediately when alerts change.
+  if (requested != buzzerMode) {
+    allBuzzersOff();
+    buzzerMode = requested;
+    buzzerSequence = 0;
+    buzzerPhaseStarted = now;
+    buzzerSounding = (requested != BUZZER_IDLE);
+    if (buzzerSounding) {
+      digitalWrite(selectedBuzzerPin(requested, buzzerSequence), HIGH);
+    }
+    return;
+  }
+  if (buzzerMode == BUZZER_IDLE) return;
+
+  unsigned long onMs, gapMs;
+  if (buzzerMode == BUZZER_FIRE) {
+    onMs = FIRE_ON_MS;
+    gapMs = FIRE_GAP_MS;
+  } else if (buzzerMode == BUZZER_SMOKE) {
+    onMs = SMOKE_ON_MS;
+    gapMs = SMOKE_GAP_MS;
+  } else {
+    onMs = QUAKE_ON_MS;
+    gapMs = QUAKE_GAP_MS;
+  }
+
+  if (now - buzzerPhaseStarted < (buzzerSounding ? onMs : gapMs)) return;
+
+  allBuzzersOff();
+  buzzerPhaseStarted = now;
+  if (buzzerSounding) {
+    // Begin a silent gap between individual buzzer pulses.
+    buzzerSounding = false;
+  } else {
+    // After the gap, choose the next buzzer in the fire sequence.
+    if (buzzerMode == BUZZER_FIRE) {
+      buzzerSequence = (buzzerSequence + 1) % 3;
+    }
+    buzzerSounding = true;
+    digitalWrite(selectedBuzzerPin(buzzerMode, buzzerSequence), HIGH);
   }
 }
 
@@ -683,6 +1019,17 @@ void printDiagnostics(unsigned long now) {
   Serial.print(flameIdleLevel);
   Serial.print(F(" FIRE="));
   Serial.print(flameAlert ? F("YES") : F("NO"));
+  Serial.print(F(" MPU="));
+  Serial.print(mpuReady ? F("READY") : F("OFFLINE"));
+  Serial.print(F(" VIB_G="));
+  if (mpuReady) Serial.print(quakeRmsG, 3);
+  else Serial.print(F("null"));
+  Serial.print(F(" PEAK_G="));
+  if (mpuReady) Serial.print(quakePeakG, 3);
+  else Serial.print(F("null"));
+  quakePeakG = 0.0f; // peak since the previous 1-second diagnostic update
+  Serial.print(F(" SHAKE="));
+  Serial.print(quakeAlert ? F("YES") : F("NO"));
   Serial.print(F(" FREE_RAM="));
   Serial.print(freeRam());
 
@@ -696,6 +1043,7 @@ void showPanel() {
   byte mode = MODE_NORMAL;
   if (flameAlert)      mode = MODE_FIRE;
   else if (mq2Alert)   mode = MODE_SMOKE;
+  else if (quakeAlert) mode = MODE_QUAKE;
 
   // Clean slate whenever the display mode changes.
   if (mode != lastDisplayMode) {
@@ -715,8 +1063,33 @@ void showPanel() {
     return;
   }
 
+  if (mode == MODE_QUAKE) {
+    printLineP(0, F("SHAKING DETECTED"));
+    printLineP(1, F("DROP COVER HOLD"));
+    return;
+  }
+
+  // MPU monitor panel, shown even when the DHT22 has a read error.
+  if (currentPanel == 2) {
+    if (!mpuReady) {
+      printLineP(0, F("MPU6050 OFFLINE"));
+      printLineP(1, F("CHECK I2C WIRES"));
+    } else if (millis() - mpuStartTime < MPU_SETTLE_MS) {
+      printLineP(0, F("MPU CALIBRATING"));
+      printLineP(1, F("KEEP SENSOR STILL"));
+    } else {
+      char vibration[10];
+      char line[17];
+      dtostrf(quakeRmsG, 4, 2, vibration);
+      printLineP(0, F("QUAKE MONITOR"));
+      snprintf_P(line, sizeof(line), PSTR("VIB:%sg STABLE"), vibration);
+      printLine(1, line);
+    }
+    return;
+  }
+
   // Smoke sensor status panel (only while the MQ-2 is not ready).
-  if (currentPanel == 2 && mq2State != MQ2_READY) {
+  if (currentPanel == 3 && mq2State != MQ2_READY) {
     char line1[17];
 
     printLineP(0, F("SMOKE SENSOR"));
@@ -772,6 +1145,7 @@ void showPanel() {
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
+  Wire.begin();                       // I2C shared by LCD + GY-521
 
   pinMode(MQ2_PIN, INPUT);
   pinMode(FLAME_PIN, INPUT);
@@ -779,6 +1153,13 @@ void setup() {
   pinMode(LED_GREEN_PIN, OUTPUT);
   pinMode(LED_YELLOW_PIN, OUTPUT);
   pinMode(LED_RED_PIN, OUTPUT);
+
+  // Initialize all buzzer pins OFF before any alarm detection begins.
+  allBuzzersOff();
+  pinMode(BUZZER_SMOKE_PIN, OUTPUT);
+  pinMode(BUZZER_QUAKE_PIN, OUTPUT);
+  pinMode(BUZZER_FIRE_PIN, OUTPUT);
+  allBuzzersOff();
 
   // Lamp test: all three LEDs on during the splash screen.
   setLeds(true, true, true);
@@ -795,6 +1176,9 @@ void setup() {
   delay(2000);
 
   setLeds(false, false, false);
+
+  // Initialize MPU while leaving original fire/smoke logic unchanged.
+  initializeMPU(millis());
 
   // Learn the flame module's resting level (no flame in view).
   printLineP(0, F("FLAME LEARNING"));
@@ -820,9 +1204,10 @@ void setup() {
 void loop() {
   unsigned long now = millis();
 
-  // Poll both alarm sensors first so neither is ever starved.
+  // Poll alarms early: fire, smoke and vibration.
   updateFlame(now);
   updateMQ2(now);
+  updateMPU(now);
 
   // Read DHT22 immediately, then every 2.5 seconds.
   if (firstReading || now - lastSensorRead >= SENSOR_INTERVAL) {
@@ -834,15 +1219,17 @@ void loop() {
   now = millis();
   updateFlame(now);          // catch up right after the DHT22 block
   updateMQ2(now);
+  updateMPU(now);
   printDiagnostics(now);
   updateLeds(now);
+  updateBuzzers(now);
 
   // Rotate LCD panels every 3 seconds.
-  // 3 panels while the MQ-2 is warming up, 2 once it is ready.
+  // 3 panels with MPU status, or 4 while the MQ-2 warms/calibrates.
   if (now - lastPanelChange >= PANEL_INTERVAL) {
     lastPanelChange = now;
 
-    byte panelCount = (mq2State == MQ2_READY) ? 2 : 3;
+    byte panelCount = (mq2State == MQ2_READY) ? 3 : 4;
     currentPanel++;
     if (currentPanel >= panelCount) {
       currentPanel = 0;
@@ -851,6 +1238,7 @@ void loop() {
 
   showPanel();
 
-  // Serial telemetry for the GAYAK dashboard.
+  // Unchanged DATA CSV for existing desktop dashboard + separate QUAKE CSV.
   sendSerialData(now);
+  sendQuakeData(now);
 }
