@@ -1,32 +1,18 @@
-// WOKWI SIMULATION VERSION FOR https://wokwi.com/projects/478926664159746049
-// D5=RED, D6=YELLOW, D7=GREEN, D8=SMOKE, D9=QUAKE, D10=FIRE
-// The Wokwi piezo parts require tone(); real active buzzers use HIGH/LOW.
+// Wokwi GAYAK: sensors use built-in controls; no test buttons / faux power switch.
+// Photoresistor module on D3 is a visible-light proxy, NOT a real flame sensor.
+// LEDs: D5 GREEN, D6 YELLOW, D7 RED; buzzers: D8 SMOKE, D9 QUAKE, D10 FIRE.
+// Wokwi piezos use tone(); the real two-terminal active buzzers use DC drivers.
 #define GAYAK_WOKWI_SIM 1
-#define SIM_SWITCH_PIN 4
-#define ACK_BUTTON_PIN 12
-#define FLAME_ANALOG_PIN A1
-const unsigned long ACK_MUTE_MS = 5000UL;
-unsigned long ackMuteUntil = 0;
-bool previousAckDown = false;
-bool simWasPowered = true;
-int flameAnalogBaseline = 512;
 
 /*
  GAYAK - Complete Arduino Uno R3 firmware and three active buzzers
 
- PROTOTYPE BUZZER WIRING (no transistor, limited sound output):
-   Uno D8  -- 1k ohm series resistor -- (+) 5V active buzzer #1
-   Uno D9  -- 1k ohm series resistor -- (+) 5V active buzzer #2
-   Uno D10 -- 1k ohm series resistor -- (+) SFM-27 3-24V buzzer
-   Each buzzer (-) --------------------- Uno GND
-
- HIGH switches a buzzer ON. LOW switches it OFF.
- The 1k series resistors limit current to <5mA, but buzzers may be
- quieter / unreliable at this current. For a finished warning device,
- use a properly rated transistor/MOSFET or buzzer driver.
+ WOKWI BUZZER PROXY: direct D8/D9/D10 -> piezo(+) and piezo(-) -> GND.
+ Wokwi piezo buzzers are simulated, with no series 1k ohm resistors.
+ Physical active buzzers need rated switching drivers for safe full-volume operation.
 
  Pin assignments retained from the current uploaded GAYAK firmware:
- D2 DHT22, D3 flame DO, D5 red LED, D6 yellow LED, D7 green LED,
+ D2 DHT22, D3 flame DO, D5 green LED, D6 yellow LED, D7 red LED,
  A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
@@ -40,7 +26,7 @@ int flameAnalogBaseline = 512;
 */
 
 // GAYAK Early Warning System - MPU-6050 + alternating active buzzers
-// Arduino Uno R3. LED pins corrected: D5=RED, D6=YELLOW, D7=GREEN.
+// Arduino Uno R3. LED pins corrected: D5=GREEN, D6=YELLOW, D7=RED.
 // Prototype vibration detection only; not a certified earthquake alarm.
 // LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
 // Validate voltage levels: MPU6050 chip uses 3.3V I2C logic.
@@ -65,14 +51,12 @@ int flameAnalogBaseline = 512;
 #define MPU_ADDR 0x68
 
 // Status LEDs (each through a 220-330 ohm resistor to GND)
-#define LED_RED_PIN    5
+#define LED_RED_PIN    7
 #define LED_YELLOW_PIN 6
-#define LED_GREEN_PIN  7
+#define LED_GREEN_PIN  5
 
-// Three separate 2-pin active buzzers. Prototype: 1k series resistor
-// from each pin to buzzer (+), each buzzer (-) to GND.
-// Properly rated drivers are recommended for the final deployment.
-// HIGH turns on an active buzzer; LOW turns it off.
+// Wokwi three piezo buzzer proxies: no series resistors; use tone()/noTone().
+// Physical active buzzers must use a properly rated driver circuit.
 #define BUZZER_SMOKE_PIN 8    // 5V active buzzer #1
 #define BUZZER_QUAKE_PIN 9    // 5V active buzzer #2
 #define BUZZER_FIRE_PIN  10   // SFM-27 (3-24V) active buzzer
@@ -84,8 +68,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // ================ SETTINGS ================
 
-const unsigned long PANEL_INTERVAL  = 3000UL;
-const unsigned long SENSOR_INTERVAL = 2500UL;
+const unsigned long PANEL_INTERVAL  = 1800UL;
+const unsigned long SENSOR_INTERVAL = 2200UL; // DHT22 minimum 2 seconds
 
 // ================ EARTHQUAKE/VIBRATION SETTINGS ================
 // PROTOTYPE ONLY: These are vibration thresholds, NOT earthquake magnitude.
@@ -93,10 +77,10 @@ const unsigned long SENSOR_INTERVAL = 2500UL;
 const unsigned long MPU_SAMPLE_MS       = 20UL;    // target 50 Hz
 const unsigned long MPU_RETRY_MS        = 5000UL;
 const unsigned long MPU_SETTLE_MS       = 2000UL;  // keep still after startup
-const unsigned long QUAKE_CONFIRM_MS    = 800UL;   // sustained vibration
-const unsigned long QUAKE_CLEAR_MS      = 2500UL;  // must be quiet to clear
+const unsigned long QUAKE_CONFIRM_MS    = 500UL;   // sustained vibration
+const unsigned long QUAKE_CLEAR_MS      = 1200UL;  // must be quiet to clear
 const unsigned long QUAKE_MIN_HOLD_MS   = 5000UL;  // minimum alert duration
-const unsigned long QUAKE_SERIAL_MS     = 1000UL;
+const unsigned long QUAKE_SERIAL_MS     = 400UL;
 
 const float QUAKE_TRIGGER_RMS_G = 0.12f;  // change after testing
 const float QUAKE_CLEAR_RMS_G   = 0.06f;
@@ -130,12 +114,12 @@ unsigned long buzzerPhaseStarted = 0;
 const unsigned long MQ2_WARMUP_MS       = 5000UL;  // was 120000UL (longer settle = steadier baseline)
 const unsigned long MQ2_BASELINE_MS     = 3000UL;   // was 10000UL (more samples averaged)
 const unsigned long MQ2_SAMPLE_INTERVAL = 100UL;
-const unsigned long MQ2_CLEAR_TIME      = 1500UL;
+const unsigned long MQ2_CLEAR_TIME      = 800UL;
 const unsigned long MQ2_DEBUG_INTERVAL  = 1000UL;
 
 // False-alarm protection
 const int MQ2_OVERSAMPLE = 16;                   // ADC reads averaged per sample
-const unsigned long MQ2_CONFIRM_MS = 2000UL;     // delta must stay high this long (was 3 samples = 0.3 s)
+const unsigned long MQ2_CONFIRM_MS = 750UL;     // delta must stay high this long (was 3 samples = 0.3 s)
 
 // Provisional ADC-difference thresholds (NOT calibrated concentrations).
 const int MQ2_TRIGGER_DELTA   = 40;   // raised back from 30: 30 sat inside the noise
@@ -186,15 +170,15 @@ float quakePeakG = 0.0f;
 // Flame sensor settings
 // Auto-learn reads the pin at boot (no flame in view) and treats that
 // level as "no fire". Fire = the pin leaving that level.
-const bool FLAME_AUTO_LEARN = true;
+const bool FLAME_AUTO_LEARN = false; // Wokwi photoresistor DO LOW = bright/flame proxy
 
 // Used only when FLAME_AUTO_LEARN is false.
 // true = OUT goes LOW on fire, false = OUT goes HIGH on fire.
 const bool FLAME_ACTIVE_LOW = true;
 
 const unsigned long FLAME_SAMPLE_INTERVAL = 50UL;
-const unsigned long FLAME_CLEAR_TIME      = 1500UL;
-const int FLAME_CONFIRM_SAMPLES           = 3;
+const unsigned long FLAME_CLEAR_TIME      = 500UL;
+const int FLAME_CONFIRM_SAMPLES           = 2;
 
 // ================ DISPLAY MODES ================
 
@@ -521,9 +505,6 @@ void updateBuzzers(unsigned long now) {
   if (flameAlert)      requested = BUZZER_FIRE;
   else if (mq2Alert)   requested = BUZZER_SMOKE;
   else if (quakeAlert) requested = BUZZER_QUAKE;
-
-  // ACK silences for 5 seconds, but does not clear hazard indications.
-  if ((long)(ackMuteUntil - now) > 0) requested = BUZZER_IDLE;
 
   // Start the appropriate pattern immediately when alerts change.
   if (requested != buzzerMode) {
@@ -963,12 +944,8 @@ void updateFlame(unsigned long now) {
 
   lastFlameRead = now;
 
-  // Wokwi flame analog test: move the A1 slider away from its startup position.
+  // Digital output from Wokwi adjustable-light proxy at D3 (active LOW).
   bool detected = flameDetectedNow();
-#if GAYAK_WOKWI_SIM
-  if (abs(analogRead(FLAME_ANALOG_PIN) - flameAnalogBaseline) >= 150)
-    detected = true;
-#endif
 
   if (!flameAlert) {
 
@@ -1186,9 +1163,7 @@ void setup() {
   Wire.begin();                       // I2C shared by LCD + GY-521
 
   pinMode(MQ2_PIN, INPUT);
-  pinMode(FLAME_PIN, INPUT_PULLUP);  // flame TEST button to GND (Wokwi)
-  pinMode(SIM_SWITCH_PIN, INPUT_PULLUP); // slide switch connects D4 to GND when ON
-  pinMode(ACK_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(FLAME_PIN, INPUT); // Wokwi light-sensor DO is an actively driven digital output
 
   pinMode(LED_GREEN_PIN, OUTPUT);
   pinMode(LED_YELLOW_PIN, OUTPUT);
@@ -1213,7 +1188,7 @@ void setup() {
   printLineP(0, F("GAYAK MONITOR"));
   printLineP(1, F("INITIALIZING..."));
 
-  delay(2000);
+  delay(600);  // shorten Wokwi boot splash; continue sensor warm-up asynchronously
 
   setLeds(false, false, false);
 
@@ -1224,7 +1199,6 @@ void setup() {
   printLineP(0, F("FLAME LEARNING"));
   printLineP(1, F("KEEP FLAME AWAY"));
   learnFlameIdle();
-  flameAnalogBaseline = analogRead(FLAME_ANALOG_PIN);
 
   currentPanel = 0;
 
@@ -1244,23 +1218,6 @@ void setup() {
 
 void loop() {
   unsigned long now = millis();
-
-  // Wokwi SPDT as a SIMULATED logical power switch (not a physical 5V cut).
-  bool powered = digitalRead(SIM_SWITCH_PIN) == LOW;
-  if (!powered) {
-    if (simWasPowered) { allBuzzersOff(); setLeds(false, false, false); lcd.noBacklight(); }
-    simWasPowered = false;
-    return;
-  }
-  if (!simWasPowered) { lcd.backlight(); forceRedraw(); simWasPowered = true; }
-
-  // ACK / MUTE for 5 seconds (hold/release; alarms continue visually).
-  bool ackDown = digitalRead(ACK_BUTTON_PIN) == LOW;
-  if (ackDown && !previousAckDown) {
-    ackMuteUntil = now + ACK_MUTE_MS;
-    Serial.println(F("[ACK] buzzer muted for five seconds"));
-  }
-  previousAckDown = ackDown;
 
   // Poll alarms early: fire, smoke and vibration.
   updateFlame(now);

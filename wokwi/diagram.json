@@ -1,27 +1,27 @@
 {
   "version": 1,
-  "author": "GAYAK / neat wiring v2",
+  "author": "GAYAK | clean sensor-driven wiring v3",
   "editor": "wokwi",
   "parts": [
     {
       "type": "wokwi-arduino-uno",
       "id": "uno",
-      "left": -635,
-      "top": 90,
+      "left": -590,
+      "top": 170,
       "attrs": {}
     },
     {
       "type": "wokwi-breadboard-half",
       "id": "pcb",
-      "left": 680,
-      "top": 715,
+      "left": 30,
+      "top": 755,
       "attrs": {}
     },
     {
       "type": "wokwi-dht22",
       "id": "dht",
-      "left": -640,
-      "top": -355,
+      "left": -570,
+      "top": -330,
       "attrs": {
         "temperature": "29",
         "humidity": "65"
@@ -30,17 +30,27 @@
     {
       "type": "wokwi-gas-sensor",
       "id": "gas",
-      "left": -400,
-      "top": -355,
+      "left": -295,
+      "top": -330,
       "attrs": {
         "ppm": "400"
       }
     },
     {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "flame",
+      "left": -15,
+      "top": -330,
+      "attrs": {
+        "lux": "10",
+        "threshold": "2.5"
+      }
+    },
+    {
       "type": "wokwi-lcd1602",
       "id": "lcd",
-      "left": -100,
-      "top": -355,
+      "left": 290,
+      "top": -330,
       "attrs": {
         "pins": "i2c",
         "i2cAddress": "0x27"
@@ -49,8 +59,8 @@
     {
       "type": "wokwi-mpu6050",
       "id": "mpu",
-      "left": 350,
-      "top": -355,
+      "left": 685,
+      "top": -330,
       "attrs": {
         "accelX": "0",
         "accelY": "0",
@@ -58,62 +68,20 @@
       }
     },
     {
-      "type": "wokwi-pushbutton",
-      "id": "flame",
-      "left": -610,
-      "top": 450,
-      "attrs": {
-        "color": "red",
-        "label": "FLAME TEST (DO)",
-        "key": "F"
-      }
-    },
-    {
-      "type": "wokwi-pushbutton",
-      "id": "ack",
-      "left": -415,
-      "top": 450,
-      "attrs": {
-        "color": "blue",
-        "label": "ACK / MUTE 5s",
-        "key": "A"
-      }
-    },
-    {
-      "type": "wokwi-slide-potentiometer",
-      "id": "flameAO",
-      "left": 20,
-      "top": 450,
-      "attrs": {
-        "value": "512",
-        "travelLength": "30"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "power",
-      "left": -210,
-      "top": 450,
-      "attrs": {
-        "value": "",
-        "bounce": "0"
-      }
-    },
-    {
       "type": "wokwi-led",
-      "id": "led_red",
-      "left": 405,
-      "top": 180,
+      "id": "led_green",
+      "left": 95,
+      "top": 155,
       "attrs": {
-        "color": "red",
-        "label": "RED D5"
+        "color": "green",
+        "label": "GREEN / D5"
       }
     },
     {
       "type": "wokwi-resistor",
-      "id": "r_led_red",
-      "left": 409,
-      "top": 78,
+      "id": "r_led_green",
+      "left": 99,
+      "top": 48,
       "attrs": {
         "value": "1000"
       },
@@ -122,18 +90,18 @@
     {
       "type": "wokwi-led",
       "id": "led_yellow",
-      "left": 690,
-      "top": 180,
+      "left": 380,
+      "top": 155,
       "attrs": {
         "color": "yellow",
-        "label": "YELLOW D6"
+        "label": "YELLOW / D6"
       }
     },
     {
       "type": "wokwi-resistor",
       "id": "r_led_yellow",
-      "left": 694,
-      "top": 78,
+      "left": 384,
+      "top": 48,
       "attrs": {
         "value": "1000"
       },
@@ -141,19 +109,19 @@
     },
     {
       "type": "wokwi-led",
-      "id": "led_green",
-      "left": 975,
-      "top": 180,
+      "id": "led_red",
+      "left": 665,
+      "top": 155,
       "attrs": {
-        "color": "green",
-        "label": "GREEN D7"
+        "color": "red",
+        "label": "RED / D7"
       }
     },
     {
       "type": "wokwi-resistor",
-      "id": "r_led_green",
-      "left": 979,
-      "top": 78,
+      "id": "r_led_red",
+      "left": 669,
+      "top": 48,
       "attrs": {
         "value": "1000"
       },
@@ -162,291 +130,194 @@
     {
       "type": "wokwi-buzzer",
       "id": "smokeB",
-      "left": 405,
-      "top": 458,
+      "left": 95,
+      "top": 485,
       "attrs": {
         "mode": "smooth",
-        "volume": "0.4"
+        "volume": "0.5"
       }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r_buzz_smoke",
-      "left": 415,
-      "top": 360,
-      "attrs": {
-        "value": "1000"
-      },
-      "rotate": 90
     },
     {
       "type": "wokwi-buzzer",
       "id": "quakeB",
-      "left": 690,
-      "top": 458,
+      "left": 380,
+      "top": 485,
       "attrs": {
         "mode": "smooth",
-        "volume": "0.4"
+        "volume": "0.5"
       }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r_buzz_quake",
-      "left": 700,
-      "top": 360,
-      "attrs": {
-        "value": "1000"
-      },
-      "rotate": 90
     },
     {
       "type": "wokwi-buzzer",
       "id": "fireB",
-      "left": 975,
-      "top": 458,
+      "left": 665,
+      "top": 485,
       "attrs": {
         "mode": "smooth",
-        "volume": "0.4"
+        "volume": "0.5"
       }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r_buzz_fire",
-      "left": 985,
-      "top": 360,
-      "attrs": {
-        "value": "1000"
-      },
-      "rotate": 90
     },
     {
       "type": "wokwi-text",
       "id": "title",
-      "left": -645,
-      "top": -580,
+      "left": -585,
+      "top": -545,
       "attrs": {
-        "text": "GAYAK  |  ARDUINO UNO R3  |  WOKWI WIRING - CLEAN LAYOUT"
+        "text": "GAYAK  |  EARLY WARNING SYSTEM  |  WOKWI"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "sensTitle",
-      "left": -645,
-      "top": -466,
+      "id": "section_sensors",
+      "left": -585,
+      "top": -462,
       "attrs": {
-        "text": "01  SENSORS + I2C DISPLAY"
+        "text": "01   LIVE SENSORS  (EDIT SENSOR VALUES TO TEST)"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "dhtLabel",
-      "left": -645,
-      "top": -421,
+      "id": "lab_dht",
+      "left": -570,
+      "top": -386,
       "attrs": {
-        "text": "DHT22 / D2"
+        "text": "DHT22"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "gasLabel",
-      "left": -405,
-      "top": -421,
+      "id": "lab_gas",
+      "left": -295,
+      "top": -386,
       "attrs": {
-        "text": "MQ-2 / A0"
+        "text": "MQ-2"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "lcdLabel",
-      "left": -105,
-      "top": -421,
+      "id": "lab_light",
+      "left": -15,
+      "top": -386,
       "attrs": {
-        "text": "16x2 LCD / 0x27"
+        "text": "LIGHT PROXY / FIRE DO"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "mpuLabel",
-      "left": 345,
-      "top": -421,
+      "id": "lab_lcd",
+      "left": 290,
+      "top": -386,
       "attrs": {
-        "text": "MPU6050 / 0x68"
+        "text": "I2C LCD  0x27"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "unoLabel",
-      "left": -640,
-      "top": 27,
+      "id": "lab_mpu",
+      "left": 685,
+      "top": -386,
       "attrs": {
-        "text": "02  ARDUINO CONTROLLER"
+        "text": "MPU-6050  0x68"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "ledTitle",
-      "left": 395,
-      "top": 20,
+      "id": "lab_uno",
+      "left": -590,
+      "top": 105,
       "attrs": {
-        "text": "03  STATUS LEDS  (1k ohm each)"
+        "text": "02   ARDUINO UNO R3"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "redLabel",
-      "left": 395,
-      "top": 140,
+      "id": "lab_led",
+      "left": 85,
+      "top": -10,
       "attrs": {
-        "text": "RED / D5"
+        "text": "03   STATUS LEDS  (1K OHM)"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "yellowLabel",
-      "left": 680,
-      "top": 140,
+      "id": "lab_buzz",
+      "left": 85,
+      "top": 383,
       "attrs": {
-        "text": "YELLOW / D6"
+        "text": "04   BUZZERS  (NO SERIES RESISTORS IN WOKWI)"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "greenLabel",
-      "left": 965,
-      "top": 140,
+      "id": "lab_pcb",
+      "left": 30,
+      "top": 693,
       "attrs": {
-        "text": "GREEN / D7"
+        "text": "05   POWER BUS  /  PCB PERFBOARD PROXY"
       }
     },
     {
       "type": "wokwi-text",
-      "id": "buzzerTitle",
-      "left": 395,
-      "top": 276,
+      "id": "note_bottom",
+      "left": -585,
+      "top": 1125,
       "attrs": {
-        "text": "04  ALARM BUZZERS  (1k ohm series - simulation)"
+        "text": "NOTE: LCD + MPU share A4/A5. LDR is a light-based fire-input proxy, not a flame sensor."
       }
     },
     {
       "type": "wokwi-text",
-      "id": "smokeLabel",
-      "left": 395,
-      "top": 321,
+      "id": "note_safety",
+      "left": -585,
+      "top": 1166,
       "attrs": {
-        "text": "SMOKE / D8"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "quakeLabel",
-      "left": 680,
-      "top": 321,
-      "attrs": {
-        "text": "QUAKE / D9"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "fireLabel",
-      "left": 965,
-      "top": 321,
-      "attrs": {
-        "text": "FIRE SFM-27 / D10"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "ctrlTitle",
-      "left": -640,
-      "top": 386,
-      "attrs": {
-        "text": "05  TEST CONTROLS"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "flameLabel",
-      "left": -615,
-      "top": 421,
-      "attrs": {
-        "text": "FLAME / D3  [F]"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "ackLabel",
-      "left": -420,
-      "top": 421,
-      "attrs": {
-        "text": "MUTE / D12  [A]"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "switchLabel",
-      "left": -220,
-      "top": 421,
-      "attrs": {
-        "text": "SIM POWER / D4"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "sliderLabel",
-      "left": 5,
-      "top": 421,
-      "attrs": {
-        "text": "FLAME LEVEL / A1"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "pcbTitle",
-      "left": 680,
-      "top": 652,
-      "attrs": {
-        "text": "06  PCB TEST BOARD PROXY"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "pcbSubTitle",
-      "left": 680,
-      "top": 676,
-      "attrs": {
-        "text": "BREADBOARD = 5V + GND DISTRIBUTION"
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "note1",
-      "left": -640,
-      "top": 948,
-      "attrs": {
-        "text": "SIMULATION: piezo buzzers need tone(); real active buzzers use controlled DC + proper drivers."
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "note2",
-      "left": -640,
-      "top": 985,
-      "attrs": {
-        "text": "BATTERY/TP4056 NOT SIMULATED: never connect unregulated 18650 voltage to Arduino 5V."
+        "text": "BATTERY + TP4056 NOT SIMULATED. Real active buzzers need properly rated drivers."
       }
     }
   ],
   "connections": [
     [
       "uno:5V",
+      "pcb:bp.1",
+      "red",
+      [
+        "v225",
+        "h120",
+        "*",
+        "v-20"
+      ]
+    ],
+    [
+      "uno:GND.2",
+      "pcb:bn.1",
+      "black",
+      [
+        "v250",
+        "h155",
+        "*",
+        "v-25"
+      ]
+    ],
+    [
+      "uno:5V",
       "dht:VCC",
       "red",
       [
-        "v85",
-        "h-330",
-        "v-590",
+        "h-72",
+        "v-255",
         "*",
-        "v45"
+        "v80"
+      ]
+    ],
+    [
+      "uno:GND.1",
+      "dht:GND",
+      "black",
+      [
+        "h-104",
+        "v-240",
+        "*",
+        "v117"
       ]
     ],
     [
@@ -454,19 +325,59 @@
       "gas:VCC",
       "red",
       [
-        "v130",
+        "v77",
         "*",
-        "v130"
+        "v77"
+      ]
+    ],
+    [
+      "dht:GND",
+      "gas:GND",
+      "black",
+      [
+        "v106",
+        "*",
+        "v106"
       ]
     ],
     [
       "gas:VCC",
+      "flame:VCC",
+      "red",
+      [
+        "v77",
+        "*",
+        "v77"
+      ]
+    ],
+    [
+      "gas:GND",
+      "flame:GND",
+      "black",
+      [
+        "v106",
+        "*",
+        "v106"
+      ]
+    ],
+    [
+      "flame:VCC",
       "lcd:VCC",
       "red",
       [
-        "v130",
+        "v77",
         "*",
-        "v130"
+        "v77"
+      ]
+    ],
+    [
+      "flame:GND",
+      "lcd:GND",
+      "black",
+      [
+        "v106",
+        "*",
+        "v106"
       ]
     ],
     [
@@ -474,41 +385,9 @@
       "mpu:VCC",
       "red",
       [
-        "v130",
+        "v77",
         "*",
-        "v130"
-      ]
-    ],
-    [
-      "uno:GND.2",
-      "dht:GND",
-      "black",
-      [
-        "v110",
-        "h-380",
-        "v-650",
-        "*",
-        "v80"
-      ]
-    ],
-    [
-      "dht:GND",
-      "gas:GND",
-      "black",
-      [
-        "v168",
-        "*",
-        "v168"
-      ]
-    ],
-    [
-      "gas:GND",
-      "lcd:GND",
-      "black",
-      [
-        "v168",
-        "*",
-        "v168"
+        "v77"
       ]
     ],
     [
@@ -516,9 +395,9 @@
       "mpu:GND",
       "black",
       [
-        "v168",
+        "v106",
         "*",
-        "v168"
+        "v106"
       ]
     ],
     [
@@ -528,14 +407,13 @@
       []
     ],
     [
-      "uno:2",
       "dht:SDA",
+      "uno:2",
       "green",
       [
-        "v-80",
-        "h-105",
+        "v158",
         "*",
-        "v70"
+        "v-45"
       ]
     ],
     [
@@ -543,10 +421,19 @@
       "uno:A0",
       "orange",
       [
-        "v210",
+        "v187",
         "*",
-        "h155",
-        "v-45"
+        "v-63"
+      ]
+    ],
+    [
+      "flame:DO",
+      "uno:3",
+      "magenta",
+      [
+        "v215",
+        "*",
+        "v-60"
       ]
     ],
     [
@@ -554,10 +441,9 @@
       "uno:A4",
       "cyan",
       [
-        "v235",
+        "v239",
         "*",
-        "h120",
-        "v-60"
+        "v-65"
       ]
     ],
     [
@@ -565,10 +451,9 @@
       "uno:A5",
       "gold",
       [
-        "v250",
+        "v256",
         "*",
-        "h140",
-        "v-60"
+        "v-77"
       ]
     ],
     [
@@ -576,9 +461,9 @@
       "mpu:SDA",
       "cyan",
       [
-        "v65",
+        "v55",
         "*",
-        "v65"
+        "v55"
       ]
     ],
     [
@@ -586,25 +471,25 @@
       "mpu:SCL",
       "gold",
       [
-        "v85",
+        "v69",
         "*",
-        "v85"
+        "v69"
       ]
     ],
     [
       "uno:5",
-      "r_led_red:1",
-      "red",
+      "r_led_green:1",
+      "limegreen",
       [
-        "v-65",
+        "v-55",
         "*",
-        "v-22"
+        "v-28"
       ]
     ],
     [
-      "r_led_red:2",
-      "led_red:A",
-      "red",
+      "r_led_green:2",
+      "led_green:A",
+      "limegreen",
       []
     ],
     [
@@ -612,9 +497,9 @@
       "r_led_yellow:1",
       "yellow",
       [
-        "v-50",
+        "v-55",
         "*",
-        "v-22"
+        "v-28"
       ]
     ],
     [
@@ -625,107 +510,89 @@
     ],
     [
       "uno:7",
-      "r_led_green:1",
-      "limegreen",
+      "r_led_red:1",
+      "red",
       [
-        "v-35",
+        "v-55",
         "*",
-        "v-22"
+        "v-28"
       ]
     ],
     [
-      "r_led_green:2",
-      "led_green:A",
-      "limegreen",
+      "r_led_red:2",
+      "led_red:A",
+      "red",
       []
     ],
     [
+      "led_green:C",
+      "led_yellow:C",
+      "black",
+      [
+        "v56",
+        "*",
+        "v56"
+      ]
+    ],
+    [
+      "led_yellow:C",
       "led_red:C",
-      "led_yellow:C",
       "black",
       [
-        "v62",
+        "v56",
         "*",
-        "v62"
+        "v56"
       ]
     ],
     [
-      "led_yellow:C",
-      "led_green:C",
+      "led_red:C",
+      "pcb:bn.10",
       "black",
       [
-        "v62",
+        "h112",
+        "v408",
         "*",
-        "v62"
-      ]
-    ],
-    [
-      "led_green:C",
-      "pcb:bn.13",
-      "black",
-      [
-        "h165",
-        "v490",
-        "*",
-        "v-38"
+        "v-27"
       ]
     ],
     [
       "uno:8",
-      "r_buzz_smoke:1",
-      "purple",
-      [
-        "v185",
-        "*",
-        "v-28"
-      ]
-    ],
-    [
-      "r_buzz_smoke:2",
       "smokeB:2",
       "purple",
-      []
+      [
+        "v148",
+        "*",
+        "v-48"
+      ]
     ],
     [
       "uno:9",
-      "r_buzz_quake:1",
-      "violet",
-      [
-        "v200",
-        "*",
-        "v-28"
-      ]
-    ],
-    [
-      "r_buzz_quake:2",
       "quakeB:2",
-      "violet",
-      []
+      "blue",
+      [
+        "v148",
+        "*",
+        "v-48"
+      ]
     ],
     [
       "uno:10",
-      "r_buzz_fire:1",
-      "blueviolet",
-      [
-        "v215",
-        "*",
-        "v-28"
-      ]
-    ],
-    [
-      "r_buzz_fire:2",
       "fireB:2",
-      "blueviolet",
-      []
+      "orange",
+      [
+        "v148",
+        "*",
+        "v-48"
+      ]
     ],
     [
       "smokeB:1",
       "quakeB:1",
       "black",
       [
-        "v55",
+        "v72",
         "*",
-        "v55"
+        "v72"
       ]
     ],
     [
@@ -733,130 +600,20 @@
       "fireB:1",
       "black",
       [
-        "v55",
+        "v72",
         "*",
-        "v55"
+        "v72"
       ]
     ],
     [
       "fireB:1",
-      "pcb:bn.12",
+      "pcb:bn.14",
       "black",
       [
-        "h140",
-        "v155",
+        "h103",
+        "v135",
         "*",
-        "v-45"
-      ]
-    ],
-    [
-      "flame:1.l",
-      "uno:3",
-      "orange",
-      [
-        "v-54",
-        "*",
-        "v45"
-      ]
-    ],
-    [
-      "ack:1.l",
-      "uno:12",
-      "blue",
-      [
-        "v-62",
-        "*",
-        "v35"
-      ]
-    ],
-    [
-      "power:2",
-      "uno:4",
-      "limegreen",
-      [
-        "v-100",
-        "*",
-        "v70"
-      ]
-    ],
-    [
-      "flame:2.l",
-      "ack:2.l",
-      "black",
-      [
-        "v88",
-        "*",
-        "v88"
-      ]
-    ],
-    [
-      "ack:2.l",
-      "power:1",
-      "black",
-      [
-        "v88",
-        "*",
-        "v88"
-      ]
-    ],
-    [
-      "power:1",
-      "uno:GND.1",
-      "black",
-      [
-        "v102",
-        "*",
-        "v70"
-      ]
-    ],
-    [
-      "flameAO:SIG",
-      "uno:A1",
-      "orange",
-      [
-        "v-62",
-        "*",
-        "v70"
-      ]
-    ],
-    [
-      "flameAO:VCC",
-      "uno:5V",
-      "red",
-      [
-        "v-100",
-        "*",
-        "v65"
-      ]
-    ],
-    [
-      "flameAO:GND",
-      "uno:GND.1",
-      "black",
-      [
-        "v-115",
-        "*",
-        "v85"
-      ]
-    ],
-    [
-      "uno:5V",
-      "pcb:bp.1",
-      "red",
-      [
-        "v500",
-        "*",
-        "v-50"
-      ]
-    ],
-    [
-      "uno:GND.2",
-      "pcb:bn.1",
-      "black",
-      [
-        "v480",
-        "*",
-        "v-45"
+        "v-37"
       ]
     ]
   ],

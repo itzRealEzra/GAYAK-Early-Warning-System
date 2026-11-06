@@ -13,7 +13,7 @@
  use a properly rated transistor/MOSFET or buzzer driver.
 
  Pin assignments retained from the current uploaded GAYAK firmware:
- D2 DHT22, D3 flame DO, D5 red LED, D6 yellow LED, D7 green LED,
+ D2 DHT22, D3 flame DO, D5 green LED, D6 yellow LED, D7 red LED,
  A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
@@ -27,7 +27,7 @@
 */
 
 // GAYAK Early Warning System - MPU-6050 + alternating active buzzers
-// Arduino Uno R3. LED pins corrected: D5=RED, D6=YELLOW, D7=GREEN.
+// Arduino Uno R3. LED pins corrected: D5=GREEN, D6=YELLOW, D7=RED.
 // Prototype vibration detection only; not a certified earthquake alarm.
 // LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
 // Validate voltage levels: MPU6050 chip uses 3.3V I2C logic.
@@ -52,9 +52,9 @@
 #define MPU_ADDR 0x68
 
 // Status LEDs (each through a 220-330 ohm resistor to GND)
-#define LED_RED_PIN    5
+#define LED_RED_PIN    7
 #define LED_YELLOW_PIN 6
-#define LED_GREEN_PIN  7
+#define LED_GREEN_PIN  5
 
 // Three separate 2-pin active buzzers. Prototype: 1k series resistor
 // from each pin to buzzer (+), each buzzer (-) to GND.
