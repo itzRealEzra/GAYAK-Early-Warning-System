@@ -141,7 +141,7 @@ NOVEMBER 2026: MPU-6050 AND 3-BUZZER UPDATE
 * Alarms: FIRE D10 -> D8 -> D9 alternating; SMOKE D8; SHAKING D9.
 * The original DATA serial format is preserved for the existing Flask web
   dashboard; MPU data is emitted separately as QUAKE,online,alert,rms_g.
-  The present dashboard does not yet show QUAKE telemetry.
+  The dashboard now shows QUAKE telemetry and records shaking-alert events.
 * The Wokwi sketch uses tone() for simulated piezo buzzers; do NOT substitute
   it for the real active-buzzer sketch which uses HIGH/LOW outputs.
 * Prototype 1kΩ buzzer test wiring limits current but may be too quiet for an
