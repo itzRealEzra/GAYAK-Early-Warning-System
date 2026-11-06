@@ -4,7 +4,7 @@
 
 ## Setup and baseline
 
-- Use a current copy of `wokwi/diagram.json`, `wokwi/sketch.ino`, and `wokwi/libraries.txt`.
+- Build and connect the Wokwi circuit yourself using [manual Wokwi wiring](../wokwi/README.md); load current `wokwi/sketch.ino` and `wokwi/libraries.txt`. Use **three 220Ω LED resistors**, one per indicator.
 - Set DHT22 to comfortable baseline values, MQ-2 to initial 400 ppm simulation value, photoresistor to **low lux**, and MPU-6050 to X=0, Y=0, Z=1 g.
 - Start Serial Monitor at 115200 baud. Record initial LCD and LED behavior.
 - Allow the shorter Wokwi MQ-2 warm-up and baseline to complete; for a real device, allow the physical intervals.
@@ -26,7 +26,7 @@
 | Alert priority | Trigger smoke, then fire | Fire takes priority over smoke sounds | Remove fire; smoke should resume if still active |
 | Sensor unavailable | Carefully simulate missing MPU only if supported | Not falsely green all-clear | Restore sensor |
 | Serial telemetry | Change input while monitoring | `DATA` and `QUAKE` records continue without corrupting fields | N/A |
-| Wokwi layout | Open updated diagram | No test buttons, no buzzer resistors, labels outside primary wires | N/A |
+| Manual Wokwi wiring | Inspect your own circuit | D5 green, D6 yellow, D7 red, each with 220Ω; no extra buttons or piezo buzzer resistors | Recheck all wires |
 
 **Important nuance:** “Earthquake test” in this table means an **artificial motion input** to the MPU-6050. Neither a static force setting nor a simulated wobble reproduces real seismic propagation.
 
