@@ -1,7 +1,7 @@
-# Student Guide — GAYAK Hazard Monitoring Prototype
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 ## Purpose
-GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquisition, sensor calibration, I2C, LCD output, digital alarms, USB serial telemetry, and safe prototype assembly. Its motion channel detects **local acceleration/vibration**, not earthquake magnitude.
+GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquisition, sensor calibration, I2C, LCD output, digital alarms, USB serial telemetry, and safe prototype assembly. Its MPU-6050 detects **intense shaking and acceleration** and reports STABLE, MOTION DETECTED, STRONG SHAKING, or INTENSE SHAKING based on filtered acceleration; it cannot measure earthquake magnitude or verify what caused shaking.
 
 **Learning outcomes:** Students should be able to (1) identify each module and power level; (2) interpret a wiring diagram and common ground; (3) share the A4/A5 I2C bus; (4) set and evaluate relative detection thresholds; (5) distinguish a simulated event from measured hardware data; (6) record repeated trial results; and (7) explain battery/charging limitations.
 
@@ -22,7 +22,7 @@ GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquis
 | MQ-2 | Relative gas/smoke analog response | Needs warm-up and baseline; not a calibrated ppm or certified smoke detector |
 | Flame sensor module (physical) | Digital threshold output (DO) | Depends on sensitivity/polarity, line of sight, and interference |
 | Photoresistor (Wokwi only) | Simulated bright-light DO as flame proxy | Not an IR flame detector |
-| MPU-6050 / GY-521 | 3-axis acceleration/rotation | Acceleration does not reveal Richter magnitude or earthquake location |
+| MPU-6050 / GY-521 | Local acceleration and intense shaking | Filtered motion levels do not reveal Richter magnitude, official seismic intensity, or earthquake origin |
 | LCD 16×2 (I2C) | Status and rotating readings | Address can vary by backpack |
 | Status LEDs | Green/Yellow/Red visual indication | Require current-limiting resistors |
 | Three buzzers | Independent audible patterns | Real active buzzers need properly rated drivers |

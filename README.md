@@ -1,4 +1,4 @@
-# GAYAK — Early Warning System
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 **Arduino Uno R3 | Temperature · Humidity · Heat Index · Gas/Smoke · Flame · Vibration**
 
@@ -27,7 +27,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **DHT22:** temperature, relative humidity, and estimated heat index.
 - **MQ-2:** relative gas/smoke response, with warm-up, baseline tracking, and a confirmation period.
 - **Flame module:** digital flame indication on the **physical hardware**.
-- **GY-521 / MPU-6050:** filtered acceleration-based **shaking detection** on a shared I2C bus.
+- **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** rotating sensor panels with priority alert messages.
 - **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
 - **Three alarms:** fire alternates SFM-27 → smoke buzzer → shaking buzzer; smoke and shaking have separate patterns.
@@ -64,6 +64,17 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | Sustained shaking | Red fast blink | D9 rapid pulses |
 | Flame/fire | Red solid | D10 → D8 → D9 alternating |
 
+### Shaking and acceleration detection (experimental)
+
+| Level | Filtered local acceleration |
+| --- | --- |
+| STABLE | Below 0.04 g |
+| MOTION DETECTED | 0.04 to below 0.12 g |
+| STRONG SHAKING | 0.12 to below 0.30 g |
+| INTENSE SHAKING | 0.30 g and higher |
+
+These thresholds are **prototype starting values**, not validated seismic intensity values or a prediction of earthquakes. Alarm activation requires sustained filtered acceleration, so a displayed motion level may change before a buzzer sounds. Tilting or handling the MPU-6050 can also affect the reading. Validate against normal classroom vibrations and mount the sensor securely.
+
 **Priority: FIRE > SMOKE > SHAKING** for LCD and sound. Fire has the highest priority; all channels are not energized continuously.
 
 ## Simulated vs. physical hardware
@@ -91,7 +102,7 @@ Arduino IDE libraries: **DHT sensor library (Adafruit)**, **Adafruit Unified Sen
 4. Run `start_gayak.bat`, or `py app.py`.
 5. Open **http://127.0.0.1:5000**. If auto-detection uses the wrong COM port, run `set GAYAK_COM_PORT=COM4` in that CMD window before launching, replacing COM4 with your own port.
 
-USB Serial runs at **115200 baud**. Existing `DATA` CSV telemetry remains compatible with the desktop app; additional `QUAKE,online,alert,rms_g` records carry MPU status. The dashboard displays vibration, sensor health, and shaking events without changing the existing temperature/fire/smoke record fields.
+USB Serial runs at **115200 baud**. Existing `DATA` CSV telemetry remains compatible with the desktop app; additional `QUAKE,online,alert,rms_g,level` records carry MPU status. The parser also supports the earlier four-field format. The dashboard displays vibration, sensor health, and shaking events without changing the existing temperature/fire/smoke record fields.
 
 ## Portable battery system — safety warning
 

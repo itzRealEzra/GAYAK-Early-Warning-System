@@ -1,4 +1,4 @@
-# GAYAK Prototype — Test and Evaluation Plan
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 **Status:** These are proposed acceptance tests, **not recorded results**. The project has not been certified or independently validated as a life-safety warning device.
 
@@ -19,7 +19,8 @@
 | Normal LEDs | Normal sensors after calibration | D5 green ON, D6/D7 OFF | Recalibrate or alarm |
 | MQ-2 smoke | Raise gas control after baseline | D6 yellow + D8 repeating, LCD smoke alert | Lower gas/delta; clear delay |
 | Flame proxy | Increase photoresistor lux above DO threshold | D7 red + D10→D8→D9, LCD fire alert | Lower lux; clear delay |
-| MPU-6050 shake | Repeatedly change X/Y acceleration | D7 fast red blink + rapid D9, LCD shaking alert, `QUAKE,...,1,...` | Steady acceleration + clear/hold delay |
+| MPU-6050 strong shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.12 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, STRONG SHAKING, `QUAKE,...,STRONG` | Return to steady reading; allow clear/hold delay |
+| MPU-6050 intense shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.30 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, INTENSE SHAKING, `QUAKE,...,INTENSE` | Return to steady reading; allow clear/hold delay |
 | Alert priority | Trigger smoke, then fire | Fire takes priority over smoke sounds | Remove fire; smoke should resume if still active |
 | Sensor unavailable | Carefully simulate missing MPU only if supported | Not falsely green all-clear | Restore sensor |
 | Serial telemetry | Change input while monitoring | `DATA` and `QUAKE` records continue without corrupting fields | N/A |

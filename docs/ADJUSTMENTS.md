@@ -1,4 +1,4 @@
-# Sensor Adjustment and Calibration
+# GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
 **Edit the relevant `.ino` source** in Arduino IDE for the physical device, or `wokwi/sketch.ino` for the simulator. They intentionally have different timing and buzzer handling. After changing constants, recompile and upload/restart. Make only one parameter change per experiment and log both the before/after values.
 
@@ -14,7 +14,9 @@
 | `MQ2_TRIGGER_DELTA` | Analog ADC difference that activates smoke | 40 | 40 |
 | `MQ2_CLEAR_DELTA` | Delta below which smoke can clear | 25 | 25 |
 | `MPU_SAMPLE_MS` | MPU read target interval | 20 ms (~50 Hz) | 20 ms |
-| `QUAKE_TRIGGER_RMS_G` | Motion/vibration trigger threshold | 0.12 g | 0.12 g |
+| `MOTION_NOTICE_RMS_G` | Start displaying unconfirmed movement | 0.04 g | 0.04 g |
+| `QUAKE_TRIGGER_RMS_G` | STRONG SHAKING / alert confirmation threshold | 0.12 g | 0.12 g |
+| `INTENSE_SHAKING_RMS_G` | INTENSE SHAKING display threshold | 0.30 g | 0.30 g |
 | `QUAKE_CLEAR_RMS_G` | Motion/vibration clear threshold | 0.06 g | 0.06 g |
 | `QUAKE_CONFIRM_MS` | Required sustained motion | 800 ms | 500 ms |
 | `FLAME_CLEAR_TIME` | Required quiet interval to clear | 1500 ms | 500 ms |
@@ -39,7 +41,9 @@ These are **initial experimental defaults**, not approved alarm thresholds. If a
 
 **Wokwi:** There is **no simulated IR flame module** in this project. The photoresistor's `DO` goes LOW when simulated light exceeds its threshold (initial threshold 2.5V, roughly 100 lux for the stock module). The Wokwi sketch fixes `FLAME_ACTIVE_LOW=true` and `FLAME_AUTO_LEARN=false`. Click the photoresistor and change `lux` to see the input transition; this **does not calibrate real flame detection**.
 
-## 3. Adjust MPU-6050 vibration detection
+## 3. Adjust MPU-6050 intense shaking and acceleration detection
+
+GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE (<0.04 g), MOTION DETECTED (0.04–0.119 g), STRONG SHAKING (0.12–0.299 g), or INTENSE SHAKING (≥0.30 g). These are device labels, **not** earthquake magnitude or official intensity. The visual state responds to filtered acceleration, but the shaking alarm waits for the `QUAKE_CONFIRM_MS` confirmation interval. Avoid interpreting one tilt or brief change as a confirmed earthquake.
 
 - Secure the MPU module to a stable surface. Hold it still for the `MPU_SETTLE_MS` start interval.
 - Record `QUAKE,1,0,<rms_g>` values over at least several minutes of ordinary ambient movement and observe the normal noise level.
