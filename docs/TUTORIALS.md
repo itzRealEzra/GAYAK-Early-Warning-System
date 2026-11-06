@@ -1,18 +1,21 @@
 # GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
-## 1. Wokwi simulation
+## 1. Wokwi simulation — manual wiring
 
-1. Open https://wokwi.com/projects/478926664159746049 and **Save a Copy** first.
-2. Open the copied project's `diagram.json` tab and paste the content of [../wokwi/diagram.json](../wokwi/diagram.json).
-3. Replace `sketch.ino` with [../wokwi/sketch.ino](../wokwi/sketch.ino). Do **not** paste the physical Arduino sketch, since Wokwi piezo buzzers need `tone()`.
-4. Replace `libraries.txt` with [../wokwi/libraries.txt](../wokwi/libraries.txt).
-5. Click **Start Simulation**. Check that the LCD initializes, green LED eventually illuminates and no buzzer sounds during normal operation.
-6. Click **DHT22** to change temperature and humidity. DHT22 is polled about every **2.2 seconds**, and LCD panels rotate about every **1.8 seconds**.
-7. Click **MQ-2** and change the simulated ppm after ~5 seconds warming + ~3 seconds calibration. A sustained increase should eventually trigger **D8** and the yellow LED. A change isn't always instant because noise filtering and confirmation are intentional.
-8. Click **photoresistor** and increase lux above its digital switching threshold (nominal ~100 lux) to simulate a *fire input*. It drives **D3 LOW** and triggers **D10 → D8 → D9**. Lower lux to clear. **This is not real fire simulation.**
-9. Click **MPU-6050** and repeatedly change acceleration on X or Y to simulate **intense shaking and acceleration**; the red LED should blink and **D9** pulse. Leave readings steady for the alert to clear. The module filters gravity, so one static acceleration step is not the same as sustained vibration.
-10. In Serial Monitor at **115200 baud**, look for separate `DATA,...` and `QUAKE,...` records.
-11. Stop/Start Wokwi to reset sensors and calibration. No extra test buttons or power switch are in this revision.
+**Build your own wiring. No premade diagram or `diagram.json` import is needed.** Use [the complete pin-by-pin Wokwi guide](../wokwi/README.md).
+
+1. Open https://wokwi.com/projects/478926664159746049 and **Save a Copy**, or create a new Wokwi Arduino Uno R3 project. Remove outdated extra pushbuttons and the simulated switch, if present.
+2. Add **DHT22, MQ-2 Gas Sensor, Photoresistor Sensor (fire-input proxy), MPU6050, 16x2 I2C LCD, three LEDs (green/yellow/red), three 220Ω resistors, and three Wokwi piezo buzzers**.
+3. Wire DHT22 data → **D2**, MQ-2 AOUT → **A0**, and photoresistor DO → **D3**. Power their VCC/GND from the simulated 5V/GND rails.
+4. Wire **D5 → 220Ω → Green LED anode**, **D6 → 220Ω → Yellow LED anode**, and **D7 → 220Ω → Red LED anode**. Connect each cathode to GND.
+5. Wire piezo buzzer pin 2 to **D8 (smoke)**, **D9 (shaking)**, and **D10 (fire)**; wire each piezo pin 1 to GND. **No buzzer resistors in Wokwi.** Real two-terminal active buzzers need drivers.
+6. Set the LCD to **I2C** at address **0x27**. Connect LCD SDA + MPU SDA to **A4**, and LCD SCL + MPU SCL to **A5**. Power them in simulation, share GND, and connect MPU AD0 to GND for **0x68**.
+7. Copy [`wokwi/sketch.ino`](../wokwi/sketch.ino) into your Wokwi sketch tab and [`wokwi/libraries.txt`](../wokwi/libraries.txt) into its libraries tab. Wokwi saves your **own** diagram automatically as you wire.
+8. Start simulation and allow initialization (~5s MQ-2 warm-up + ~3s baseline). Normal operation ends with **green D5** and no audible alarm.
+9. Change DHT22 values: sensor reads approximately every **2.2s** and LCD panels rotate every **1.8s**.
+10. Raise MQ-2 gas after calibration to test **yellow D6 + D8**. Adjust photoresistor lux above its threshold (about 100 lux) to test **red D7 + D10→D8→D9**; this is a simulated light-input proxy, not real flame sensing.
+11. Repeatedly change MPU6050 X/Y acceleration to test sustained intense shaking, **blinking red D7 + rapid D9**. Restore steady acceleration to clear the alarm after its hold/clear intervals.
+12. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. No extra test buttons or fake power switch are needed.
 
 ### What if changes seem delayed?
 - **DHT22** normally updates only once every ≥2 s.
@@ -28,7 +31,7 @@
 
 1. Connect DHT22 DATA→D2 and MQ-2 AO→A0, with compatible power/GND.
 2. Connect flame sensor DO→D3, making sure the module's idle/firing polarity is understood.
-3. Connect **Green LED D5**, **Yellow LED D6**, **Red LED D7** through individual **1kΩ** current-limiting resistors; LEDs' negative/cathode sides go to GND.
+3. Connect **Green LED D5**, **Yellow LED D6**, **Red LED D7** through individual **220Ω** current-limiting resistors; LEDs' negative/cathode sides go to GND.
 4. Connect LCD SDA and MPU SDA to **A4**; connect both SCLs to **A5**. Respect 3.3V I2C logic limits using a level shifter when the LCD backpack pulls SDA/SCL to 5V.
 5. Wire your active buzzers through independently rated transistor/MOSFET low-side drivers, not directly to the Arduino; see [WIRING_AND_POWER.md](WIRING_AND_POWER.md).
 6. In Arduino IDE, install **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**, and **LiquidCrystal_I2C**; `Wire` is built in.
