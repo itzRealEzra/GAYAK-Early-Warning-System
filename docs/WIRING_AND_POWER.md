@@ -13,9 +13,9 @@ The GY-521 MPU-6050 is used for **intense shaking and acceleration** measurement
 | A0 | MQ-2 AO | Analog sensor VCC/GND must match board specification |
 | A4 | LCD SDA and GY-521 SDA | Shared I2C bus |
 | A5 | LCD SCL and GY-521 SCL | Shared I2C bus |
-| D5 | GREEN LED + 1kΩ series | LED cathode → GND |
-| D6 | YELLOW LED + 1kΩ series | LED cathode → GND |
-| D7 | RED LED + 1kΩ series | LED cathode → GND |
+| D5 | GREEN LED + 220Ω series | LED cathode → GND |
+| D6 | YELLOW LED + 220Ω series | LED cathode → GND |
+| D7 | RED LED + 220Ω series | LED cathode → GND |
 | D8 | Smoke buzzer driver input | 5V two-pin active buzzer #1 |
 | D9 | Shaking buzzer driver input | 5V two-pin active buzzer #2 |
 | D10 | Fire buzzer driver input | SFM-27 3–24V active buzzer |
@@ -110,7 +110,7 @@ This is a **conceptual** load path only, not complete, build-ready charging circ
 
 - All leads labeled and correct polarity; no exposed loose battery terminals.
 - Battery disconnected when wiring, soldering, or uploading via USB unless validated source switching is present.
-- Correct LED resistor per LED (1kΩ is acceptable; may reduce brightness).
+- Use one 220Ω current-limiting resistor on **each** LED (Green D5, Yellow D6, Red D7). Do not confuse these with buzzer power or MOSFET gate resistors.
 - Buzzer drivers present and correctly oriented; current ratings verified.
 - GY-521 I2C bus voltage compatibility checked.
 - Common grounds correct, no shorts between positive and GND.
