@@ -11,7 +11,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 | I want to… | Open |
 | --- | --- |
 | Learn what the project does | [Student guide](docs/STUDENT_GUIDE.md) |
-| Run the circuit in a browser | [Wokwi tutorial](docs/TUTORIALS.md#1-wokwi-simulation) |
+| Build and wire the Wokwi circuit yourself | [Manual Wokwi tutorial](docs/TUTORIALS.md#1-wokwi-simulation) |
 | Build a physical circuit | [Wiring and power guide](docs/WIRING_AND_POWER.md) |
 | Change sensitivity and timing | [Adjustments and calibration](docs/ADJUSTMENTS.md) |
 | Understand intense shaking and acceleration | [MPU-6050 detection guide](docs/MPU6050_SHAKING.md) |
@@ -40,9 +40,9 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 | --- | --- |
 | D2 | DHT22 DATA |
 | D3 | Flame sensor DO |
-| D5 | **GREEN LED** via 1kΩ resistor |
-| D6 | **YELLOW LED** via 1kΩ resistor |
-| D7 | **RED LED** via 1kΩ resistor |
+| D5 | **GREEN LED** via 220Ω resistor |
+| D6 | **YELLOW LED** via 220Ω resistor |
+| D7 | **RED LED** via 220Ω resistor |
 | D8 | 5V active buzzer #1, SMOKE (use rated driver) |
 | D9 | 5V active buzzer #2, SHAKING (use rated driver) |
 | D10 | SFM-27 3–24V active buzzer, FIRE (use rated driver) |
@@ -86,10 +86,10 @@ Wokwi models **piezo** buzzers that require `tone()`. Your real **two-terminal a
 
 - `arduino/GAYAK.ino` — **physical-hardware** firmware (active-buzzer DC control).
 - `wokwi/sketch.ino` — **simulator-only** firmware (piezo `tone()`, faster simulation timings).
-- `wokwi/diagram.json` — cleaned Wokwi diagram, LED pin order Green D5 / Yellow D6 / Red D7.
+- **Manual Wokwi wiring:** use [`wokwi/README.md`](wokwi/README.md) to place and connect the components yourself, with 220Ω per LED. A premade `diagram.json` is not required.
 - `wokwi/libraries.txt` — simulator dependencies.
 
-Changing GitHub files **does not automatically update the hosted Wokwi URL**. Copy the three Wokwi files into a duplicate of the hosted project.
+Changing GitHub files **does not automatically update the hosted Wokwi URL**. Manually wire your own Wokwi project; copy only the simulator program `wokwi/sketch.ino` and dependencies `wokwi/libraries.txt`. Wokwi saves your custom circuit automatically.
 
 ## Arduino software
 
