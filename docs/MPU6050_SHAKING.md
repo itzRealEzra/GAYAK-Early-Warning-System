@@ -59,7 +59,7 @@ Wokwi is accelerated for classroom demonstrations; **these are defaults, not cal
 
 ## Student testing tutorial
 
-1. Start the Wokwi simulation using `wokwi/diagram.json` and `wokwi/sketch.ino`, or power the real board over USB with safe buzzer drivers.
+1. Build your Wokwi circuit manually using the [wiring instructions](../wokwi/README.md) and then run `wokwi/sketch.ino`; alternatively power the real board over USB with safe buzzer drivers.
 2. Hold the MPU-6050 stationary for at least the startup settling period; allow the LCD to initialize.
 3. In the Serial Monitor at **115200 baud**, inspect messages beginning with `QUAKE,`. The record fields are `QUAKE,online,alert,filtered_rms_g,level`.
 4. In Wokwi, **repeatedly** change the X or Y acceleration back and forth, rather than leaving one nonzero value fixed. Record when the displayed filtered reading passes 0.04g, 0.12g, and 0.30g.
