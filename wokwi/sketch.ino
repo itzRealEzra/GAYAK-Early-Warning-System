@@ -50,7 +50,7 @@
 // GY-521 MPU-6050; shared I2C with LCD on A4/A5.
 #define MPU_ADDR 0x68
 
-// Status LEDs (each through a 220-330 ohm resistor to GND)
+// LEDs: D5 Green, D6 Yellow, D7 Red; each via 220-ohm series resistor to LED anode, cathode to GND.
 #define LED_RED_PIN    7
 #define LED_YELLOW_PIN 6
 #define LED_GREEN_PIN  5
