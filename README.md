@@ -1,153 +1,104 @@
-GAYAK — Hazard Monitoring System
-Local Web Dashboard for Arduino Uno R3 (USB Serial)
-====================================================
+# GAYAK — Early Warning System
 
-OVERVIEW
---------
-GAYAK is a local-only environmental hazard monitoring dashboard. It reads live
-sensor data from an Arduino Uno R3 over USB serial (PySerial) and serves a web
-dashboard through Flask on http://127.0.0.1:5000.
+**Arduino Uno R3 | Temperature · Humidity · Heat Index · Gas/Smoke · Flame · Vibration**
 
-No Wi-Fi, no internet, no cloud services, no database and no external network
-module are required. Everything runs on your PC.
+GAYAK is a **student-built hazard-monitoring prototype**. It displays live measurements on a 16×2 I2C LCD and sends USB serial telemetry to an optional **offline Flask dashboard** running locally on a Windows PC. It also uses three status LEDs and three alternating buzzer channels.
 
-HARDWARE (current Arduino Uno R3)
----------------------------------
-DHT22 DATA D2, Flame DO D3, MQ-2 AO A0
-RED LED D5, YELLOW LED D6, GREEN LED D7
-Smoke active buzzer D8, Quake active buzzer D9, SFM-27 fire buzzer D10
-LCD 0x27 and GY-521 MPU-6050 0x68: SDA=A4, SCL=A5 (shared I2C)
-D4, D12 and A1 in the Wokwi project are simulator-only controls.
+> **Educational prototype, not a certified life-safety product.** The MPU-6050 detects local shaking, **not earthquake magnitude, epicenter, or proof that an earthquake occurred**. MQ-2 readings are relative analog measurements, not certified gas concentrations. Do not depend on GAYAK for evacuation or personal safety decisions.
 
-SOFTWARE DEPENDENCIES (PC)
---------------------------
-* Python 3
-* Flask
-* PySerial
+## Start here
 
-Install with: pip install -r requirements.txt
+| I want to… | Open |
+| --- | --- |
+| Learn what the project does | [Student guide](docs/STUDENT_GUIDE.md) |
+| Run the circuit in a browser | [Wokwi tutorial](docs/TUTORIALS.md#1-wokwi-simulation) |
+| Build a physical circuit | [Wiring and power guide](docs/WIRING_AND_POWER.md) |
+| Change sensitivity and timing | [Adjustments and calibration](docs/ADJUSTMENTS.md) |
+| Run the local web dashboard | [Dashboard tutorial](docs/TUTORIALS.md#3-windows-local-dashboard) |
+| Find a wiring/programming problem | [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| Evaluate the trainer in a laboratory | [Test plan and checklists](docs/TEST_PLAN.md) |
+| Edit the latest simulator | [Wokwi project files](wokwi/README.md) |
 
-ARDUINO LIBRARIES (install via Arduino Library Manager)
--------------------------------------------------------
-* DHT sensor library by Adafruit
-* Adafruit Unified Sensor (required by the DHT library)
-* LiquidCrystal I2C by Frank de Brabander
+**Wokwi starter:** https://wokwi.com/projects/478926664159746049  
+**GitHub:** https://github.com/itzRealEzra/GAYAK-Early-Warning-System
 
-SETUP
------
-1. Wire the Arduino exactly as listed above. Do not change the wiring.
-2. Open arduino/GAYAK.ino in the Arduino IDE.
-3. Select Tools -> Board -> Arduino Uno and the correct COM port.
-4. Upload the sketch.
-5. CLOSE the Arduino Serial Monitor. The Python dashboard needs exclusive
-   access to the COM port; having the Serial Monitor open will block it.
-6. Determine the Arduino COM port (Device Manager -> Ports, e.g. COM3).
-7. Run start_gayak.bat. To fix a specific port, run:
-      set GAYAK_COM_PORT=COM3
-      start_gayak.bat
-   or set it permanently in your system environment variables.
-8. Open http://127.0.0.1:5000 in your browser (start_gayak.bat does this
-   automatically after a short delay).
+## Features
 
-HOW IT WORKS
-------------
-* The Arduino samples the DHT22 every 2 s, reads the MQ-2 continuously,
-  rotates its LCD panels every 3 s, and sends one DATA record per line over
-  serial 5 times per second (and immediately when a smoke or fire alert changes).
-* The Python serial reader owns the COM port in a background thread, parses
-  DATA records, ignores LOG diagnostics, keeps the latest readings in memory
-  and reconnects automatically if the USB cable is unplugged or the Arduino
-  resets.
-* The browser receives live updates pushed over Server-Sent Events
-  (/api/stream) the moment a record arrives. If the stream drops it falls back
-  to polling /api/status once per second.
-* Serial speed is 115200 baud (sketch + dashboard). Set the Arduino Serial
-  Monitor to 115200 too. Override the dashboard with GAYAK_BAUD if needed.
-* History and alert events live in RAM only and reset when the application
-  restarts.
+- **DHT22:** temperature, relative humidity, and estimated heat index.
+- **MQ-2:** relative gas/smoke response, with warm-up, baseline tracking, and a confirmation period.
+- **Flame module:** digital flame indication on the **physical hardware**.
+- **GY-521 / MPU-6050:** filtered acceleration-based **shaking detection** on a shared I2C bus.
+- **LCD:** rotating sensor panels with priority alert messages.
+- **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
+- **Three alarms:** fire alternates SFM-27 → smoke buzzer → shaking buzzer; smoke and shaking have separate patterns.
+- **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
-DASHBOARD STATES
-----------------
-System status: ONLINE / DISCONNECTED / ERROR (reflects the serial link).
-MQ-2 states: WARMING UP / CALIBRATING / MONITORING / SENSOR UNAVAILABLE.
-Readings unavailable from the sensor are shown as "—", never fabricated.
-Stale data (no update for >5 s) is clearly marked.
+## Current Arduino Uno pinout
 
-MQ-2 ALERT
-----------
-When the Arduino reports an active gas/smoke alert, the dashboard shows:
-  GAS/SMOKE ALERT!
-  EVACUATE NOW!
-The banner stays visible for as long as the Arduino reports the alert and
-records the time the alert began. The dashboard is an additional monitoring
-interface only — not a certified smoke alarm or gas detector.
+| Arduino pin | Physical function |
+| --- | --- |
+| D2 | DHT22 DATA |
+| D3 | Flame sensor DO |
+| D5 | **GREEN LED** via 1kΩ resistor |
+| D6 | **YELLOW LED** via 1kΩ resistor |
+| D7 | **RED LED** via 1kΩ resistor |
+| D8 | 5V active buzzer #1, SMOKE (use rated driver) |
+| D9 | 5V active buzzer #2, SHAKING (use rated driver) |
+| D10 | SFM-27 3–24V active buzzer, FIRE (use rated driver) |
+| A0 | MQ-2 AO |
+| A4 | LCD + MPU-6050 SDA |
+| A5 | LCD + MPU-6050 SCL |
+| 5V / GND | Regulated supply and common ground |
 
-TROUBLESHOOTING
----------------
-* "Arduino USB: DISCONNECTED" — check the cable, the COM port, and that no
-  other program (Serial Monitor, Putty, another GAYAK instance) holds the port.
-* "Wrong COM port" — set GAYAK_COM_PORT to the port shown in Device Manager.
-* Values show "—" / "Sensor unavailable" — the DHT22 may be failing or
-  warming up; MQ-2 shows WARMING UP / CALIBRATING during its first minutes.
-* "Stale data" — no serial record received for more than 5 s.
-* "Port 5000 is already in use" — start_gayak.bat names the PID holding it.
-  Close it, or run: set GAYAK_PORT=5001 then start_gayak.bat.
+Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not require D4, D12, or A1. The LCD usually uses I2C address `0x27` and the MPU-6050 `0x68`; verify with an I2C scanner if needed.
 
-FILES
------
-app.py                 Flask web application
-serial_reader.py       USB serial reader background thread
-templates/index.html   Dashboard HTML
-static/css/style.css   Dashboard styles
-static/js/dashboard.js Dashboard logic + charts
-requirements.txt       Python dependencies
-start_gayak.bat        Windows startup script
-arduino/GAYAK.ino      Arduino firmware
+## Alert priority
 
-FIRE ALERT NOT DETECTING?
--------------------------
-The "Flame Sensor" panel shows the live D3 level, the idle level learned at
-boot and the level that means fire. Hold a lighter ~20 cm from the sensor:
-  * Pin does not change   -> turn the module's sensitivity pot, check DO wiring
-                             (it must go to D3, not AO) and the 5V/GND pins.
-  * Pin changes but no alert -> the idle level was learned wrongly (sun or a
-                             lamp was in view at boot). Reboot with the sensor
-                             shaded, or set FLAME_AUTO_LEARN = false in the
-                             sketch and choose FLAME_ACTIVE_LOW for your module.
+| State | LED response | Buzzer response |
+| --- | --- | --- |
+| Normal after calibration | Green solid | Silent |
+| MQ-2 warming up | Red blinking | Silent |
+| MQ-2 baseline calibration | Yellow blinking | Silent |
+| MPU offline | Yellow blinking (when otherwise clear) | Silent |
+| Gas/smoke | Yellow solid | D8 repeating |
+| Sustained shaking | Red fast blink | D9 rapid pulses |
+| Flame/fire | Red solid | D10 → D8 → D9 alternating |
 
-FULL SCREEN
------------
-start_gayak.bat opens the dashboard as a full-screen Edge/Chrome app window.
-Press F11 (or F on the page) to toggle full screen; double-click the top bar
-works too. Set the browser zoom (Ctrl +/-) to taste.
+**Priority: FIRE > SMOKE > SHAKING** for LCD and sound. Fire has the highest priority; all channels are not energized continuously.
 
-STATUS LIGHT (TAB TITLE + TOP BAR)
-----------------------------------
-The page mirrors the Arduino LEDs so you can watch it from another tab:
-  Warming up   red blinking      Calibrating  yellow blinking
-  Working      green solid       Smoke        yellow solid
-  Fire         red solid         No signal    grey
-The tab title and tab icon change colour (e.g. "green GAYAK - Monitoring"),
-and the lamps in the top bar light the same way.
+## Simulated vs. physical hardware
 
+The simulator uses a **Wokwi photoresistor module as an adjustable-light proxy** for the flame sensor, because it can expose a controllable DO signal. Changing *lux* is an **input demonstration, not a real flame detection test**. It has **no extra pushbuttons, acknowledgment switch, or software power switch**. Use the built-in DHT22, MQ-2, MPU-6050, and light-proxy properties to test readings.
 
-NOVEMBER 2026: MPU-6050 AND 3-BUZZER UPDATE
---------------------------------------------
-* Physical firmware: arduino/GAYAK.ino; calibrated vibration thresholds must
-  be tested in place. This is motion detection, NOT Richter magnitude.
-* Wokwi simulation: wokwi/diagram.json, sketch.ino, libraries.txt and README.md.
-  The hosted Wokwi circuit is not auto-updated by this GitHub repository.
-* LED pins: D5 RED / D6 YELLOW / D7 GREEN.
-* Alarms: FIRE D10 -> D8 -> D9 alternating; SMOKE D8; SHAKING D9.
-* The original DATA serial format is preserved for the existing Flask web
-  dashboard; MPU data is emitted separately as QUAKE,online,alert,rms_g.
-  The dashboard now shows QUAKE telemetry and records shaking-alert events.
-* The Wokwi sketch uses tone() for simulated piezo buzzers; do NOT substitute
-  it for the real active-buzzer sketch which uses HIGH/LOW outputs.
-* Prototype 1kΩ buzzer test wiring limits current but may be too quiet for an
-  actual alarm. Verify currents and use rated transistor/MOSFET drivers.
-* Use proper 3.3V I2C level shifting as necessary with the physical GY-521.
-* The TP4056 is a single-cell/1S charger, not a 5V regulator. Do not connect
-  a two-cell series 18650 holder to it. Use a compatible protected 1S battery
-  system, a suitable boost regulator, fuse, isolation and safe power path.
-* GAYAK is not a certified fire, smoke, gas, or earthquake warning system.
+Wokwi models **piezo** buzzers that require `tone()`. Your real **two-terminal active buzzers** use DC on/off through appropriately rated MOSFET/transistor driver circuits. **Do not copy the direct-connected Wokwi buzzer wiring to the real build.** Wokwi has **no real TP4056/18650 charging circuit** in this project.
+
+- `arduino/GAYAK.ino` — **physical-hardware** firmware (active-buzzer DC control).
+- `wokwi/sketch.ino` — **simulator-only** firmware (piezo `tone()`, faster simulation timings).
+- `wokwi/diagram.json` — cleaned Wokwi diagram, LED pin order Green D5 / Yellow D6 / Red D7.
+- `wokwi/libraries.txt` — simulator dependencies.
+
+Changing GitHub files **does not automatically update the hosted Wokwi URL**. Copy the three Wokwi files into a duplicate of the hosted project.
+
+## Arduino software
+
+Arduino IDE libraries: **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**, and a compatible **LiquidCrystal_I2C** library. `Wire` is included with the Arduino AVR core; no extra MPU library is required by the supplied firmware. Select **Arduino Uno**, the USB COM port, and upload `arduino/GAYAK.ino`.
+
+## Local desktop dashboard (Windows)
+
+1. Install Python 3 and run `py -m pip install -r requirements.txt` from the repository root.
+2. Connect the Arduino via USB; upload the physical `.ino` file.
+3. **Close the Arduino IDE Serial Monitor** (only one application can own the COM port).
+4. Run `start_gayak.bat`, or `py app.py`.
+5. Open **http://127.0.0.1:5000**. If auto-detection uses the wrong COM port, run `set GAYAK_COM_PORT=COM4` in that CMD window before launching, replacing COM4 with your own port.
+
+USB Serial runs at **115200 baud**. Existing `DATA` CSV telemetry remains compatible with the desktop app; additional `QUAKE,online,alert,rms_g` records carry MPU status. The dashboard displays vibration, sensor health, and shaking events without changing the existing temperature/fire/smoke record fields.
+
+## Portable battery system — safety warning
+
+A standard TP4056 USB-C charger is a **one-cell / 1S Li-ion charger**, not a 5V regulator or automatic load-sharing module. **Never connect a two-cell 7.4V series holder to a TP4056**. A compatible protected 1S battery or properly engineered, matched parallel 1S pack needs the **correct protection, fuse, SPST switch, suitably sized regulated 5V boost converter, and USB/battery power-source isolation**. Do not charge while running unless a suitable power-path design is implemented. **For initial classroom tests, use USB power and leave the battery disconnected.**
+
+See [Physical wiring and power](docs/WIRING_AND_POWER.md) for an explicit connection guide and limitations.
+
+## Project status
+
+The files are statically checked for key pin and component references. **A live Wokwi run, a physical circuit validation, battery safety testing, and alarm-volume testing are still required.** Instructors should use the [test plan](docs/TEST_PLAN.md) to record actual results.
