@@ -24,7 +24,7 @@ GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquis
 | Photoresistor (Wokwi only) | Simulated bright-light DO as flame proxy | Not an IR flame detector |
 | MPU-6050 / GY-521 | Local acceleration and intense shaking | Filtered motion levels do not reveal Richter magnitude, official seismic intensity, or earthquake origin |
 | LCD 16×2 (I2C) | Status and rotating readings | Address can vary by backpack |
-| Status LEDs | Green/Yellow/Red visual indication | Require current-limiting resistors |
+| Status LEDs | Green/Yellow/Red visual indication | **One 220Ω current-limiting resistor on each LED** |
 | Three buzzers | Independent audible patterns | Real active buzzers need properly rated drivers |
 | PCB perfboard | Physical interconnect | Isolated-hole perfboard does not have automatic power rails |
 | Battery/TP4056/boost | Optional portable supply | 1S protection, safe charge/load design, 5V regulation required |
@@ -35,7 +35,7 @@ GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquis
 Read [wiring guide](WIRING_AND_POWER.md). Label each pin in the [student pin map](#check-your-pin-map). Explain which sensors send analog data (MQ-2), digital data (flame, DHT22), and I2C data (LCD, MPU-6050).
 
 ### Activity 2 — Run the simulator (20–30 min)
-Follow [Wokwi tutorial](TUTORIALS.md#1-wokwi-simulation). Modify one input at a time. Record the LCD, LED, buzzer, and serial output. Observe that the sensor value may change before the confirmed alarm does, because the program filters or confirms inputs.
+Use the [manual Wokwi wiring tutorial](TUTORIALS.md#1-wokwi-simulation) to connect the circuit yourself (no premade diagram file). Each LED uses its own **220Ω** series resistor. Modify one input at a time. Record the LCD, LED, buzzer, and serial output. Observe that the sensor value may change before the confirmed alarm does, because the program filters or confirms inputs.
 
 ### Activity 3 — Understand alert priority (15–20 min)
 Trigger smoke, then trigger simulated fire without clearing smoke. Expected: fire's red LED/LCD and alternating buzzer sequence take priority. Restore both inputs and note the delay before reset. Next, trigger shaking and explain why D9 is faster.
