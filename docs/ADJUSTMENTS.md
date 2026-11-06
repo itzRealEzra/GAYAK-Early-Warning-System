@@ -43,6 +43,9 @@ These are **initial experimental defaults**, not approved alarm thresholds. If a
 
 ## 3. Adjust MPU-6050 intense shaking and acceleration detection
 
+For the acceleration processing method, four-level classifier, confirmation behavior, and classroom lab procedure, see [MPU-6050 shaking and acceleration guide](MPU6050_SHAKING.md).
+
+
 GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE (<0.04 g), MOTION DETECTED (0.04–0.119 g), STRONG SHAKING (0.12–0.299 g), or INTENSE SHAKING (≥0.30 g). These are device labels, **not** earthquake magnitude or official intensity. The visual state responds to filtered acceleration, but the shaking alarm waits for the `QUAKE_CONFIRM_MS` confirmation interval. Avoid interpreting one tilt or brief change as a confirmed earthquake.
 
 - Secure the MPU module to a stable surface. Hold it still for the `MPU_SETTLE_MS` start interval.

@@ -10,6 +10,8 @@
 - Allow the shorter Wokwi MQ-2 warm-up and baseline to complete; for a real device, allow the physical intervals.
 - Change one input at a time, restore baseline, then deliberately combine simultaneous alerts.
 
+> For the distinction between motion-level labels and confirmed alarms, and an MPU-specific repeatable testing procedure, read the [MPU-6050 guide](MPU6050_SHAKING.md).
+
 ## Functional trials (record each three times)
 
 | Test | Stimulus | Expected after confirmation | Clear condition |
