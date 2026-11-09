@@ -79,7 +79,7 @@ const unsigned long SENSOR_INTERVAL = 2500UL;
 // Secure the MPU firmly to the structure being monitored.
 const unsigned long MPU_SAMPLE_MS       = 20UL;    // target 50 Hz
 const unsigned long MPU_RETRY_MS        = 5000UL;
-const unsigned long MPU_SETTLE_MS       = 2000UL;  // keep still after startup
+const unsigned long MPU_SETTLE_MS       = 5000UL;  // calibrate gravity baseline; suppress startup alerts
 const unsigned long QUAKE_CONFIRM_MS    = 800UL;   // sustained vibration
 const unsigned long QUAKE_CLEAR_MS      = 2500UL;  // must be quiet to clear
 const unsigned long QUAKE_MIN_HOLD_MS   = 5000UL;  // minimum alert duration
@@ -338,7 +338,7 @@ void initializeMPU(unsigned long now) {
   mpuStartTime = now;
   lastMPURead = now;
   mpuReady = true;
-  Serial.println(F("MPU6050 READY - keep sensor stationary for 2 s"));
+  Serial.println(F("MPU6050 READY - calibrating baseline for 5 s"));
 }
 
 void updateMPU(unsigned long now) {
@@ -361,22 +361,35 @@ void updateMPU(unsigned long now) {
   }
   mpuConsecutiveFails = 0;
 
-  // Remove slowly varying gravitational acceleration on each axis.
+  // Track the gravity baseline faster during startup. MPU wake-up and small
+  // mounting shifts can otherwise look like sustained motion and trigger the
+  // quake buzzer as soon as the old 2-second settling window expires.
+  bool settling = now - mpuStartTime < MPU_SETTLE_MS;
+  float gravityAlpha = settling ? 0.10f : MPU_GRAVITY_ALPHA;
   float dx = ax - gravityX;
   float dy = ay - gravityY;
   float dz = az - gravityZ;
-  gravityX += MPU_GRAVITY_ALPHA * dx;
-  gravityY += MPU_GRAVITY_ALPHA * dy;
-  gravityZ += MPU_GRAVITY_ALPHA * dz;
+  gravityX += gravityAlpha * dx;
+  gravityY += gravityAlpha * dy;
+  gravityZ += gravityAlpha * dz;
+
+  // Ignore motion energy throughout startup calibration. Any real shaking
+  // that continues after this window is still evaluated normally.
+  if (settling) {
+    quakeEnergy = 0.0f;
+    quakeRmsG = 0.0f;
+    quakePeakG = 0.0f;
+    quakeCandidate = false;
+    quakeClearSince = 0;
+    quakeAlert = false;
+    return;
+  }
 
   float motionSquared = dx * dx + dy * dy + dz * dz;
   quakeEnergy += MPU_ENERGY_ALPHA * (motionSquared - quakeEnergy);
   if (quakeEnergy < 0.0f) quakeEnergy = 0.0f;
   quakeRmsG = sqrtf(quakeEnergy);
   if (quakeRmsG > quakePeakG) quakePeakG = quakeRmsG;
-
-  // Let the baseline settle before enabling alerts.
-  if (now - mpuStartTime < MPU_SETTLE_MS) return;
 
   if (!quakeAlert) {
     if (quakeRmsG >= QUAKE_TRIGGER_RMS_G) {

@@ -1,0 +1,20 @@
+---
+tags: [gayak, hardware, wiring]
+---
+
+# Hardware, pins, and interfaces
+
+| Uno pin | Current local sketch purpose |
+|---|---|
+| D2 | DHT22 data |
+| D3 | Flame module digital output |
+| D5 / D6 / D7 | Green / yellow / red LEDs; each needs a current-limiting resistor |
+| A0 | MQ-2 analog output |
+| A4 / A5 | I2C SDA / SCL for LCD (commonly address `0x27`) |
+| A4 / A5 | Shared I2C SDA / SCL for GY-521 / MPU-6050 (address `0x68`) |
+| D8 | Active buzzer for smoke | 
+| D9 | Active buzzer for shaking | 
+| D10 | Active fire buzzer (SFM-27) |
+| D0 / D1 | Reserved for USB serial |
+
+Share ground and confirm module voltage and signal polarity. The sketch's prototype buzzer wiring uses series resistors; properly rated transistor/MOSFET drivers are recommended. Interpret MQ-2 as relative response. Do not treat simulated piezo connections as physical active-buzzer driver circuits. Use USB power for initial tests; battery/charger wiring requires correctly protected, regulated design. See [[GITHUB-VS-WORKSPACE]].
