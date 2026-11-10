@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GAYAK — Classroom Heat Index and Shaking/Fire Monitoring</title>
+<title>GAYAK — Classroom HI and Shaking/Fire Monitoring</title>
 <meta name="description" content="GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS">
 <link rel="icon" id="favicon" href="data:,">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -102,7 +102,7 @@
         <div class="card-meta" id="metaHum">Sensor unavailable</div>
       </article>
       <article class="card card--hi" id="cardHi">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="card-title">Heat Index</span></div>
+        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="card-title" title="Heat Index">HI</span></div>
         <div class="card-value" id="valHi">&#8212;</div>
         <div class="card-meta" id="metaHi">&#8212;</div>
       </article>
@@ -163,7 +163,7 @@
       <div class="charts">
         <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-thermometer"/></svg>Temperature</span><b id="curTemp"></b></figcaption><canvas id="chartTemp"></canvas></figure>
         <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-droplet"/></svg>Humidity</span><b id="curHum"></b></figcaption><canvas id="chartHum"></canvas></figure>
-        <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg>Heat Index</span><b id="curHi"></b></figcaption><canvas id="chartHi"></canvas></figure>
+        <figure class="chart"><figcaption><span class="cap" title="Heat Index"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg>HI</span><b id="curHi"></b></figcaption><canvas id="chartHi"></canvas></figure>
         <figure class="chart"><figcaption><span class="cap"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>MQ-2 Delta</span><b id="curDelta"></b></figcaption><canvas id="chartDelta"></canvas></figure>
       </div>
     </section>
