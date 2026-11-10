@@ -14,7 +14,8 @@ One Markdown note per named function in the checked-out workspace.
 - [[arduino/motionlevelname|`motionLevelName()`]] — `arduino/GAYAK.ino`
 - [[arduino/sendquakedata|`sendQuakeData()`]] — `arduino/GAYAK.ino`
 - [[arduino/allbuzzersoff|`allBuzzersOff()`]] — `arduino/GAYAK.ino`
-- [[arduino/selectedbuzzerpin|`selectedBuzzerPin()`]] — `arduino/GAYAK.ino`
+- [[arduino/getbuzzerpattern|`getBuzzerPattern()`]] — `arduino/GAYAK.ino`
+- [[arduino/beginbuzzerstep|`beginBuzzerStep()`]] — `arduino/GAYAK.ino`
 - [[arduino/updatebuzzers|`updateBuzzers()`]] — `arduino/GAYAK.ino`
 - [[arduino/updateleds|`updateLeds()`]] — `arduino/GAYAK.ino`
 - [[arduino/printline|`printLine()`]] — `arduino/GAYAK.ino`

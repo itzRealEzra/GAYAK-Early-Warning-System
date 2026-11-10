@@ -31,7 +31,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** rotating sensor panels with priority alert messages.
 - **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
-- **Three alarms:** fire alternates SFM-27 → smoke buzzer → shaking buzzer; smoke repeats on D8, while shaking alternates active buzzers D8/D9 in a siren-like pattern.
+- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Only one buzzer sounds at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
 ## Current Arduino Uno pinout
@@ -63,7 +63,7 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | MPU offline | Yellow solid (when otherwise clear) | Silent |
 | Gas/smoke | Yellow solid | D8 repeating |
 | Sustained shaking | Red fast blink | D9 rapid pulses |
-| Flame/fire | Red solid | D10 → D8 → D9 alternating |
+| Flame/fire | Red solid | Three short pulses on D10 |
 
 ### Shaking and acceleration detection (experimental)
 
@@ -76,7 +76,7 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 
 These thresholds are **prototype starting values**, not validated seismic intensity values or a prediction of earthquakes. Alarm activation requires sustained filtered acceleration, so a displayed motion level may change before a buzzer sounds. Tilting or handling the MPU-6050 can also affect the reading. Validate against normal classroom vibrations and mount the sensor securely.
 
-**Priority: FIRE > SMOKE > SHAKING** for LCD and sound. Fire has the highest priority; all channels are not energized continuously.
+**Sound priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.** When both smoke and flame are detected, the combined pattern plays. Only one buzzer sounds at a time. LCD fire/smoke status remains fire-first.
 
 ## Simulated vs. physical hardware
 

@@ -11,15 +11,16 @@
  Wokwi piezo buzzers are simulated, with no series 1k ohm resistors.
  Physical active buzzers need rated switching drivers for safe full-volume operation.
 
- Pin assignments retained from the current uploaded GAYAK firmware:
+ Pin assignments for the Wokwi simulation:
  D2 DHT22, D3 flame DO, D5 green LED, D6 yellow LED, D7 red LED,
  A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
- Fire: D10 -> D8 -> D9 (450 ms ON, 150 ms GAP each).
- Smoke: D8 (550 ms ON, 450 ms GAP).
- Shaking: D9 (200 ms ON, 150 ms GAP).
- Alarm priority: FIRE > SMOKE > SHAKING.
+ Smoke: one short D8 pulse each second.
+ Fire: three short D10 pulses followed by a pause.
+ Shaking: D9 and D8 alternate, followed by a short pause.
+ Fire + smoke: two fast D10 pulses then a longer D8 pulse.
+ Alarm priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.
 
  NOTE: This is a laboratory prototype, not a certified life-safety or
  earthquake warning system. MPU6050 detects motion, not earthquake origin.
@@ -96,20 +97,34 @@ const float TEMP_OFFSET = 0.0;
 const unsigned long LED_BLINK_MS = 500UL;   // blink half-period (warm-up / calibrating)
 const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = green solid
 
-// ================ BUZZER PATTERNS ================
-// Fire: SFM-27 (D10), then buzzer #1 (D8), then buzzer #2 (D9), repeat.
-// Only ONE buzzer sounds at a time. Timings are in milliseconds.
-const unsigned long FIRE_ON_MS    = 450UL;
-const unsigned long FIRE_GAP_MS   = 150UL;
-const unsigned long SMOKE_ON_MS   = 550UL;
-const unsigned long SMOKE_GAP_MS  = 450UL;
-const unsigned long QUAKE_ON_MS   = 200UL;
-const unsigned long QUAKE_GAP_MS  = 150UL;
+// ================ DISTINCT BUZZER ALARMS ================
+// Rhythm patterns work with the Wokwi piezo proxies and physical active buzzers.
+enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE };
+struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
 
-enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE };
+// Smoke: one short pulse each second on D8.
+const BuzzerStep SMOKE_PATTERN[] = {
+  { BUZZER_SMOKE_PIN, 180 }, { 0, 820 }
+};
+// Fire: three short pulses on the fire buzzer, then a clear pause.
+const BuzzerStep FIRE_PATTERN[] = {
+  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
+  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
+  { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
+};
+// Shaking: alternate buzzers with a short break between each pair.
+const BuzzerStep QUAKE_PATTERN[] = {
+  { BUZZER_QUAKE_PIN, 250 }, { BUZZER_SMOKE_PIN, 250 }, { 0, 100 }
+};
+// Fire + smoke: two fast fire pulses followed by one longer smoke-buzzer pulse.
+const BuzzerStep FIRE_SMOKE_PATTERN[] = {
+  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
+  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
+  { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+};
+
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
-byte buzzerSequence = 0;
-bool buzzerSounding = false;
+byte buzzerStep = 0;
 unsigned long buzzerPhaseStarted = 0;
 
 // MQ-2 smoke detector timing
@@ -516,22 +531,48 @@ void soundBuzzer(byte pin) {
 #endif
 }
 
-byte selectedBuzzerPin(BuzzerAlarm mode, byte sequence) {
-  if (mode == BUZZER_FIRE) {
-    // FIRE FIRST, followed by the other two buzzers, repeating.
-    if (sequence == 0) return BUZZER_FIRE_PIN;
-    if (sequence == 1) return BUZZER_SMOKE_PIN;
-    return BUZZER_QUAKE_PIN;
+const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte &length) {
+  switch (mode) {
+    case BUZZER_SMOKE:
+      length = sizeof(SMOKE_PATTERN) / sizeof(SMOKE_PATTERN[0]);
+      return SMOKE_PATTERN;
+    case BUZZER_QUAKE:
+      length = sizeof(QUAKE_PATTERN) / sizeof(QUAKE_PATTERN[0]);
+      return QUAKE_PATTERN;
+    case BUZZER_FIRE:
+      length = sizeof(FIRE_PATTERN) / sizeof(FIRE_PATTERN[0]);
+      return FIRE_PATTERN;
+    case BUZZER_FIRE_SMOKE:
+      length = sizeof(FIRE_SMOKE_PATTERN) / sizeof(FIRE_SMOKE_PATTERN[0]);
+      return FIRE_SMOKE_PATTERN;
+    default:
+      length = 0;
+      return NULL;
   }
-  if (mode == BUZZER_SMOKE) return BUZZER_SMOKE_PIN;
-  return BUZZER_QUAKE_PIN;
+}
+
+void beginBuzzerStep(unsigned long now) {
+  byte length = 0;
+  const BuzzerStep* pattern = getBuzzerPattern(buzzerMode, length);
+  if (length == 0 || pattern == NULL) {
+    allBuzzersOff();
+    return;
+  }
+
+  buzzerStep %= length;
+  allBuzzersOff();
+  if (pattern[buzzerStep].pin != 0) {
+    soundBuzzer(pattern[buzzerStep].pin);
+  }
+  buzzerPhaseStarted = now;
 }
 
 // Call every loop; never use delay(), so all sensors keep updating.
-// Alarm priority: FIRE > SMOKE > SHAKING > QUIET.
+// Priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING > QUIET.
 void updateBuzzers(unsigned long now) {
   BuzzerAlarm requested = BUZZER_IDLE;
-  if (flameAlert)      requested = BUZZER_FIRE;
+  if (flameAlert && mq2Alert) requested = BUZZER_FIRE_SMOKE;
+  else if (flameAlert) requested = BUZZER_FIRE;
   else if (mq2Alert)   requested = BUZZER_SMOKE;
   else if (quakeAlert) requested = BUZZER_QUAKE;
 
@@ -539,43 +580,21 @@ void updateBuzzers(unsigned long now) {
   if (requested != buzzerMode) {
     allBuzzersOff();
     buzzerMode = requested;
-    buzzerSequence = 0;
-    buzzerPhaseStarted = now;
-    buzzerSounding = (requested != BUZZER_IDLE);
-    if (buzzerSounding) {
-      soundBuzzer(selectedBuzzerPin(requested, buzzerSequence));
+    buzzerStep = 0;
+    if (requested != BUZZER_IDLE) {
+      beginBuzzerStep(now);
     }
     return;
   }
   if (buzzerMode == BUZZER_IDLE) return;
 
-  unsigned long onMs, gapMs;
-  if (buzzerMode == BUZZER_FIRE) {
-    onMs = FIRE_ON_MS;
-    gapMs = FIRE_GAP_MS;
-  } else if (buzzerMode == BUZZER_SMOKE) {
-    onMs = SMOKE_ON_MS;
-    gapMs = SMOKE_GAP_MS;
-  } else {
-    onMs = QUAKE_ON_MS;
-    gapMs = QUAKE_GAP_MS;
-  }
+  byte length = 0;
+  const BuzzerStep* pattern = getBuzzerPattern(buzzerMode, length);
+  if (length == 0 || pattern == NULL) return;
+  if (now - buzzerPhaseStarted < pattern[buzzerStep].durationMs) return;
 
-  if (now - buzzerPhaseStarted < (buzzerSounding ? onMs : gapMs)) return;
-
-  allBuzzersOff();
-  buzzerPhaseStarted = now;
-  if (buzzerSounding) {
-    // Begin a silent gap between individual buzzer pulses.
-    buzzerSounding = false;
-  } else {
-    // After the gap, choose the next buzzer in the fire sequence.
-    if (buzzerMode == BUZZER_FIRE) {
-      buzzerSequence = (buzzerSequence + 1) % 3;
-    }
-    buzzerSounding = true;
-    soundBuzzer(selectedBuzzerPin(buzzerMode, buzzerSequence));
-  }
+  buzzerStep = (buzzerStep + 1) % length;
+  beginBuzzerStep(now);
 }
 
 // ================ LCD LINE CONTROL ================

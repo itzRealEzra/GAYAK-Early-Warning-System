@@ -65,18 +65,14 @@ GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE 
 
 ## 5. Adjust buzzer patterns
 
-In each sketch, change:
+Edit the `*_PATTERN` step arrays in each sketch. Each step is `{ buzzer pin, duration in ms }`; use pin `0` for silence. The patterns are non-blocking and advance with `millis()`.
 
-```cpp
-const unsigned long FIRE_ON_MS   = 450UL;
-const unsigned long FIRE_GAP_MS  = 150UL;
-const unsigned long SMOKE_ON_MS  = 550UL;
-const unsigned long SMOKE_GAP_MS = 450UL;
-const unsigned long QUAKE_ON_MS  = 200UL;
-const unsigned long QUAKE_GAP_MS = 150UL;
-```
+- **Smoke:** one short D8 pulse each second.
+- **Fire:** three short D10 pulses, then a pause.
+- **Shaking:** alternate D9 and D8, then pause briefly.
+- **Fire + smoke:** two fast D10 pulses followed by a longer D8 pulse.
 
-**Fire** cycles D10 → D8 → D9, one at a time. **Smoke** pulses D8. **Shaking** pulses D9. All patterns use non-blocking `millis()` scheduling. Wokwi `tone()` drives piezo elements; physical active buzzers use DC drivers and cannot be made louder by increasing a `tone()` frequency.
+When changing durations, preserve a distinct rhythm for each condition. Wokwi `tone()` drives piezo elements; physical active buzzers use DC drivers and cannot be made louder by changing a `tone()` frequency.
 
 ## Parameter change record
 

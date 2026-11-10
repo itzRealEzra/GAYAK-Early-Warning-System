@@ -34,9 +34,9 @@ Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module 
 2. Replace your Wokwi `sketch.ino` with [the simulation program](sketch.ino), and `libraries.txt` with [the library list](libraries.txt). **You do not need to paste a `diagram.json`.**
 3. Start Simulation. The MQ-2 simulator uses approximately **5 seconds warm-up plus 3 seconds baseline calibration**, versus longer real-hardware intervals.
 4. Change DHT22 temperature and humidity; readings update about every **2.2 seconds**, while LCD panels rotate roughly every **1.8 seconds**.
-5. After baseline calibration, increase MQ-2 simulated gas concentration. The smoke alert uses **D6 yellow LED + D8 repeating buzzer** after its confirmation period.
-6. Increase the photoresistor's **lux** until DO switches LOW (roughly >100 lux with the default simulated threshold). This tests a **digital fire-input signal** and should activate **D7 red LED + D10 → D8 → D9** alternating. Decrease lux to clear. This is **not an actual fire sensor test**.
-7. Repeatedly vary the MPU6050 X/Y accelerations to simulate strong/intense shaking. The filtered motion classification can change before the confirmed alarm; shaking activates **D7 blinking red + D9 rapid buzzer** when sustained.
+5. After baseline calibration, increase MQ-2 simulated gas concentration. Smoke alone uses **D6 yellow LED + one short D8 pulse each second**.
+6. Increase the photoresistor's **lux** until DO switches LOW (roughly >100 lux with the default simulated threshold). This tests a **digital fire-input signal** and activates **D7 red LED + three short D10 pulses followed by a pause**. With both flame and MQ-2 alerts active, the combined sound is **two fast D10 pulses followed by one longer D8 pulse**. Decrease lux to clear. This is **not an actual fire sensor test**.
+7. Repeatedly vary the MPU6050 X/Y accelerations to simulate strong/intense shaking. The filtered motion classification can change before the confirmed alarm; shaking activates **D7 blinking red + alternating D9/D8 pulses** when sustained.
 8. After all conditions clear, verify **D5 green LED ON** and buzzers OFF. Open Serial Monitor at **115200 baud** to see `DATA` and `QUAKE` telemetry.
 
 ### Wokwi versus physical hardware
