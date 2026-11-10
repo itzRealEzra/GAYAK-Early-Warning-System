@@ -96,14 +96,13 @@ const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
 const float TEMP_OFFSET = 0.0;
 
 // ================ BUZZER PATTERNS ================
-// Fire: SFM-27 (D10), then buzzer #1 (D8), then buzzer #2 (D9), repeat.
-// Only ONE buzzer sounds at a time. Timings are in milliseconds.
+// Fire cycles D10 -> D8 -> D9. Shaking alternates D8 and D9 for a siren-like
+// pattern. Only ONE buzzer sounds at a time. Timings are in milliseconds.
 const unsigned long FIRE_ON_MS    = 450UL;
 const unsigned long FIRE_GAP_MS   = 150UL;
 const unsigned long SMOKE_ON_MS   = 550UL;
 const unsigned long SMOKE_GAP_MS  = 450UL;
-const unsigned long QUAKE_ON_MS   = 200UL;
-const unsigned long QUAKE_GAP_MS  = 150UL;
+const unsigned long QUAKE_SIREN_STEP_MS = 300UL;
 
 enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE };
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
@@ -120,14 +119,14 @@ const unsigned long MQ2_DEBUG_INTERVAL  = 1000UL;
 
 // False-alarm protection
 const int MQ2_OVERSAMPLE = 16;                   // ADC reads averaged per sample
-const unsigned long MQ2_CONFIRM_MS = 2000UL;     // delta must stay high this long (was 3 samples = 0.3 s)
+const unsigned long MQ2_CONFIRM_MS = 1500UL;     // sustained rise required; reduced for earlier detection
 
 // Provisional ADC-difference thresholds (NOT calibrated concentrations).
-const int MQ2_TRIGGER_DELTA   = 40;   // raised back from 30: 30 sat inside the noise
-const int MQ2_CLEAR_DELTA     = 25;   // raised from 20, keeps hysteresis below the trigger
+const int MQ2_TRIGGER_DELTA   = 20;   // provisional relative ADC rise; tune from clean-air readings
+const int MQ2_CLEAR_DELTA     = 12;   // hysteresis below trigger
 
 // Asymmetric filter: slow to rise, fast to fall
-const float MQ2_RISE_ALPHA = 0.15f;   // was 0.3f: rejects short upward spikes
+const float MQ2_RISE_ALPHA = 0.25f;   // responds faster to rising smoke readings
 const float MQ2_FALL_ALPHA = 0.6f;
 
 // Baseline tracking (only applied while delta < MQ2_TRIGGER_DELTA)
@@ -182,7 +181,7 @@ const bool FLAME_ACTIVE_LOW = true;
 
 const unsigned long FLAME_SAMPLE_INTERVAL = 50UL;
 const unsigned long FLAME_CLEAR_TIME      = 1500UL;
-const int FLAME_CONFIRM_SAMPLES           = 3;
+const int FLAME_CONFIRM_SAMPLES           = 20;   // 1 second at 50 ms/sample; reject brief light changes
 
 // ================ DISPLAY MODES ================
 
@@ -552,6 +551,9 @@ byte selectedBuzzerPin(BuzzerAlarm mode, byte sequence) {
     return BUZZER_QUAKE_PIN;
   }
   if (mode == BUZZER_SMOKE) return BUZZER_SMOKE_PIN;
+  if (mode == BUZZER_QUAKE) {
+    return (sequence == 0) ? BUZZER_SMOKE_PIN : BUZZER_QUAKE_PIN;
+  }
   return BUZZER_QUAKE_PIN;
 }
 
@@ -577,16 +579,22 @@ void updateBuzzers(unsigned long now) {
   }
   if (buzzerMode == BUZZER_IDLE) return;
 
+  if (buzzerMode == BUZZER_QUAKE) {
+    if (now - buzzerPhaseStarted < QUAKE_SIREN_STEP_MS) return;
+    allBuzzersOff();
+    buzzerSequence = (buzzerSequence + 1) % 2;
+    buzzerPhaseStarted = now;
+    digitalWrite(selectedBuzzerPin(buzzerMode, buzzerSequence), HIGH);
+    return;
+  }
+
   unsigned long onMs, gapMs;
   if (buzzerMode == BUZZER_FIRE) {
     onMs = FIRE_ON_MS;
     gapMs = FIRE_GAP_MS;
-  } else if (buzzerMode == BUZZER_SMOKE) {
+  } else {
     onMs = SMOKE_ON_MS;
     gapMs = SMOKE_GAP_MS;
-  } else {
-    onMs = QUAKE_ON_MS;
-    gapMs = QUAKE_GAP_MS;
   }
 
   if (now - buzzerPhaseStarted < (buzzerSounding ? onMs : gapMs)) return;
