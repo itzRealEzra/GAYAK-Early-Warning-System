@@ -476,14 +476,12 @@ float calculatePAGASAHeatIndexC(float tempC, float humidity) {
   float tempF = tempC * 9.0f / 5.0f + 32.0f;
   if (tempF <= 40.0f) return tempC;
 
-  float simpleF = 0.5f * (tempF + 61.0f + (tempF - 68.0f) * 1.2f
-                          + humidity * 0.094f);
-  float heatF = (simpleF + tempF) * 0.5f;
-  if (heatF < 80.0f) return (heatF - 32.0f) * 5.0f / 9.0f;
+  float apparentA = -10.3f + 1.1f * tempF + 0.047f * humidity;
+  if (apparentA < 79.0f) return (apparentA - 32.0f) * 5.0f / 9.0f;
 
   float t2 = tempF * tempF;
   float r2 = humidity * humidity;
-  heatF = -42.379f + 2.04901523f * tempF + 10.14333127f * humidity
+  float heatF = -42.379f + 2.04901523f * tempF + 10.14333127f * humidity
           - 0.22475541f * tempF * humidity - 0.00683783f * t2
           - 0.05481717f * r2 + 0.00122874f * t2 * humidity
           + 0.00085282f * tempF * r2 - 0.00000199f * t2 * r2;
