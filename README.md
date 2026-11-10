@@ -1,6 +1,6 @@
 # GAYAK: A SMART HEAT INDEX MONITORING AND EARLY WARNING SYSTEM WITH DUAL EARTHQUAKE AND FIRE ALARM DETECTION SYSTEM FOR CLASSROOMS
 
-**Arduino Uno R3 | Temperature · Humidity · Heat Index · Gas/Smoke · Flame · Vibration**
+**Arduino Uno R3 | Temperature · Humidity · HI · Gas/Smoke · Flame · Vibration**
 
 GAYAK is a **student-built hazard-monitoring prototype**. It displays live measurements on a 16×2 I2C LCD and sends USB serial telemetry to an optional **offline Flask dashboard** running locally on a Windows PC. It also uses three status LEDs and three alternating buzzer channels.
 
@@ -25,8 +25,8 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 
 ## Features
 
-- **DHT22:** temperature, relative humidity, and estimated heat index.
-- **MQ-2:** relative gas/smoke response, with warm-up, baseline tracking, and a confirmation period.
+- **DHT22:** temperature and relative humidity feed the PAGASA heat-index method; the LCD and dashboard label this calculated value **HI**.
+- **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second baseline calibration, and alert confirmation.
 - **Flame module:** digital flame indication on the **physical hardware**.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** rotating sensor panels with priority alert messages.
@@ -58,9 +58,9 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | State | LED response | Buzzer response |
 | --- | --- | --- |
 | Normal after calibration | Green solid | Silent |
-| MQ-2 warming up | Red blinking | Silent |
-| MQ-2 baseline calibration | Yellow blinking | Silent |
-| MPU offline | Yellow blinking (when otherwise clear) | Silent |
+| MQ-2 warming up | Red solid | Silent |
+| MQ-2 baseline calibration | Yellow solid | Silent |
+| MPU offline | Yellow solid (when otherwise clear) | Silent |
 | Gas/smoke | Yellow solid | D8 repeating |
 | Sustained shaking | Red fast blink | D9 rapid pulses |
 | Flame/fire | Red solid | D10 → D8 → D9 alternating |
@@ -93,7 +93,11 @@ Changing GitHub files **does not automatically update the hosted Wokwi URL**. Ma
 
 ## Arduino software
 
-Arduino IDE libraries: **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**, and a compatible **LiquidCrystal_I2C** library. `Wire` is included with the Arduino AVR core; no extra MPU library is required by the supplied firmware. Select **Arduino Uno**, the USB COM port, and upload `arduino/GAYAK.ino`.
+Arduino IDE libraries: **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**, and a compatible **LiquidCrystal_I2C** library. `Wire` is included with the Arduino AVR core; no extra MPU library is required by the supplied firmware. Open `arduino/GAYAK/GAYAK.ino` in Arduino IDE and upload to an Uno. Keep it synchronized with the repository firmware at `arduino/GAYAK.ino`.
+
+### PAGASA heat index
+
+The firmware recalculates HI from each valid DHT22 temperature and relative-humidity reading. It uses the simple low-range estimate and Rothfusz regression with humidity adjustments described in PAGASA heat-index guidance. HI categories follow PAGASA thresholds: Caution (27–32°C), Extreme Caution (33–41°C), Danger (42–51°C), and Extreme Danger (52°C and above). The HI is an estimated apparent temperature, not a medical measurement. See [PAGASA heat-index guidance](https://pubfiles.pagasa.dost.gov.ph/climps/climateforum/speciallecture.pdf).
 
 ## Local desktop dashboard (Windows)
 
