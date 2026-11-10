@@ -26,12 +26,12 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 ## Features
 
 - **DHT22:** temperature and relative humidity feed the PAGASA heat-index method; the LCD and dashboard label this calculated value **HI**.
-- **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second baseline calibration, and alert confirmation.
-- **Flame module:** digital flame indication on the **physical hardware**.
+- **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a lower provisional trigger delta confirmed for 1.5 seconds.
+- **Flame module:** digital flame indication on the **physical hardware**, confirmed over 1 second to reject brief light changes. Its digital output can also respond to infrared from non-flame light sources; set the module sensitivity potentiometer in the installed environment.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** rotating sensor panels with priority alert messages.
 - **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
-- **Three alarms:** fire alternates SFM-27 → smoke buzzer → shaking buzzer; smoke and shaking have separate patterns.
+- **Three alarms:** fire alternates SFM-27 → smoke buzzer → shaking buzzer; smoke repeats on D8, while shaking alternates active buzzers D8/D9 in a siren-like pattern.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
 ## Current Arduino Uno pinout
