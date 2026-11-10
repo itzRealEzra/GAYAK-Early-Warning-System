@@ -95,10 +95,6 @@ const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
 // Change only after comparing with a reliable thermometer.
 const float TEMP_OFFSET = 0.0;
 
-// LED behaviour
-const unsigned long LED_BLINK_MS = 500UL;   // blink half-period (warm-up / calibrating)
-const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = green solid
-
 // ================ BUZZER PATTERNS ================
 // Fire: SFM-27 (D10), then buzzer #1 (D8), then buzzer #2 (D9), repeat.
 // Only ONE buzzer sounds at a time. Timings are in milliseconds.
@@ -439,6 +435,16 @@ const char* motionLevelName(MotionLevel level) {
   }
 }
 
+// Title-case labels for the LCD; keep motionLevelName() uppercase for serial data.
+const char* motionLevelLabel(MotionLevel level) {
+  switch (level) {
+    case MOTION_INTENSE: return "Intense";
+    case MOTION_STRONG:  return "Strong";
+    case MOTION_NOTICE:  return "Motion";
+    default:             return "Stable";
+  }
+}
+
 // A separate record preserves the original dashboard DATA CSV field count.
 // QUAKE,<online:0/1>,<alert:0/1>,<filtered acceleration RMS g>,<level>
 // The optional fifth field is ignored by older readers.
@@ -480,14 +486,9 @@ void setLeds(bool green, bool yellow, bool red) {
 }
 
 // Priority: fire > smoke > shaking > MQ-2 state > MPU offline.
-//   FIRE            = RED solid
-//   SMOKE           = YELLOW solid
-//   WARMING UP      = RED blinking
-//   CALIBRATING     = YELLOW blinking
-//   WORKING/NORMAL  = GREEN (solid, or blinking if GREEN_BLINK_WHEN_READY)
+// Warm-up stays RED, calibration stays YELLOW, and ready stays GREEN;
+// keeping these states solid prevents the status lights going dark mid-flow.
 void updateLeds(unsigned long now) {
-  bool blinkOn = ((now / LED_BLINK_MS) % 2UL) == 0UL;
-
   if (flameAlert) {
     setLeds(false, false, true);
   } else if (mq2Alert) {
@@ -496,14 +497,14 @@ void updateLeds(unsigned long now) {
     // Distinctive fast red blink for vibration/shaking.
     setLeds(false, false, ((now / 250UL) % 2UL) == 0UL);
   } else if (mq2State == MQ2_WARMING_UP) {
-    setLeds(false, false, blinkOn);
+    setLeds(false, false, true);
   } else if (mq2State == MQ2_CALIBRATING) {
-    setLeds(false, blinkOn, false);
+    setLeds(false, true, false);
   } else if (!mpuReady) {
     // Do not show a green all-clear while the quake sensor is unavailable.
-    setLeds(false, blinkOn, false);
+    setLeds(false, true, false);
   } else {
-    setLeds(GREEN_BLINK_WHEN_READY ? blinkOn : true, false, false);
+    setLeds(true, false, false);
   }
 }
 
@@ -604,6 +605,13 @@ void printLineP(byte row, const __FlashStringHelper* message) {
     lcd.print(line);
     strcpy(previousLine, line);
   }
+}
+
+// Fixed label/value layout: label at the left, reading aligned to column 15.
+void printLabelValue(byte row, const char* label, const char* value) {
+  char line[17];
+  snprintf_P(line, sizeof(line), PSTR("%-7.7s %8.8s"), label, value);
+  printLine(row, line);
 }
 
 // Wipes the LCD and the line cache so the next frame is drawn clean.
@@ -1094,61 +1102,67 @@ void showPanel() {
   }
 
   if (mode == MODE_FIRE) {
-    printLineP(0, F("FIRE ALERT!"));
-    printLineP(1, mq2Alert ? F("FIRE+SMOKE! RUN!") : F("EVACUATE NOW!"));
+    printLineP(0, F("Fire Alert!"));
+    printLineP(1, F("Evacuate Now!"));
     return;
   }
 
   if (mode == MODE_SMOKE) {
-    printLineP(0, F("SMOKE ALERT!"));
-    printLineP(1, F("EVACUATE NOW!"));
+    printLineP(0, F("Smoke Alert!"));
+    printLineP(1, F("Evacuate Now!"));
     return;
   }
 
   if (mode == MODE_QUAKE) {
     printLineP(0, classifyMotion() == MOTION_INTENSE
-                  ? F("INTENSE SHAKING") : F("STRONG SHAKING"));
-    printLineP(1, F("DROP COVER HOLD"));
+                  ? F("Intense Shaking") : F("Strong Shaking"));
+    printLineP(1, F("Drop Cover Hold"));
     return;
   }
 
   // MPU monitor panel, shown even when the DHT22 has a read error.
   if (currentPanel == 2) {
     if (!mpuReady) {
-      printLineP(0, F("MPU6050 OFFLINE"));
-      printLineP(1, F("CHECK I2C WIRES"));
+      printLineP(0, F("MPU Offline"));
+      printLineP(1, F("Check I2C Wires"));
     } else if (millis() - mpuStartTime < MPU_SETTLE_MS) {
-      printLineP(0, F("MPU CALIBRATING"));
-      printLineP(1, F("KEEP SENSOR STILL"));
+      printLineP(0, F("MPU Calibrating"));
+      printLineP(1, F("Keep Still 5 Sec"));
     } else {
       char vibration[10];
+      char value[14];
       char line[17];
-      dtostrf(quakeRmsG, 4, 2, vibration);
-      printLineP(0, F("MPU ACCELERATION"));
-      snprintf_P(line, sizeof(line), PSTR("%s %sg"),
-                 motionLevelName(classifyMotion()), vibration);
-      printLine(1, line);
+      dtostrf(quakeRmsG, 1, 2, vibration);
+      snprintf_P(line, sizeof(line), PSTR("MPU: %s"),
+                 motionLevelLabel(classifyMotion()));
+      snprintf_P(value, sizeof(value), PSTR("%s g"), vibration);
+      printLine(0, line);
+      printLabelValue(1, "Accel:", value);
     }
     return;
   }
 
   // Smoke sensor status panel (only while the MQ-2 is not ready).
   if (currentPanel == 3 && mq2State != MQ2_READY) {
-    char line1[17];
-
-    printLineP(0, F("SMOKE SENSOR"));
+    char value[10];
+    unsigned long elapsed = millis() - mq2StartTime;
 
     if (mq2State == MQ2_WARMING_UP) {
-      unsigned long elapsed = millis() - mq2StartTime;
       unsigned long left = (elapsed >= MQ2_WARMUP_MS)
-                             ? 0UL
-                             : (MQ2_WARMUP_MS - elapsed) / 1000UL;
-      snprintf_P(line1, sizeof(line1), PSTR("WARMUP %us"), (unsigned int)left);
+                             ? 0UL : (MQ2_WARMUP_MS - elapsed + 999UL) / 1000UL;
+      unsigned int minutes = (unsigned int)(left / 60UL);
+      unsigned int seconds = (unsigned int)(left % 60UL);
+      snprintf_P(value, sizeof(value), PSTR("%u:%02u"), minutes, seconds);
+      printLineP(0, F("MQ2 Warm Up"));
+      printLabelValue(1, "Left:", value);
     } else {
-      snprintf_P(line1, sizeof(line1), PSTR("CALIBRATING..."));
+      unsigned long calElapsed = millis() - baselineStartTime;
+      unsigned long left = (calElapsed >= MQ2_BASELINE_MS)
+                             ? 0UL : (MQ2_BASELINE_MS - calElapsed + 999UL) / 1000UL;
+      snprintf_P(value, sizeof(value), PSTR("%lus"), left);
+      printLineP(0, F("MQ2 Calibrating"));
+      printLabelValue(1, "Left:", value);
     }
-
-    printLine(1, line1);
     return;
   }
 
@@ -1157,32 +1171,38 @@ void showPanel() {
     return;
   }
 
-  char line0[17];
-  char line1[17];
-  char tempText[12];
-  char humidText[8];
-  char hiText[12];
+  char number[12];
+  char value[14];
+  char status[10];
 
-  // Convert decimals to strings for Arduino Uno.
-  dtostrf(temperature, 4, 1, tempText);
-  dtostrf(heatIndex, 4, 1, hiText);
-
-  snprintf_P(humidText, sizeof(humidText), PSTR("%u"),
-           (unsigned int)roundf(humidity));
+  // Convert sensor values to compact text; label/value rows right-align data.
+  dtostrf(temperature, 1, 1, number);
 
   if (currentPanel == 0) {
-    // PANEL 1: TEMPERATURE + HUMIDITY
-    snprintf_P(line0, sizeof(line0), PSTR("Temp: %sC"), tempText);
-    snprintf_P(line1, sizeof(line1), PSTR("Humid: %s%%"), humidText);
+    snprintf_P(value, sizeof(value), PSTR("%s "), number);
+    byte valueLength = (byte)strlen(value);
+    value[valueLength++] = (char)0xDF;  // HD44780 degree glyph
+    value[valueLength++] = 'C';
+    value[valueLength] = '\0';
+    printLabelValue(0, "Temp:", value);
+    snprintf_P(value, sizeof(value), PSTR("%u %%"),
+               (unsigned int)roundf(humidity));
+    printLabelValue(1, "Humid:", value);
   } else {
-    // PANEL 2: HEAT INDEX + STATUS
-    snprintf_P(line0, sizeof(line0), PSTR("HI: %sC"), hiText);
-    snprintf_P(line1, sizeof(line1), PSTR("STATUS: %S"),
-               (PGM_P)getHeatStatus(heatIndexTenths));
+    dtostrf(heatIndex, 1, 1, number);
+    snprintf_P(value, sizeof(value), PSTR("%s "), number);
+    byte valueLength = (byte)strlen(value);
+    value[valueLength++] = (char)0xDF;  // HD44780 degree glyph
+    value[valueLength++] = 'C';
+    value[valueLength] = '\0';
+    printLabelValue(0, "Heat:", value);
+    if (heatIndexTenths > 540) strcpy_P(status, PSTR("Ext Dang"));
+    else if (heatIndexTenths >= 410) strcpy_P(status, PSTR("Danger"));
+    else if (heatIndexTenths >= 320) strcpy_P(status, PSTR("Ext Caut"));
+    else if (heatIndexTenths >= 270) strcpy_P(status, PSTR("Caution"));
+    else strcpy_P(status, PSTR("Normal"));
+    printLabelValue(1, "Status:", status);
   }
-
-  printLine(0, line0);
-  printLine(1, line1);
 }
 
 // ================ SETUP ================
@@ -1214,19 +1234,20 @@ void setup() {
   lcd.backlight();
   lcd.clear();
 
-  printLineP(0, F("GAYAK MONITOR"));
-  printLineP(1, F("INITIALIZING..."));
+  printLineP(0, F("Gayak Monitor"));
+  printLineP(1, F("Initializing..."));
 
   delay(2000);
 
-  setLeds(false, false, false);
+  // Begin the startup flow with a steady red warm-up indication.
+  setLeds(false, false, true);
 
   // Initialize MPU while leaving original fire/smoke logic unchanged.
   initializeMPU(millis());
 
   // Learn the flame module's resting level (no flame in view).
-  printLineP(0, F("FLAME LEARNING"));
-  printLineP(1, F("KEEP FLAME AWAY"));
+  printLineP(0, F("Flame Learning"));
+  printLineP(1, F("Keep Flame Away"));
   learnFlameIdle();
 
   currentPanel = 0;

@@ -3,6 +3,8 @@
 One Markdown note per named function in the checked-out workspace.
 
 - [[arduino/setleds|`setLeds()`]] — `arduino/GAYAK.ino`
+- [[arduino/motionlevellabel|`motionLevelLabel()`]] — `arduino/GAYAK.ino`
+- [[arduino/printlabelvalue|`printLabelValue()`]] — `arduino/GAYAK.ino`
 - [[arduino/writempuregister|`writeMPURegister()`]] — `arduino/GAYAK.ino`
 - [[arduino/readmpuacceleration|`readMPUAcceleration()`]] — `arduino/GAYAK.ino`
 - [[arduino/initializempu|`initializeMPU()`]] — `arduino/GAYAK.ino`

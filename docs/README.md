@@ -11,6 +11,7 @@ Obsidian-friendly notes for this local project and its public GitHub repository.
 - [[SYSTEM-OVERVIEW]]
 - [[ARCHITECTURE]]
 - [[HARDWARE-AND-PINS]]
+- [[LCD-LED-STATUS]]
 - [[SERIAL-PROTOCOL]]
 - [[DASHBOARD]]
 - [[RUNNING-ON-WINDOWS]]

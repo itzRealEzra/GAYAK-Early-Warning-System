@@ -10,7 +10,7 @@ source: "arduino/GAYAK.ino"
 
 ## Purpose
 
-Chooses solid or blinking LED patterns from startup/calibration and hazard states.
+Maintains a continuous status flow: steady red during MQ-2 warm-up, steady yellow during calibration (or MPU offline), and steady green when ready. Fire/smoke status overrides remain solid; active shaking uses a fast red blink. Solid warm-up/calibration indications avoid dark gaps between phases.
 
 ## Related notes
 

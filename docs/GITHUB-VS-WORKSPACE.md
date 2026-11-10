@@ -14,7 +14,7 @@ tags: [gayak, github, versions]
 
 GitHub has newer README, Flask, Arduino firmware, serial parsing, browser JS/CSS, and HTML. It adds guides for adjustments, MPU-6050 shaking, student activities, tests, troubleshooting, tutorials, and wiring/power; a `wokwi/` simulator; and `tests/test_serial_reader.py`. The newer firmware adds MPU-6050 local shaking monitoring, buzzer behavior, and extended telemetry.
 
-The local Arduino sketch has now been updated from GitHub's firmware and includes MPU-6050/QUAKE telemetry and buzzer outputs. The rest of the local checkout remains at the older revision: its Python reader ignores QUAKE records and the dashboard does not display MPU readings. GitHub's tests and Wokwi files are not present locally.
+The local Arduino sketch has now been updated from GitHub's firmware and includes MPU-6050/QUAKE telemetry, buzzer outputs, and local LCD/LED refinements. The rest of the local checkout remains at the older revision: its Python reader ignores QUAKE records and the dashboard does not display MPU readings. GitHub's tests and Wokwi files are not present locally.
 
 Use local function notes for the checked-out code. The sketch is based on current upstream firmware with a local five-second MPU baseline-calibration fix. Other upstream guides may describe software behavior absent locally; review hardware changes before applying them to a physical device.
 
