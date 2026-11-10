@@ -12,4 +12,4 @@ tags: [gayak, dashboard, flask]
 
 Browser EventSource provides live updates; polling requests `/api/status` once per second as fallback. Server memory retains at most 600 history points and 100 alert onsets; an initial status sends at most 240 points and 20 events.
 
-The page renders sensor cards, alerts, diagnostics, history charts, events, and mirrored status lamps. It is informational and not a certified hazard detector.
+The page renders sensor cards, alerts, diagnostics, history charts, events, and mirrored status lamps. The temperature/humidity readings and PAGASA-method HI arrive in each `DATA` record; the dashboard displays the received HI without recalculating it. The card and history chart label the value `HI`, and its severity styling uses the firmware's PAGASA bands: 27–32°C Caution, 33–41°C Extreme Caution, 42–51°C Danger, and 52°C or higher Extreme Danger. It is informational and not a certified hazard detector.
