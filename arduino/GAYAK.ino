@@ -112,7 +112,7 @@ bool buzzerSounding = false;
 unsigned long buzzerPhaseStarted = 0;
 
 // MQ-2 smoke detector timing
-const unsigned long MQ2_WARMUP_MS       = 180000UL;  // was 120000UL (longer settle = steadier baseline)
+const unsigned long MQ2_WARMUP_MS       = 120000UL;  // 2-minute warm-up, then 20-second baseline calibration
 const unsigned long MQ2_BASELINE_MS     = 20000UL;   // was 10000UL (more samples averaged)
 const unsigned long MQ2_SAMPLE_INTERVAL = 100UL;
 const unsigned long MQ2_CLEAR_TIME      = 1500UL;
@@ -469,10 +469,40 @@ void sendQuakeData(unsigned long now) {
 
 // ================ HEAT STATUS ================
 
+// PAGASA heat-index method: simple estimate below 80 F, then the Rothfusz
+// regression with the humidity adjustments used in PAGASA guidance.
+// Inputs are dry-bulb temperature in Celsius and relative humidity (%).
+float calculatePAGASAHeatIndexC(float tempC, float humidity) {
+  float tempF = tempC * 9.0f / 5.0f + 32.0f;
+  if (tempF <= 40.0f) return tempC;
+
+  float simpleF = 0.5f * (tempF + 61.0f + (tempF - 68.0f) * 1.2f
+                          + humidity * 0.094f);
+  float heatF = (simpleF + tempF) * 0.5f;
+  if (heatF < 80.0f) return (heatF - 32.0f) * 5.0f / 9.0f;
+
+  float t2 = tempF * tempF;
+  float r2 = humidity * humidity;
+  heatF = -42.379f + 2.04901523f * tempF + 10.14333127f * humidity
+          - 0.22475541f * tempF * humidity - 0.00683783f * t2
+          - 0.05481717f * r2 + 0.00122874f * t2 * humidity
+          + 0.00085282f * tempF * r2 - 0.00000199f * t2 * r2;
+
+  if (humidity < 13.0f && tempF >= 80.0f && tempF <= 112.0f) {
+    float adjustment = ((13.0f - humidity) * 0.25f)
+                       * sqrtf((17.0f - fabsf(tempF - 95.0f)) / 17.0f);
+    heatF -= adjustment;
+  } else if (humidity > 85.0f && tempF >= 80.0f && tempF <= 87.0f) {
+    heatF += 0.02f * (humidity - 85.0f) * (87.0f - tempF);
+  }
+
+  return (heatF - 32.0f) * 5.0f / 9.0f;
+}
+
 const __FlashStringHelper* getHeatStatus(int hiTenths) {
-  if (hiTenths > 540) return F("EXT DANG");
-  if (hiTenths >= 410) return F("DANGER");
-  if (hiTenths >= 320) return F("EXT CAUT");
+  if (hiTenths >= 520) return F("EXT DANG");
+  if (hiTenths >= 420) return F("DANGER");
+  if (hiTenths >= 330) return F("EXT CAUT");
   if (hiTenths >= 270) return F("CAUTION");
   return F("NORMAL");
 }
@@ -658,7 +688,7 @@ void readSensor() {
   temperature = newTemperature + TEMP_OFFSET;
   humidity = newHumidity;
 
-  heatIndex = dht.computeHeatIndex(temperature, humidity, false);
+  heatIndex = calculatePAGASAHeatIndexC(temperature, humidity);
   heatIndexTenths = (int)roundf(heatIndex * 10.0f);
 
   sensorOK = true;
@@ -1195,10 +1225,10 @@ void showPanel() {
     value[valueLength++] = (char)0xDF;  // HD44780 degree glyph
     value[valueLength++] = 'C';
     value[valueLength] = '\0';
-    printLabelValue(0, "Heat:", value);
-    if (heatIndexTenths > 540) strcpy_P(status, PSTR("Ext Dang"));
-    else if (heatIndexTenths >= 410) strcpy_P(status, PSTR("Danger"));
-    else if (heatIndexTenths >= 320) strcpy_P(status, PSTR("Ext Caut"));
+    printLabelValue(0, "HI:", value);
+    if (heatIndexTenths >= 520) strcpy_P(status, PSTR("Ext Dang"));
+    else if (heatIndexTenths >= 420) strcpy_P(status, PSTR("Danger"));
+    else if (heatIndexTenths >= 330) strcpy_P(status, PSTR("Ext Caut"));
     else if (heatIndexTenths >= 270) strcpy_P(status, PSTR("Caution"));
     else strcpy_P(status, PSTR("Normal"));
     printLabelValue(1, "Status:", status);
