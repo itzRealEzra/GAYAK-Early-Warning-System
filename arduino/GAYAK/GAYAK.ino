@@ -181,7 +181,7 @@ const bool FLAME_ACTIVE_LOW = true;
 
 const unsigned long FLAME_SAMPLE_INTERVAL = 50UL;
 const unsigned long FLAME_CLEAR_TIME      = 1500UL;
-const int FLAME_CONFIRM_SAMPLES           = 20;   // 1 second at 50 ms/sample; reject brief light changes
+const int FLAME_CONFIRM_SAMPLES           = 60;   // 3 seconds at 50 ms/sample; reject brief light changes
 
 // ================ DISPLAY MODES ================
 
@@ -1282,8 +1282,8 @@ void setup() {
   initializeMPU(millis());
 
   // Learn the flame module's resting level (no flame in view).
-  printLineP(0, F("Flame Learning"));
-  printLineP(1, F("Keep Flame Away"));
+  printLineP(0, F("Flame Setup"));
+  printLineP(1, F("Aim Indoors"));
   learnFlameIdle();
 
   currentPanel = 0;
