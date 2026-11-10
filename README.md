@@ -27,7 +27,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 
 - **DHT22:** temperature and relative humidity feed the PAGASA heat-index method; the LCD and dashboard label this calculated value **HI**.
 - **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a lower provisional trigger delta confirmed for 1.5 seconds.
-- **Flame module:** digital flame indication on the **physical hardware**, confirmed over 1 second to reject brief light changes. Its digital output can also respond to infrared from non-flame light sources; set the module sensitivity potentiometer in the installed environment.
+- **Flame module:** digital flame indication on the **physical hardware**, confirmed over 3 seconds to reject brief light changes. Aim it into the room away from windows/sky, adjust its sensitivity potentiometer in place, and use an opaque hood to narrow its field of view. Its digital output can still respond to a steady infrared source that crosses its threshold.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** rotating sensor panels with priority alert messages.
 - **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
