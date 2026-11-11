@@ -19,14 +19,16 @@
 | DHT22 temperature | Raise simulated temperature | Updated temperature and heat index at next sensor read/LCD panel | Return value |
 | DHT22 humidity | Change simulated humidity | Updated humidity and recalculated heat index | Return value |
 | Normal LEDs | Normal sensors after calibration | D5 green ON, D6/D7 OFF | Recalibrate or alarm |
-| MQ-2 smoke | Raise gas control after baseline | D6 yellow + D8 repeating, LCD smoke alert | Lower gas/delta; clear delay |
-| Flame proxy | Increase photoresistor lux above DO threshold | D7 red + D10→D8→D9, LCD fire alert | Lower lux; clear delay |
+| MQ-2 smoke | Raise gas control after baseline | D6 yellow + one short D8 pulse per second, LCD smoke alert | Lower gas/delta; clear delay |
+| Flame proxy | Increase photoresistor lux above DO threshold | D7 red + triple D10 pulse, LCD fire alert | Lower lux; clear delay |
+| Fire + smoke | Keep MQ-2 above threshold and trigger flame proxy | Combined sound: two fast D10 pulses then a longer D8 pulse | Clear flame; smoke-only pattern resumes if smoke remains |
+| LCD panel button | Press and release button wired D11 to GND | Advances one panel; wraps at last available panel; alerts override selected panel | Press again after alert clears |
 | MPU-6050 strong shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.12 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, STRONG SHAKING, `QUAKE,...,STRONG` | Return to steady reading; allow clear/hold delay |
 | MPU-6050 intense shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.30 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, INTENSE SHAKING, `QUAKE,...,INTENSE` | Return to steady reading; allow clear/hold delay |
-| Alert priority | Trigger smoke, then fire | Fire takes priority over smoke sounds | Remove fire; smoke should resume if still active |
+| Alert priority | Trigger smoke, then fire | Fire + smoke combined pattern takes priority over smoke-only | Remove fire; smoke-only pattern resumes if still active |
 | Sensor unavailable | Carefully simulate missing MPU only if supported | Not falsely green all-clear | Restore sensor |
 | Serial telemetry | Change input while monitoring | `DATA` and `QUAKE` records continue without corrupting fields | N/A |
-| Manual Wokwi wiring | Inspect your own circuit | D5 green, D6 yellow, D7 red, each with 220Ω; no extra buttons or piezo buzzer resistors | Recheck all wires |
+| Manual Wokwi wiring | Inspect your own circuit | D11 button to GND; D5 green, D6 yellow, D7 red, each with 220Ω; no piezo buzzer resistors | Recheck all wires |
 
 **Important nuance:** “Earthquake test” in this table means an **artificial motion input** to the MPU-6050. Neither a static force setting nor a simulated wobble reproduces real seismic propagation.
 

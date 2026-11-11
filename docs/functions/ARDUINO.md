@@ -32,5 +32,6 @@ One Markdown note per named function in the checked-out workspace.
 - [[arduino/freeram|`freeRam()`]] — `arduino/GAYAK.ino`
 - [[arduino/printdiagnostics|`printDiagnostics()`]] — `arduino/GAYAK.ino`
 - [[arduino/showpanel|`showPanel()`]] — `arduino/GAYAK.ino`
+- [[arduino/updatepanelbutton|`updatePanelButton()`]] — `arduino/GAYAK.ino`
 - [[arduino/setup|`setup()`]] — `arduino/GAYAK.ino`
 - [[arduino/loop|`loop()`]] — `arduino/GAYAK.ino`

@@ -15,6 +15,9 @@ tags: [gayak, hardware, wiring]
 | D8 | Active buzzer for smoke | 
 | D9 | Active buzzer for shaking | 
 | D10 | Active fire buzzer (SFM-27) |
+| D11 | LCD panel advance button; connect between D11 and GND, using `INPUT_PULLUP` |
 | D0 / D1 | Reserved for USB serial |
+
+Press and release the D11 button to advance the LCD to the next panel. Alerts temporarily take over the display; the selected panel returns after the alert clears. No external pull-up resistor is needed.
 
 Share ground and confirm module voltage and signal polarity. The sketch's prototype buzzer wiring uses series resistors; properly rated transistor/MOSFET drivers are recommended. Interpret MQ-2 as relative response. Do not treat simulated piezo connections as physical active-buzzer driver circuits. Use USB power for initial tests; battery/charger wiring requires correctly protected, regulated design. See [[GITHUB-VS-WORKSPACE]].

@@ -29,7 +29,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a lower provisional trigger delta confirmed for 1.5 seconds.
 - **Flame module:** digital flame indication on the **physical hardware**, confirmed over 3 seconds to reject brief light changes. Aim it into the room away from windows/sky, adjust its sensitivity potentiometer in place, and use an opaque hood to narrow its field of view. Its digital output can still respond to a steady infrared source that crosses its threshold.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
-- **LCD:** rotating sensor panels with priority alert messages.
+- **LCD:** press the D11 button to advance sensor panels; active alerts override the selected panel.
 - **Status LEDs:** Green / Yellow / Red and condition-specific blinking.
 - **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Only one buzzer sounds at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
@@ -46,6 +46,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 | D8 | 5V active buzzer #1, SMOKE (use rated driver) |
 | D9 | 5V active buzzer #2, SHAKING (use rated driver) |
 | D10 | SFM-27 3–24V active buzzer, FIRE (use rated driver) |
+| D11 | Panel button; connect button between D11 and GND (`INPUT_PULLUP`) |
 | A0 | MQ-2 AO |
 | A4 | LCD + MPU-6050 SDA |
 | A5 | LCD + MPU-6050 SCL |
@@ -62,6 +63,7 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | MQ-2 baseline calibration | Yellow solid | Silent |
 | MPU offline | Yellow solid (when otherwise clear) | Silent |
 | Gas/smoke | Yellow solid | D8 repeating |
+| Fire + smoke | Red solid | Two fast D10 pulses, then a longer D8 pulse |
 | Sustained shaking | Red fast blink | D9 rapid pulses |
 | Flame/fire | Red solid | Three short pulses on D10 |
 
@@ -80,7 +82,7 @@ These thresholds are **prototype starting values**, not validated seismic intens
 
 ## Simulated vs. physical hardware
 
-The simulator uses a **Wokwi photoresistor module as an adjustable-light proxy** for the flame sensor, because it can expose a controllable DO signal. Changing *lux* is an **input demonstration, not a real flame detection test**. It has **no extra pushbuttons, acknowledgment switch, or software power switch**. Use the built-in DHT22, MQ-2, MPU-6050, and light-proxy properties to test readings.
+The simulator uses a **Wokwi photoresistor module as an adjustable-light proxy** for the flame sensor, because it can expose a controllable DO signal. Changing *lux* is an **input demonstration, not a real flame detection test**. A pushbutton between **D11 and GND** advances the LCD panel; there is no acknowledgment switch or software power switch. Use the built-in DHT22, MQ-2, MPU-6050, and light-proxy properties to test readings.
 
 Wokwi models **piezo** buzzers that require `tone()`. Your real **two-terminal active buzzers** use DC on/off through appropriately rated MOSFET/transistor driver circuits. **Do not copy the direct-connected Wokwi buzzer wiring to the real build.** Wokwi has **no real TP4056/18650 charging circuit** in this project.
 

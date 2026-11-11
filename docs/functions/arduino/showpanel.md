@@ -10,7 +10,7 @@ source: "arduino/GAYAK.ino"
 
 ## Purpose
 
-Renders the current rotating LCD panel, prioritizing hazard alerts and sensor states. Normal readings use title-case labels and right-aligned values; calibration screens show compact remaining time.
+Renders the user-selected LCD panel, prioritizing hazard alerts and sensor states. A debounced D11 button press advances the selected page; normal readings use title-case labels and right-aligned values, while calibration screens show compact remaining time.
 
 ## Related notes
 

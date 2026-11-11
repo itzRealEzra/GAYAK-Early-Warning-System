@@ -19,6 +19,7 @@ The GY-521 MPU-6050 is used for **intense shaking and acceleration** measurement
 | D8 | Smoke buzzer driver input | 5V two-pin active buzzer #1 |
 | D9 | Shaking buzzer driver input | 5V two-pin active buzzer #2 |
 | D10 | Fire buzzer driver input | SFM-27 3–24V active buzzer |
+| D11 | Pushbutton to GND | LCD panel advance; firmware uses `INPUT_PULLUP`, so no external resistor is needed |
 | D0, D1 | USB Serial | Do not use these pins for alarms while the dashboard runs |
 
 ### Common I2C bus
@@ -69,7 +70,7 @@ A typical perfboard has **isolated solder pads**; no rails are connected unless 
 3. Keep the 5V supply path separated from signal lines and provide strain relief for all battery and USB leads.
 4. Mount three buzzer MOSFETs/drivers with their gate resistors and gate pull-down resistors; join all MOSFET sources to the shared GND.
 5. Connect D8→smoke driver, D9→shaking driver and D10→fire driver. Connect each buzzer (+) to its specified regulated voltage, not an Arduino GPIO.
-6. Route the DHT22, flame, MQ-2, LCD, and MPU signal wires as in the pinout above.
+6. Route the DHT22, flame, MQ-2, LCD, MPU, and the D11-to-GND panel button as in the pinout above.
 7. Label **5V / GND / D5 green / D6 yellow / D7 red / D8 smoke / D9 shaking / D10 fire**.
 8. Before power-up, use a multimeter to confirm **no continuity from 5V to GND**, no reversed buzzer polarity, and each expected terminal is connected to its intended pad.
 

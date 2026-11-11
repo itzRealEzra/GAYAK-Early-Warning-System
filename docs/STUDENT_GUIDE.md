@@ -23,7 +23,8 @@ GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquis
 | Flame sensor module (physical) | Digital threshold output (DO) | Depends on sensitivity/polarity, line of sight, and interference |
 | Photoresistor (Wokwi only) | Simulated bright-light DO as flame proxy | Not an IR flame detector |
 | MPU-6050 / GY-521 | Local acceleration and intense shaking | Filtered motion levels do not reveal Richter magnitude, official seismic intensity, or earthquake origin |
-| LCD 16×2 (I2C) | Status and rotating readings | Address can vary by backpack |
+| LCD 16×2 (I2C) | Status and button-selected readings | Address can vary by backpack |
+| Pushbutton | Advances LCD panel on D11 | Connect between D11 and GND; internal pull-up is enabled |
 | Status LEDs | Green/Yellow/Red visual indication | **One 220Ω current-limiting resistor on each LED** |
 | Three buzzers | Independent audible patterns | Real active buzzers need properly rated drivers |
 | PCB perfboard | Physical interconnect | Isolated-hole perfboard does not have automatic power rails |
@@ -38,7 +39,7 @@ Read [wiring guide](WIRING_AND_POWER.md). Label each pin in the [student pin map
 Use the [manual Wokwi wiring tutorial](TUTORIALS.md#1-wokwi-simulation) to connect the circuit yourself (no premade diagram file). Each LED uses its own **220Ω** series resistor. Modify one input at a time. Record the LCD, LED, buzzer, and serial output. Observe that the sensor value may change before the confirmed alarm does, because the program filters or confirms inputs.
 
 ### Activity 3 — Understand alert priority (15–20 min)
-Trigger smoke, then trigger simulated fire without clearing smoke. Expected: fire's red LED/LCD and alternating buzzer sequence take priority. Restore both inputs and note the delay before reset. Next, trigger shaking and explain why D9 is faster.
+Trigger smoke, then trigger simulated fire without clearing smoke. Expected: fire's red LED/LCD and combined fire + smoke buzzer pattern take priority. Restore both inputs and note the delay before reset. Next, trigger shaking and identify its alternating buzzer pattern.
 
 ### Activity 4 — Calibrate carefully (20–30 min)
 Read [adjustments](ADJUSTMENTS.md). Record the normal MQ-2 analog baseline, then adjust one threshold **in simulation**. Explain false positives and false negatives. Do not claim an acceleration threshold equals Richter magnitude.
@@ -61,6 +62,7 @@ D7  RED LED
 D8  5V ACTIVE BUZZER #1 (SMOKE) via driver
 D9  5V ACTIVE BUZZER #2 (SHAKING) via driver
 D10 SFM-27 3–24V (FIRE) via driver
+D11 LCD panel button → GND
 ```
 
 ## Sample observation sheet

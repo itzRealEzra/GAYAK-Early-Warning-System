@@ -5,7 +5,7 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 | Symptom | Likely cause | Check |
 | --- | --- | --- |
 | Wokwi wiring looks cluttered | Old or unorganized connections | Rearrange wires manually according to [Wokwi wiring guide](../wokwi/README.md); no imported diagram is necessary |
-| Old extra buttons still appear | Legacy controls remain in your Wokwi copy | Delete those parts and their wires manually; use updated `wokwi/sketch.ino` with no button controls |
+| LCD panel does not advance | Button is not connected to D11/GND, or button is wired to two pins on the same side | Connect the switch between D11 and GND; firmware uses `INPUT_PULLUP`, and advances on each debounced press/release |
 | Green/red LEDs swapped | Firmware or wires still have previous pin assignment | Current order is **D5 Green, D6 Yellow, D7 Red** |
 | LEDs dark or wrong status | Reversed LED, wrong pin, MQ-2 calibrating or MPU offline | Check **D5 Green, D6 Yellow, D7 Red**, each with **220Ω series resistor** toward the LED anode; cathode→GND. Read status output |
 | Wokwi piezo makes no noise | Running physical active-buzzer sketch, browser muted or disconnected pin | Use **wokwi/sketch.ino** with `tone()` and verify D8/D9/D10→piezo pin 2, pin 1→GND |
@@ -16,11 +16,11 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 | Shaking never triggers | One static adjustment absorbed by gravity filter, insufficient sustained motion | Repeatedly change X/Y acceleration in Wokwi across confirmation period |
 | “Magnitude” not displayed | MPU-6050 does not measure seismic magnitude | Report filtered acceleration in `g` and STABLE/MOTION/STRONG/INTENSE local states, never Richter values |
 | STRONG or INTENSE appears before buzzer | Instantaneous filtered-motion state changes before sustained-alarm confirmation | Keep controlled shaking above the trigger for `QUAKE_CONFIRM_MS` and review clear/hold timings |
-| Fire proxy doesn't trigger in Wokwi | Photoresistor lux too low, wrong D3, old pushbutton sketch | Increase **lux** on the photoresistor until its DO changes LOW; use current sketch |
+| Fire proxy doesn't trigger in Wokwi | Photoresistor lux too low, wrong D3, old simulator sketch | Increase **lux** on the photoresistor until its DO changes LOW; use current sketch |
 | Physical flame module false alarms | Sensitivity too high, sunlight, mislearned idle polarity | Shade module and calibrate comparator; check `FLAME_ACTIVE_LOW` |
 | MQ-2 reports warming up | Expected startup state | Wokwi ~5 s + 3 s baseline; real firmware ~180 s + 20 s |
 | MQ-2 never clears | High gas input, slow baseline recovery, wrong threshold | Return simulator gas value to normal, inspect RAW/FILTERED/BASE/DELTA |
-| Sensor data updates slowly | DHT22 reads at ≥2s, LCD panel rotation, alert confirmation | See [adjustments](ADJUSTMENTS.md), avoid unsafe reduction of minimum sensor intervals |
+| Sensor data updates slowly | DHT22 reads at ≥2s or alerts require confirmation | LCD panels are manually advanced with the D11 button; see [adjustments](ADJUSTMENTS.md) |
 | Arduino upload fails (`resp=0x00`) | Wrong COM port, Serial Monitor/dash app holds port, loose USB, short | Stop Flask/Serial Monitor; check board/port, cable and D0/D1 wiring |
 | Dashboard shows DISCONNECTED | COM port unavailable or Python app not running | Check Device Manager, `GAYAK_COM_PORT`, USB cable |
 | Dashboard is stale or readings absent | Bad serial baud/data, MPU offline or no DATA | Confirm 115200 baud, `DATA` records and matching firmware |

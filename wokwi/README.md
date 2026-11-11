@@ -4,11 +4,11 @@
 
 **No premade wiring diagram is needed.** This repository provides `wokwi/sketch.ino` and `wokwi/libraries.txt`. You can create, move, and connect parts directly in Wokwi; it maintains the diagram in your own project.
 
-Open [the existing Wokwi project](https://wokwi.com/projects/478926664159746049), **Save a Copy**, and remove the old extra buttons, simulated power switch and duplicated wires as needed. You may also start from a blank Arduino Uno project.
+Open [the existing Wokwi project](https://wokwi.com/projects/478926664159746049), **Save a Copy**, remove obsolete controls and duplicated wires as needed, and keep/add one pushbutton for LCD paging. You may also start from a blank Arduino Uno project.
 
 ### Add these Wokwi parts
 
-Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module (**fire-input proxy, not a real flame sensor**); one 16x2 LCD set to **I2C** mode (address `0x27`); one MPU6050; green/yellow/red LEDs (one each); **three 220Ω resistors (LEDs only)**; three Wokwi piezo buzzers; optional breadboard for 5V/GND wiring.
+Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module (**fire-input proxy, not a real flame sensor**); one 16x2 LCD set to **I2C** mode (address `0x27`); one MPU6050; one pushbutton; green/yellow/red LEDs (one each); **three 220Ω resistors (LEDs only)**; three Wokwi piezo buzzers; optional breadboard for 5V/GND wiring.
 
 ### Manual wiring reference
 
@@ -17,6 +17,7 @@ Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module 
 | DHT22 | Data/SDA → **D2** | VCC → 5V; GND → GND |
 | MQ-2 gas sensor | AOUT → **A0** | VCC → 5V; GND → GND |
 | Photoresistor module | DO → **D3** | VCC → 5V; GND → GND |
+| LCD next-panel pushbutton | One switch side → **D11**; opposite side → **GND** | `INPUT_PULLUP` is enabled; no external resistor |
 | Green LED | **D5 → 220Ω → anode A** | Cathode C → GND |
 | Yellow LED | **D6 → 220Ω → anode A** | Cathode C → GND |
 | Red LED | **D7 → 220Ω → anode A** | Cathode C → GND |
@@ -33,7 +34,7 @@ Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module 
 1. Arrange components in logical groups. Connect one wire at a time according to the table, then inspect each wire and common GND. An optional Wokwi breadboard can organize power connections.
 2. Replace your Wokwi `sketch.ino` with [the simulation program](sketch.ino), and `libraries.txt` with [the library list](libraries.txt). **You do not need to paste a `diagram.json`.**
 3. Start Simulation. The MQ-2 simulator uses approximately **5 seconds warm-up plus 3 seconds baseline calibration**, versus longer real-hardware intervals.
-4. Change DHT22 temperature and humidity; readings update about every **2.2 seconds**, while LCD panels rotate roughly every **1.8 seconds**.
+4. Change DHT22 temperature and humidity; readings update about every **2.2 seconds**. Press and release the D11 button to advance the LCD panel; alerts temporarily override the selected panel.
 5. After baseline calibration, increase MQ-2 simulated gas concentration. Smoke alone uses **D6 yellow LED + one short D8 pulse each second**.
 6. Increase the photoresistor's **lux** until DO switches LOW (roughly >100 lux with the default simulated threshold). This tests a **digital fire-input signal** and activates **D7 red LED + three short D10 pulses followed by a pause**. With both flame and MQ-2 alerts active, the combined sound is **two fast D10 pulses followed by one longer D8 pulse**. Decrease lux to clear. This is **not an actual fire sensor test**.
 7. Repeatedly vary the MPU6050 X/Y accelerations to simulate strong/intense shaking. The filtered motion classification can change before the confirmed alarm; shaking activates **D7 blinking red + alternating D9/D8 pulses** when sustained.

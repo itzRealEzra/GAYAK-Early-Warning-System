@@ -1,4 +1,4 @@
-// Wokwi GAYAK: sensors use built-in controls; no test buttons / faux power switch.
+// Wokwi GAYAK: sensor controls plus D11-to-GND LCD panel button; no faux power switch.
 // Photoresistor module on D3 is a visible-light proxy, NOT a real flame sensor.
 // LEDs: D5 GREEN, D6 YELLOW, D7 RED; buzzers: D8 SMOKE, D9 QUAKE, D10 FIRE.
 // Wokwi piezos use tone(); the real two-terminal active buzzers use DC drivers.
@@ -13,7 +13,7 @@
 
  Pin assignments for the Wokwi simulation:
  D2 DHT22, D3 flame DO, D5 green LED, D6 yellow LED, D7 red LED,
- A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
+ D11 LCD panel button, A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
  Smoke: one short D8 pulse each second.
@@ -47,6 +47,7 @@
 #define DHT_TYPE DHT22
 #define FLAME_PIN 3
 #define MQ2_PIN A0
+#define PANEL_BUTTON_PIN 11
 
 // GY-521 MPU-6050; shared I2C with LCD on A4/A5.
 #define MPU_ADDR 0x68
@@ -69,8 +70,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // ================ SETTINGS ================
 
-const unsigned long PANEL_INTERVAL  = 1800UL;
 const unsigned long SENSOR_INTERVAL = 2200UL; // DHT22 minimum 2 seconds
+const unsigned long PANEL_BUTTON_DEBOUNCE_MS = 40UL;
 
 // ================ MPU-6050 ACCELERATION / SHAKING SETTINGS ================
 // Experimental local motion levels; NOT earthquake magnitude or official intensity.
@@ -211,10 +212,12 @@ byte lastDisplayMode = 255;   // forces a clean first draw
 
 // ================ DHT22 VARIABLES ================
 
-unsigned long lastPanelChange = 0;
 unsigned long lastSensorRead = 0;
 
 byte currentPanel = 0;
+bool panelButtonLastReading = HIGH;
+bool panelButtonStableState = HIGH;
+unsigned long panelButtonLastChange = 0;
 
 bool sensorOK = false;
 bool firstReading = true;
@@ -1101,6 +1104,25 @@ void printDiagnostics(unsigned long now) {
 
 // ================ LCD DISPLAY ================
 
+void updatePanelButton(unsigned long now) {
+  byte panelCount = (mq2State == MQ2_READY) ? 3 : 4;
+  if (currentPanel >= panelCount) currentPanel = 0;
+
+  bool reading = digitalRead(PANEL_BUTTON_PIN);
+  if (reading != panelButtonLastReading) {
+    panelButtonLastReading = reading;
+    panelButtonLastChange = now;
+  }
+
+  if (now - panelButtonLastChange >= PANEL_BUTTON_DEBOUNCE_MS &&
+      reading != panelButtonStableState) {
+    panelButtonStableState = reading;
+    if (panelButtonStableState == LOW) {
+      currentPanel = (currentPanel + 1) % panelCount;
+    }
+  }
+}
+
 void showPanel() {
   // Fire outranks smoke, smoke outranks normal.
   byte mode = MODE_NORMAL;
@@ -1214,6 +1236,10 @@ void setup() {
 
   pinMode(MQ2_PIN, INPUT);
   pinMode(FLAME_PIN, INPUT); // Wokwi light-sensor DO is an actively driven digital output
+  pinMode(PANEL_BUTTON_PIN, INPUT_PULLUP);
+  panelButtonLastReading = digitalRead(PANEL_BUTTON_PIN);
+  panelButtonStableState = panelButtonLastReading;
+  panelButtonLastChange = millis();
 
   pinMode(LED_GREEN_PIN, OUTPUT);
   pinMode(LED_YELLOW_PIN, OUTPUT);
@@ -1254,7 +1280,6 @@ void setup() {
 
   unsigned long now = millis();
 
-  lastPanelChange = now;
   lastSensorRead = 0;
 
   mq2StartTime = now;
@@ -1288,18 +1313,7 @@ void loop() {
   printDiagnostics(now);
   updateLeds(now);
   updateBuzzers(now);
-
-  // Rotate LCD panels every 3 seconds.
-  // 3 panels with MPU status, or 4 while the MQ-2 warms/calibrates.
-  if (now - lastPanelChange >= PANEL_INTERVAL) {
-    lastPanelChange = now;
-
-    byte panelCount = (mq2State == MQ2_READY) ? 3 : 4;
-    currentPanel++;
-    if (currentPanel >= panelCount) {
-      currentPanel = 0;
-    }
-  }
+  updatePanelButton(now);
 
   showPanel();
 
