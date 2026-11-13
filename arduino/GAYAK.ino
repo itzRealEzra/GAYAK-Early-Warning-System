@@ -134,11 +134,11 @@ const unsigned long MQ2_DEBUG_INTERVAL  = 1000UL;
 
 // False-alarm protection
 const int MQ2_OVERSAMPLE = 16;                   // ADC reads averaged per sample
-const unsigned long MQ2_CONFIRM_MS = 1500UL;     // sustained rise required; reduced for earlier detection
+const unsigned long MQ2_CONFIRM_MS = 400UL;      // short confirmation for small smoke-related rises
 
 // Provisional ADC-difference thresholds (NOT calibrated concentrations).
-const int MQ2_TRIGGER_DELTA   = 20;   // provisional relative ADC rise; tune from clean-air readings
-const int MQ2_CLEAR_DELTA     = 12;   // hysteresis below trigger
+const int MQ2_TRIGGER_DELTA   = 8;    // high-sensitivity provisional relative ADC rise
+const int MQ2_CLEAR_DELTA     = 4;    // hysteresis below trigger
 
 // Asymmetric filter: slow to rise, fast to fall
 const float MQ2_RISE_ALPHA = 0.25f;   // responds faster to rising smoke readings

@@ -26,7 +26,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 ## Features
 
 - **DHT22:** temperature and relative humidity feed the PAGASA heat-index method; the LCD and dashboard label this calculated value **HI**.
-- **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a lower provisional trigger delta confirmed for 1.5 seconds.
+- **MQ-2:** high-sensitivity relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a small provisional ADC rise confirmed for 0.4 seconds. It can also react to other gases and is not a calibrated or certified smoke alarm.
 - **Flame module:** digital flame indication on the **physical hardware**, confirmed over 3 seconds to reject brief light changes. Aim it into the room away from windows/sky, adjust its sensitivity potentiometer in place, and use an opaque hood to narrow its field of view. Its digital output can still respond to a steady infrared source that crosses its threshold.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD / D11 button:** one press acknowledges all currently active fire, smoke, shaking, and HI alerts, clears their LCD overlays and dashboard alert banners, silences their buzzer patterns, and dismisses an active HI popup. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. Sensor readings remain active; each alert can sound again after its source clears and triggers again. When there is no new alert to acknowledge, D11 advances the LCD panel.

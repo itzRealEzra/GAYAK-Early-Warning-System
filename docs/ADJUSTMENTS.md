@@ -7,11 +7,11 @@
 | Parameter | Function | Physical prototype default | Wokwi default |
 | --- | --- | --- | --- |
 | `SENSOR_INTERVAL` | DHT22 polling | 2500 ms | 2200 ms |
-| `MQ2_WARMUP_MS` | Initial sensor warm-up | 180000 ms | 5000 ms |
+| `MQ2_WARMUP_MS` | Initial sensor warm-up | 120000 ms | 5000 ms |
 | `MQ2_BASELINE_MS` | Normal-air averaging | 20000 ms | 3000 ms |
-| `MQ2_CONFIRM_MS` | Required smoke delta duration | 2000 ms | 750 ms |
-| `MQ2_TRIGGER_DELTA` | Analog ADC difference that activates smoke | 40 | 40 |
-| `MQ2_CLEAR_DELTA` | Delta below which smoke can clear | 25 | 25 |
+| `MQ2_CONFIRM_MS` | Required smoke delta duration | 400 ms | 250 ms |
+| `MQ2_TRIGGER_DELTA` | Analog ADC difference that activates smoke | 8 | 12 |
+| `MQ2_CLEAR_DELTA` | Delta below which smoke can clear | 4 | 6 |
 | `MPU_SAMPLE_MS` | MPU read target interval | 20 ms (~50 Hz) | 20 ms |
 | `MOTION_NOTICE_RMS_G` | Start displaying unconfirmed movement | 0.04 g | 0.04 g |
 | `QUAKE_TRIGGER_RMS_G` | STRONG SHAKING / alert confirmation threshold | 0.12 g | 0.12 g |
@@ -28,8 +28,8 @@ These are **initial experimental defaults**, not approved alarm thresholds. If a
 1. Allow full warm-up with the sensor in clean ambient air. The firmware is set to 180 s warm-up and 20 s baseline collection; first-use sensing elements may require additional manufacturer-recommended conditioning beyond that.
 2. Read Serial Monitor at **115200 baud**. Observe `RAW`, `FILTERED`, `BASE`, `DELTA` and `STATE`.
 3. Record ten baseline/delta readings in normal ambient air at similar humidity and temperature.
-4. If background noise repeatedly approaches the trigger delta, do not lower the threshold; investigate wiring, power supply noise, heating and baseline drift first.
-5. Increase `MQ2_TRIGGER_DELTA` to reduce sensitivity (but potentially miss weak events), decrease only after controlled validation. Keep `MQ2_CLEAR_DELTA` below `MQ2_TRIGGER_DELTA` for hysteresis.
+4. The physical default is intentionally sensitive: a filtered rise of 8 ADC counts above the clean-air baseline for 0.4 seconds triggers the alert. If it false-triggers, investigate wiring, power supply noise, warm-up, and baseline drift; then increase `MQ2_TRIGGER_DELTA` or `MQ2_CONFIRM_MS` in small steps.
+5. Keep `MQ2_CLEAR_DELTA` below `MQ2_TRIGGER_DELTA` for hysteresis. These values are prototype response settings, not an absolute smoke concentration threshold.
 6. Re-test three trials and record both detection and clearing times. The output is an **ADC delta, not calibrated smoke ppm**.
 
 **Wokwi**: set initial MQ-2 gas level to its default during startup and only increase the simulated ppm after baseline calibration. The simulator's ppm control does **not** mean the physical sketch measures absolute ppm.
