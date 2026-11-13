@@ -31,7 +31,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
 - **LCD:** press the D11 button to advance sensor panels; active fire/smoke/quake alerts override the selected panel. HI Danger (41–<52°C) and Extreme Danger (≥52°C) show an LCD warning until D11 acknowledges it or a valid HI reading falls below 41°C.
 - **Heat-index LEDs after MQ-2 calibration:** Safe (<27°C) is green; Caution (27–<33°C) yellow; Extreme Caution (33–<41°C) yellow + red; Danger (41–<52°C) red; Extreme Danger (≥52°C) yellow + red.
-- **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing the device's D11 button also acknowledges the firmware warning and syncs that acknowledgement to the dashboard.
+  - **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing the device's D11 button acknowledges the firmware warning, silences the Extreme Danger buzzer, and syncs the acknowledgement to clear the dashboard popup.
 - **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning until D11 is pressed or HI falls below 41°C. Only one buzzer pattern runs at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 

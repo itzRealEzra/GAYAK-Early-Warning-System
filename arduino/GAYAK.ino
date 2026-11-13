@@ -1212,7 +1212,7 @@ void showPanel() {
     char heatValue[17];
     char hiText[8];
     dtostrf(heatIndex, 1, 1, hiText);
-    snprintf_P(heatValue, sizeof(heatValue), PSTR("%s C  D11=Ack"), hiText);
+    snprintf_P(heatValue, sizeof(heatValue), PSTR("HI: %s C"), hiText);
     printLine(1, heatValue);
     return;
   }

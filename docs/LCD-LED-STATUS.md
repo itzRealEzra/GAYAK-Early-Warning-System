@@ -13,7 +13,7 @@ Temp:       58.0 °C
 Humid:          45 %
 ```
 
-Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. Warm-up and calibration pages show the remaining time at the right edge. Hazard messages use compact title-case instructions. HI Danger (≥41°C) and Extreme Danger (≥52°C) temporarily replace the normal display with a warning. Press D11 to acknowledge it; the next press resumes panel cycling. The warning also clears automatically when a valid HI reading drops below 41°C.
+Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. Warm-up and calibration pages show the remaining time at the right edge. Hazard messages use compact title-case instructions. HI Danger (≥41°C) and Extreme Danger (≥52°C) temporarily replace the normal display with a warning and the current HI value. Pressing D11 acknowledges the warning, silences the Extreme Danger buzzer, and clears the matching dashboard popup; the next press resumes panel cycling. The warning also clears automatically when a valid HI reading drops below 41°C.
 
 ## LED sequence
 
