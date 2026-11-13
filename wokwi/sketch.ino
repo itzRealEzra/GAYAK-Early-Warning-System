@@ -100,7 +100,7 @@ const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = gree
 
 // ================ DISTINCT BUZZER ALARMS ================
 // Rhythm patterns work with the Wokwi piezo proxies and physical active buzzers.
-enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE };
+enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE, BUZZER_HEAT };
 struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
 
 // Smoke: one short pulse each second on D8.
@@ -122,6 +122,10 @@ const BuzzerStep FIRE_SMOKE_PATTERN[] = {
   { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
   { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
   { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+};
+const BuzzerStep HEAT_PATTERN[] = {
+  { BUZZER_QUAKE_PIN, 500 }, { 0, 250 },
+  { BUZZER_QUAKE_PIN, 500 }, { 0, 1000 }
 };
 
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
@@ -165,6 +169,7 @@ const long SERIAL_BAUD = 115200;                   // must match GAYAK_BAUD in a
 unsigned long lastSerialSend = 0;
 bool lastSentSmoke = false;   // alert state in the last DATA record
 bool lastSentFlame = false;
+bool lastSentHeatAcknowledged = false;
 
 // ================ MPU-6050 STATE ================
 // Local filtered acceleration in g; not a seismic intensity classification.
@@ -207,6 +212,7 @@ const byte MODE_NORMAL = 0;
 const byte MODE_SMOKE  = 1;
 const byte MODE_FIRE   = 2;
 const byte MODE_QUAKE  = 3;
+const byte MODE_HEAT   = 4;
 
 byte lastDisplayMode = 255;   // forces a clean first draw
 
@@ -229,6 +235,8 @@ float temperature = 0.0;
 float humidity = 0.0;
 float heatIndex = 0.0;
 int heatIndexTenths = 0;
+bool heatWarningActive = false;
+bool heatAlertAcknowledged = false;
 
 // LCD line cache prevents unnecessary flicker.
 char previousLine0[17] = "";
@@ -466,9 +474,9 @@ void sendQuakeData(unsigned long now) {
 // ================ HEAT STATUS ================
 
 const __FlashStringHelper* getHeatStatus(int hiTenths) {
-  if (hiTenths > 540) return F("EXT DANG");
+  if (hiTenths >= 520) return F("EXT DANG");
   if (hiTenths >= 410) return F("DANGER");
-  if (hiTenths >= 320) return F("EXT CAUT");
+  if (hiTenths >= 330) return F("EXT CAUT");
   if (hiTenths >= 270) return F("CAUTION");
   return F("NORMAL");
 }
@@ -481,15 +489,11 @@ void setLeds(bool green, bool yellow, bool red) {
   digitalWrite(LED_RED_PIN,    red    ? HIGH : LOW);
 }
 
-// Priority: fire > smoke > shaking > MQ-2 state > MPU offline.
+// Calibration keeps red/yellow steady; after calibration, valid HI drives LEDs.
 //   FIRE            = RED solid
 //   SMOKE           = YELLOW solid
-//   WARMING UP      = RED blinking
-//   CALIBRATING     = YELLOW blinking
-//   WORKING/NORMAL  = GREEN (solid, or blinking if GREEN_BLINK_WHEN_READY)
+//   EXTREME DANGER / EXTREME CAUTION = YELLOW + RED
 void updateLeds(unsigned long now) {
-  bool blinkOn = ((now / LED_BLINK_MS) % 2UL) == 0UL;
-
   if (flameAlert) {
     setLeds(false, false, true);
   } else if (mq2Alert) {
@@ -498,12 +502,20 @@ void updateLeds(unsigned long now) {
     // Distinctive fast red blink for vibration/shaking.
     setLeds(false, false, ((now / 250UL) % 2UL) == 0UL);
   } else if (mq2State == MQ2_WARMING_UP) {
-    setLeds(false, false, blinkOn);
+    setLeds(false, false, true);
   } else if (mq2State == MQ2_CALIBRATING) {
-    setLeds(false, blinkOn, false);
-  } else if (!mpuReady) {
+    setLeds(false, true, false);
+  } else if (sensorOK && heatIndexTenths >= 520) {
+    setLeds(false, true, true);
+  } else if (sensorOK && heatIndexTenths >= 410) {
+    setLeds(false, false, true);
+  } else if (sensorOK && heatIndexTenths >= 330) {
+    setLeds(false, true, true);
+  } else if (sensorOK && heatIndexTenths >= 270) {
+    setLeds(false, true, false);
+  } else if (!mpuReady || !sensorOK) {
     // Do not show a green all-clear while the quake sensor is unavailable.
-    setLeds(false, blinkOn, false);
+    setLeds(false, true, false);
   } else {
     setLeds(GREEN_BLINK_WHEN_READY ? blinkOn : true, false, false);
   }
@@ -548,6 +560,9 @@ const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte &length) {
     case BUZZER_FIRE_SMOKE:
       length = sizeof(FIRE_SMOKE_PATTERN) / sizeof(FIRE_SMOKE_PATTERN[0]);
       return FIRE_SMOKE_PATTERN;
+    case BUZZER_HEAT:
+      length = sizeof(HEAT_PATTERN) / sizeof(HEAT_PATTERN[0]);
+      return HEAT_PATTERN;
     default:
       length = 0;
       return NULL;
@@ -571,12 +586,13 @@ void beginBuzzerStep(unsigned long now) {
 }
 
 // Call every loop; never use delay(), so all sensors keep updating.
-// Priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING > QUIET.
+// Priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HEAT > SHAKING > QUIET.
 void updateBuzzers(unsigned long now) {
   BuzzerAlarm requested = BUZZER_IDLE;
   if (flameAlert && mq2Alert) requested = BUZZER_FIRE_SMOKE;
   else if (flameAlert) requested = BUZZER_FIRE;
   else if (mq2Alert)   requested = BUZZER_SMOKE;
+  else if (heatWarningActive && heatIndexTenths >= 520 && !heatAlertAcknowledged) requested = BUZZER_HEAT;
   else if (quakeAlert) requested = BUZZER_QUAKE;
 
   // Start the appropriate pattern immediately when alerts change.
@@ -675,6 +691,8 @@ void readSensor() {
 
   heatIndex = dht.computeHeatIndex(temperature, humidity, false);
   heatIndexTenths = (int)roundf(heatIndex * 10.0f);
+  heatWarningActive = heatIndexTenths >= 410;
+  if (!heatWarningActive) heatAlertAcknowledged = false;
 
   sensorOK = true;
 
@@ -717,13 +735,15 @@ int readMQ2Averaged() {
 void sendSerialData(unsigned long now) {
   // An alert change goes out immediately; everything else every interval.
   bool alertChanged = (mq2Alert != lastSentSmoke) ||
-                      (flameAlert != lastSentFlame);
+                      (flameAlert != lastSentFlame) ||
+                      (heatAlertAcknowledged != lastSentHeatAcknowledged);
   if (!alertChanged && now - lastSerialSend < SERIAL_INTERVAL_MS) {
     return;
   }
   lastSerialSend = now;
   lastSentSmoke = mq2Alert;
   lastSentFlame = flameAlert;
+  lastSentHeatAcknowledged = heatAlertAcknowledged;
 
   Serial.print(F("DATA,"));
 
@@ -794,7 +814,10 @@ void sendSerialData(unsigned long now) {
   // Live flame pin level + learned idle level (for wiring diagnostics)
   Serial.print(digitalRead(FLAME_PIN));
   Serial.print(F(","));
-  Serial.println(flameIdleLevel);
+  Serial.print(flameIdleLevel);
+  Serial.print(F(","));
+  Serial.print(heatAlertAcknowledged ? 1 : 0);
+  Serial.println();
 }
 
 // ================ MQ-2 SMOKE DETECTION ================
@@ -1118,16 +1141,21 @@ void updatePanelButton(unsigned long now) {
       reading != panelButtonStableState) {
     panelButtonStableState = reading;
     if (panelButtonStableState == LOW) {
-      currentPanel = (currentPanel + 1) % panelCount;
+      if (heatWarningActive && !heatAlertAcknowledged) {
+        heatAlertAcknowledged = true;
+      } else {
+        currentPanel = (currentPanel + 1) % panelCount;
+      }
     }
   }
 }
 
 void showPanel() {
-  // Fire outranks smoke, smoke outranks normal.
+  // Fire and smoke outrank heat; an unacknowledged HI warning outranks shaking.
   byte mode = MODE_NORMAL;
   if (flameAlert)      mode = MODE_FIRE;
   else if (mq2Alert)   mode = MODE_SMOKE;
+  else if (heatWarningActive && !heatAlertAcknowledged) mode = MODE_HEAT;
   else if (quakeAlert) mode = MODE_QUAKE;
 
   // Clean slate whenever the display mode changes.
@@ -1145,6 +1173,16 @@ void showPanel() {
   if (mode == MODE_SMOKE) {
     printLineP(0, F("SMOKE ALERT!"));
     printLineP(1, F("EVACUATE NOW!"));
+    return;
+  }
+
+  if (mode == MODE_HEAT) {
+    printLineP(0, heatIndexTenths >= 520 ? F("HI EXT DANGER") : F("HI DANGER"));
+    char heatValue[17];
+    char hiText[8];
+    dtostrf(heatIndex, 1, 1, hiText);
+    snprintf_P(heatValue, sizeof(heatValue), PSTR("%s C  D11=Ack"), hiText);
+    printLine(1, heatValue);
     return;
   }
 

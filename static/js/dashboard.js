@@ -253,24 +253,61 @@
 
 
   /* ---------- Status LED: mirrors the Arduino, in the tab title + top bar ---------- */
-  // Same rules as the sketch: FIRE red solid, SMOKE yellow solid,
-  // warming up red blinking, calibrating yellow blinking, working green solid.
+  // Mirrors the sketch: sensor alarms/calibration take priority, then HI bands.
   const LED_EMOJI = { red: "\uD83D\uDD34", yellow: "\uD83D\uDFE1", green: "\uD83D\uDFE2", off: "\u26AA" };
-  const LED_HEX = { red: "#ff3b30", yellow: "#ffcc00", green: "#34c759", off: "#c7c7cc" };
+  const LED_HEX = { red: "#ff3b30", yellow: "#ffcc00", yellowred: "#ff9500", green: "#34c759", off: "#c7c7cc" };
   const LED_BLINK_MS = 500;
 
   let led = { color: "off", blink: false, label: "No signal", title: "Offline" };
   let ledKey = "";
+  let heatDangerActive = false;
+  let heatPopupDismissed = false;
+  let latestHeatIndex = null;
 
-  function ledFor(conn, stale, state, smoke, fire, quake, quakeOnline) {
+  function renderHeatPopup(heatIndex, firmwareAcknowledged) {
+    const numericHI = heatIndex == null ? null : Number(heatIndex);
+    if (numericHI != null && Number.isFinite(numericHI)) {
+      latestHeatIndex = numericHI;
+      if (numericHI < 41) {
+        heatDangerActive = false;
+        heatPopupDismissed = false;
+      } else if (!heatDangerActive) {
+        heatDangerActive = true;
+        heatPopupDismissed = false;
+      }
+    }
+    if (firmwareAcknowledged === true) heatPopupDismissed = true;
+
+    const visible = heatDangerActive && !heatPopupDismissed;
+    setClass($("heatModal"), "hidden", !visible);
+    if (!visible) return;
+
+    const extreme = latestHeatIndex >= 52;
+    setText($("heatModalTitle"), extreme ? "EXTREME DANGER: HEAT INDEX" : "DANGER: HEAT INDEX");
+    setText($("heatModalMessage"), extreme
+      ? "Extreme heat-index conditions. Move to a cooler place and hydrate."
+      : "Dangerous heat-index conditions. Reduce exertion and move to a cooler place.");
+    setText($("heatModalValue"), latestHeatIndex == null ? "Latest reading unavailable" : "HI: " + latestHeatIndex.toFixed(1) + " °C");
+  }
+
+  function ledFor(conn, stale, state, smoke, fire, quake, quakeOnline, heatIndex) {
     if (conn !== "CONNECTED" || stale) return { color: "off", blink: false, label: "No signal", title: "Offline" };
     if (fire)  return { color: "red",    blink: false, label: "Fire alert",   title: "FIRE ALERT" };
     if (smoke) return { color: "yellow", blink: false, label: "Smoke alert",  title: "SMOKE ALERT" };
     if (quake) return { color: "red", blink: true, label: "Shaking detected", title: "SHAKING" };
-    if (quakeOnline === false) return { color: "yellow", blink: true, label: "MPU offline", title: "MPU offline" };
     if (state === "WARMING_UP")  return { color: "red",    blink: true,  label: "Warming up",  title: "Warming up" };
     if (state === "CALIBRATING") return { color: "yellow", blink: true,  label: "Calibrating", title: "Calibrating" };
-    if (state === "MONITORING")  return { color: "green",  blink: false, label: "Working",     title: "Monitoring" };
+    if (state === "MONITORING" && heatIndex != null && Number.isFinite(Number(heatIndex))) {
+      const hi = Number(heatIndex);
+      if (hi >= 52) return { color: "yellowred", blink: false, label: "HI Extreme danger", title: "HI EXTREME DANGER" };
+      if (hi >= 41) return { color: "red", blink: false, label: "HI Danger", title: "HI DANGER" };
+      if (hi >= 33) return { color: "yellowred", blink: false, label: "HI Extreme caution", title: "HI EXTREME CAUTION" };
+      if (hi >= 27) return { color: "yellow", blink: false, label: "HI Caution", title: "HI CAUTION" };
+      if (quakeOnline === false) return { color: "yellow", blink: true, label: "MPU offline", title: "MPU OFFLINE" };
+      return { color: "green", blink: false, label: "HI Safe", title: "HI SAFE" };
+    }
+    if (quakeOnline === false) return { color: "yellow", blink: true, label: "MPU offline", title: "MPU OFFLINE" };
+    if (state === "MONITORING") return { color: "yellow", blink: true, label: "Heat index unavailable", title: "HI UNAVAILABLE" };
     return { color: "off", blink: false, label: "No signal", title: "Offline" };
   }
 
@@ -297,8 +334,8 @@
     if (document.title !== t) document.title = t;
     drawFavicon(LED_HEX[shown]);
 
-    setClass($("lampRed"), "on", shown === "red");
-    setClass($("lampYellow"), "on", shown === "yellow");
+    setClass($("lampRed"), "on", shown === "red" || shown === "yellowred");
+    setClass($("lampYellow"), "on", shown === "yellow" || shown === "yellowred");
     setClass($("lampGreen"), "on", shown === "green");
     setText($("ledLabel"), led.label);
   }
@@ -370,6 +407,7 @@
     setText($("metaHum"), r.humidity == null ? "Sensor unavailable" : "");
     setText($("metaHi"), r.heat_status || DASH);
     setCardState($("cardHi"), heatKind(r.heat_status));
+    renderHeatPopup(r.heat_index, r.heat_alert_acknowledged);
 
     /* Gas / smoke */
     const smoke = !!r.mq2_alert;
@@ -442,7 +480,7 @@
     if (fire) { const t = latestEventTime(events, "fire"); setText($("fireStarted"), t ? "Active since " + fmtTime(t) : ""); }
     if (smoke) { const t = latestEventTime(events, "smoke"); setText($("smokeStarted"), t ? "Active since " + fmtTime(t) : ""); }
     if (quake) { const t = latestEventTime(events, "quake"); setText($("quakeStarted"), t ? "Active since " + fmtTime(t) : ""); }
-    led = ledFor(conn, stale, state, smoke, fire, quake, quakeOnline);
+    led = ledFor(conn, stale, state, smoke, fire, quake, quakeOnline, r.heat_index);
     applyLed();
 
     /* Diagnostics */
@@ -539,6 +577,10 @@
     if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) toggleFullscreen();
   });
   document.querySelector(".toolbar").addEventListener("dblclick", toggleFullscreen);
+  $("heatDismiss").addEventListener("click", () => {
+    heatPopupDismissed = true;
+    setClass($("heatModal"), "hidden", true);
+  });
 
   setInterval(applyLed, 250);
   applyLed();

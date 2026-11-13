@@ -10,7 +10,7 @@ source: "arduino/GAYAK.ino"
 
 ## Purpose
 
-Maintains a continuous status flow: steady red during MQ-2 warm-up, steady yellow during calibration (or MPU offline), and steady green when ready. Fire/smoke status overrides remain solid; active shaking uses a fast red blink. Solid warm-up/calibration indications avoid dark gaps between phases.
+Maintains a continuous status flow: steady red during MQ-2 warm-up, steady yellow during calibration, then maps valid heat index to LEDs after calibration: below 27°C green; 27–<33°C yellow; 33–<41°C yellow + red; 41–<52°C red; and ≥52°C yellow + red. Fire, smoke, and shaking indications keep priority. If HI or MPU data is unavailable while otherwise clear, yellow prevents a false all-clear.
 
 ## Related notes
 

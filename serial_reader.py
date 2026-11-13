@@ -76,6 +76,7 @@ class SerialReader:
             "fire_alert": False,
             "flame_pin": None,
             "flame_idle": None,
+            "heat_alert_acknowledged": None,
             "quake_online": None,
             "quake_alert": False,
             "quake_rms_g": None,
@@ -160,6 +161,7 @@ class SerialReader:
                 "fire_alert": False,
                 "flame_pin": None,
                 "flame_idle": None,
+                "heat_alert_acknowledged": None,
                 "quake_online": None,
                 "quake_alert": False,
                 "quake_rms_g": None,
@@ -255,7 +257,7 @@ class SerialReader:
 
     def _parse_data(self, text: str) -> None:
         parts = text.split(",")
-        if len(parts) not in (10, 13) or parts[0] != "DATA":
+        if len(parts) not in (10, 13, 14) or parts[0] != "DATA":
             return
         try:
             readings = {
@@ -273,8 +275,9 @@ class SerialReader:
                 "fire_alert": False,
                 "flame_pin": None,
                 "flame_idle": None,
+                "heat_alert_acknowledged": (parts[13].strip() == "1") if len(parts) == 14 else None,
             }
-            if len(parts) == 13:
+            if len(parts) in (13, 14):
                 readings["fire_alert"] = parts[10].strip() == "1"
                 readings["flame_pin"] = self._to_int(parts[11])
                 readings["flame_idle"] = self._to_int(parts[12])

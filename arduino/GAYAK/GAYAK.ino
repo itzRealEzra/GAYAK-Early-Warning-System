@@ -1,16 +1,9 @@
 /*
  GAYAK - Complete Arduino Uno R3 firmware and three active buzzers
 
- PROTOTYPE BUZZER WIRING (no transistor, limited sound output):
-   Uno D8  -- 1k ohm series resistor -- (+) 5V active buzzer #1
-   Uno D9  -- 1k ohm series resistor -- (+) 5V active buzzer #2
-   Uno D10 -- 1k ohm series resistor -- (+) SFM-27 3-24V buzzer
-   Each buzzer (-) --------------------- Uno GND
-
- HIGH switches a buzzer ON. LOW switches it OFF.
- The 1k series resistors limit current to <5mA, but buzzers may be
- quieter / unreliable at this current. For a finished warning device,
- use a properly rated transistor/MOSFET or buzzer driver.
+ Buzzer modules are switched by D8/D9/D10. Match each buzzer's supply and
+ current to its driver; do not power a higher-voltage/higher-current sounder
+ directly from an Arduino I/O pin. HIGH requests ON; LOW requests OFF.
 
  Pin assignments for the physical GAYAK hardware:
  D2 DHT22, D3 flame DO, D5 green LED, D6 yellow LED, D7 red LED,
@@ -21,7 +14,7 @@
  Fire: three short pulses on D10 followed by a pause.
  Shaking: D9 and D8 alternate, followed by a short pause.
  Fire + smoke: two fast D10 pulses then a longer D8 pulse.
- Alarm priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.
+ Alarm priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HI > SHAKING.
 
  NOTE: This is a laboratory prototype, not a certified life-safety or
  earthquake warning system. MPU6050 detects motion, not earthquake origin.
@@ -54,17 +47,17 @@
 #define MPU_ADDR 0x68
 
 // LEDs: D5 Green, D6 Yellow, D7 Red; each via 220-ohm series resistor to LED anode, cathode to GND.
-#define LED_RED_PIN    7
+#define LED_RED_PIN 7
 #define LED_YELLOW_PIN 6
-#define LED_GREEN_PIN  5
+#define LED_GREEN_PIN 5
 
 // Three separate 2-pin active buzzers. Prototype: 1k series resistor
 // from each pin to buzzer (+), each buzzer (-) to GND.
 // Properly rated drivers are recommended for the final deployment.
 // HIGH turns on an active buzzer; LOW turns it off.
-#define BUZZER_SMOKE_PIN 8    // 5V active buzzer #1
-#define BUZZER_QUAKE_PIN 9    // 5V active buzzer #2
-#define BUZZER_FIRE_PIN  10   // SFM-27 (3-24V) active buzzer
+#define BUZZER_SMOKE_PIN 8  // 5V active buzzer #1
+#define BUZZER_QUAKE_PIN 9  // 5V active buzzer #2
+#define BUZZER_FIRE_PIN 10  // SFM-27 (3-24V) active buzzer
 
 // ================ COMPONENTS ================
 
@@ -79,28 +72,36 @@ const unsigned long PANEL_BUTTON_DEBOUNCE_MS = 40UL;
 // ================ MPU-6050 ACCELERATION / SHAKING SETTINGS ================
 // Experimental local motion levels; NOT earthquake magnitude or official intensity.
 // Secure the MPU firmly to the structure being monitored.
-const unsigned long MPU_SAMPLE_MS       = 20UL;    // target 50 Hz
-const unsigned long MPU_RETRY_MS        = 5000UL;
-const unsigned long MPU_SETTLE_MS       = 5000UL;  // calibrate gravity baseline; suppress startup alerts
-const unsigned long QUAKE_CONFIRM_MS    = 800UL;   // sustained vibration
-const unsigned long QUAKE_CLEAR_MS      = 2500UL;  // must be quiet to clear
-const unsigned long QUAKE_MIN_HOLD_MS   = 5000UL;  // minimum alert duration
-const unsigned long QUAKE_SERIAL_MS     = 1000UL;
+const unsigned long MPU_SAMPLE_MS = 20UL;  // target 50 Hz
+const unsigned long MPU_RETRY_MS = 5000UL;
+const unsigned long MPU_SETTLE_MS = 5000UL;      // calibrate gravity baseline; suppress startup alerts
+const unsigned long QUAKE_CONFIRM_MS = 800UL;    // sustained vibration
+const unsigned long QUAKE_CLEAR_MS = 2500UL;     // must be quiet to clear
+const unsigned long QUAKE_MIN_HOLD_MS = 5000UL;  // minimum alert duration
+const unsigned long QUAKE_SERIAL_MS = 1000UL;
 
-const float MOTION_NOTICE_RMS_G = 0.04f;   // unconfirmed movement indication
-const float QUAKE_TRIGGER_RMS_G = 0.12f;  // sustained STRONG shaking threshold
-const float INTENSE_SHAKING_RMS_G = 0.30f; // intense filtered acceleration (not Richter)
-const float QUAKE_CLEAR_RMS_G   = 0.06f;
-const float MPU_GRAVITY_ALPHA   = 0.005f; // slow-moving gravity baseline
-const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
+const float MOTION_NOTICE_RMS_G = 0.04f;    // unconfirmed movement indication
+const float QUAKE_TRIGGER_RMS_G = 0.12f;    // sustained STRONG shaking threshold
+const float INTENSE_SHAKING_RMS_G = 0.30f;  // intense filtered acceleration (not Richter)
+const float QUAKE_CLEAR_RMS_G = 0.06f;
+const float MPU_GRAVITY_ALPHA = 0.005f;  // slow-moving gravity baseline
+const float MPU_ENERGY_ALPHA = 0.08f;    // RMS-like vibration smoother
 
 // Change only after comparing with a reliable thermometer.
 const float TEMP_OFFSET = 0.0;
 
 // ================ DISTINCT BUZZER ALARMS ================
 // Rhythms are made with the existing active buzzers; only one sounds at a time.
-enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE };
-struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
+enum BuzzerAlarm { BUZZER_IDLE,
+                   BUZZER_SMOKE,
+                   BUZZER_QUAKE,
+                   BUZZER_FIRE,
+                   BUZZER_FIRE_SMOKE,
+                   BUZZER_HEAT };
+struct BuzzerStep {
+  byte pin;
+  unsigned int durationMs;
+};  // pin 0 = silence
 
 // Smoke: one short pulse each second on D8.
 const BuzzerStep SMOKE_PATTERN[] = {
@@ -108,9 +109,7 @@ const BuzzerStep SMOKE_PATTERN[] = {
 };
 // Fire: three short pulses on the fire buzzer, then a clear pause.
 const BuzzerStep FIRE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
+  { BUZZER_FIRE_PIN, 180 }, { 0, 120 }, { BUZZER_FIRE_PIN, 180 }, { 0, 120 }, { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
 };
 // Shaking: alternating buzzers with a short break between each pair.
 const BuzzerStep QUAKE_PATTERN[] = {
@@ -118,9 +117,12 @@ const BuzzerStep QUAKE_PATTERN[] = {
 };
 // Fire + smoke: two fast fire pulses followed by one longer smoke-buzzer pulse.
 const BuzzerStep FIRE_SMOKE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+  { BUZZER_FIRE_PIN, 120 }, { 0, 100 }, { BUZZER_FIRE_PIN, 120 }, { 0, 100 }, { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+};
+// Extreme heat: a distinct two-pulse warning on the shaking buzzer (D9).
+const BuzzerStep HEAT_PATTERN[] = {
+  { BUZZER_QUAKE_PIN, 500 }, { 0, 250 },
+  { BUZZER_QUAKE_PIN, 500 }, { 0, 1000 }
 };
 
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
@@ -128,46 +130,50 @@ byte buzzerStep = 0;
 unsigned long buzzerPhaseStarted = 0;
 
 // MQ-2 smoke detector timing
-const unsigned long MQ2_WARMUP_MS       = 120000UL;  // 2-minute warm-up, then 20-second baseline calibration
-const unsigned long MQ2_BASELINE_MS     = 20000UL;   // was 10000UL (more samples averaged)
+const unsigned long MQ2_WARMUP_MS = 120000UL;   // 2-minute warm-up, then 20-second baseline calibration
+const unsigned long MQ2_BASELINE_MS = 20000UL;  // was 10000UL (more samples averaged)
 const unsigned long MQ2_SAMPLE_INTERVAL = 100UL;
-const unsigned long MQ2_CLEAR_TIME      = 1500UL;
-const unsigned long MQ2_DEBUG_INTERVAL  = 1000UL;
+const unsigned long MQ2_CLEAR_TIME = 1500UL;
+const unsigned long MQ2_DEBUG_INTERVAL = 1000UL;
 
 // False-alarm protection
-const int MQ2_OVERSAMPLE = 16;                   // ADC reads averaged per sample
-const unsigned long MQ2_CONFIRM_MS = 1500UL;     // sustained rise required; reduced for earlier detection
+const int MQ2_OVERSAMPLE = 16;                // ADC reads averaged per sample
+const unsigned long MQ2_CONFIRM_MS = 1500UL;  // sustained rise required; reduced for earlier detection
 
 // Provisional ADC-difference thresholds (NOT calibrated concentrations).
-const int MQ2_TRIGGER_DELTA   = 20;   // provisional relative ADC rise; tune from clean-air readings
-const int MQ2_CLEAR_DELTA     = 12;   // hysteresis below trigger
+const int MQ2_TRIGGER_DELTA = 20;  // provisional relative ADC rise; tune from clean-air readings
+const int MQ2_CLEAR_DELTA = 12;    // hysteresis below trigger
 
 // Asymmetric filter: slow to rise, fast to fall
-const float MQ2_RISE_ALPHA = 0.25f;   // responds faster to rising smoke readings
+const float MQ2_RISE_ALPHA = 0.25f;  // responds faster to rising smoke readings
 const float MQ2_FALL_ALPHA = 0.6f;
 
 // Baseline tracking (only applied while delta < MQ2_TRIGGER_DELTA)
-const float MQ2_BASELINE_RISE_IDLE   = 0.001f;  // was 0.0005f: follows slow thermal/humidity drift
-const float MQ2_BASELINE_FALL        = 0.02f;   // fast downward drift
-const float MQ2_BASELINE_RISE_ALERT  = 0.05f;   // releases a stuck offset
+const float MQ2_BASELINE_RISE_IDLE = 0.001f;  // was 0.0005f: follows slow thermal/humidity drift
+const float MQ2_BASELINE_FALL = 0.02f;        // fast downward drift
+const float MQ2_BASELINE_RISE_ALERT = 0.05f;  // releases a stuck offset
 
 // Fast-recovery: lets the baseline chase a decaying sensor tail while an
 // alert is active, without absorbing real (persistent) smoke.
 const float MQ2_BASELINE_RISE_RECOVERY = 0.05f;  // chase speed during decay
-const float MQ2_RECOVERY_FRACTION      = 0.6f;   // chase only below 60% of peak
-const float MQ2_SLOPE_TOLERANCE        = 1.0f;   // ADC counts per second
-const unsigned long MQ2_SLOPE_WINDOW   = 1000UL;
+const float MQ2_RECOVERY_FRACTION = 0.6f;        // chase only below 60% of peak
+const float MQ2_SLOPE_TOLERANCE = 1.0f;          // ADC counts per second
+const unsigned long MQ2_SLOPE_WINDOW = 1000UL;
 
 // Serial telemetry interval (GAYAK dashboard)
-const unsigned long SERIAL_INTERVAL_MS = 200UL;    // DATA record, 5 per second
-const long SERIAL_BAUD = 115200;                   // must match GAYAK_BAUD in app.py
+const unsigned long SERIAL_INTERVAL_MS = 200UL;  // DATA record, 5 per second
+const long SERIAL_BAUD = 115200;                 // must match GAYAK_BAUD in app.py
 unsigned long lastSerialSend = 0;
-bool lastSentSmoke = false;   // alert state in the last DATA record
+bool lastSentSmoke = false;  // alert state in the last DATA record
 bool lastSentFlame = false;
+bool lastSentHeatAcknowledged = false;
 
-// ================ MPU-6050 STATE ================
+// ================ MPU-6050 STATE ===============
 // Local filtered acceleration in g; not a seismic intensity classification.
-enum MotionLevel { MOTION_STABLE, MOTION_NOTICE, MOTION_STRONG, MOTION_INTENSE };
+enum MotionLevel { MOTION_STABLE,
+                   MOTION_NOTICE,
+                   MOTION_STRONG,
+                   MOTION_INTENSE };
 
 bool mpuReady = false;
 bool quakeAlert = false;
@@ -197,17 +203,18 @@ const bool FLAME_AUTO_LEARN = true;
 const bool FLAME_ACTIVE_LOW = true;
 
 const unsigned long FLAME_SAMPLE_INTERVAL = 50UL;
-const unsigned long FLAME_CLEAR_TIME      = 1500UL;
-const int FLAME_CONFIRM_SAMPLES           = 60;   // 3 seconds at 50 ms/sample; reject brief light changes
+const unsigned long FLAME_CLEAR_TIME = 1500UL;
+const int FLAME_CONFIRM_SAMPLES = 60;  // 3 seconds at 50 ms/sample; reject brief light changes
 
 // ================ DISPLAY MODES ================
 
 const byte MODE_NORMAL = 0;
-const byte MODE_SMOKE  = 1;
-const byte MODE_FIRE   = 2;
-const byte MODE_QUAKE  = 3;
+const byte MODE_SMOKE = 1;
+const byte MODE_FIRE = 2;
+const byte MODE_QUAKE = 3;
+const byte MODE_HEAT = 4;
 
-byte lastDisplayMode = 255;   // forces a clean first draw
+byte lastDisplayMode = 255;  // forces a clean first draw
 
 // ================ DHT22 VARIABLES ================
 
@@ -221,13 +228,15 @@ unsigned long panelButtonLastChange = 0;
 bool sensorOK = false;
 bool firstReading = true;
 
-const byte DHT_MAX_FAILS = 3;   // consecutive failed reads before "Sensor Error"
+const byte DHT_MAX_FAILS = 3;  // consecutive failed reads before "Sensor Error"
 byte dhtFailCount = 0;
 
 float temperature = 0.0;
 float humidity = 0.0;
 float heatIndex = 0.0;
 int heatIndexTenths = 0;
+bool heatWarningActive = false;
+bool heatAlertAcknowledged = false;
 
 // LCD line cache prevents unnecessary flicker.
 char previousLine0[17] = "";
@@ -249,22 +258,22 @@ unsigned long lastMQ2Debug = 0;
 unsigned long baselineStartTime = 0;
 unsigned long baselineSamples = 0;
 unsigned long mq2ClearStart = 0;
-unsigned long mq2ConfirmStart = 0;   // 0 = delta not currently above trigger
+unsigned long mq2ConfirmStart = 0;  // 0 = delta not currently above trigger
 
 float baselineSum = 0.0;
 float mq2Baseline = 0.0;
 float mq2Filtered = 0.0;
 
 // Fast-recovery tracking
-float mq2PeakDelta = 0.0f;       // highest delta seen during the current alert
-float mq2Slope = 0.0f;           // ADC counts per MQ2_SLOPE_WINDOW (+ rising, - falling)
-float mq2SlopeRef = 0.0f;        // filtered value at the start of the slope window
+float mq2PeakDelta = 0.0f;  // highest delta seen during the current alert
+float mq2Slope = 0.0f;      // ADC counts per MQ2_SLOPE_WINDOW (+ rising, - falling)
+float mq2SlopeRef = 0.0f;   // filtered value at the start of the slope window
 unsigned long mq2SlopeRefTime = 0;
 
 int mq2Raw = 0;
 
 bool mq2FilterInitialized = false;
-bool mq2Alert = false;      // true = smoke alert active
+bool mq2Alert = false;  // true = smoke alert active
 
 // ================ FLAME VARIABLES ================
 
@@ -285,14 +294,15 @@ bool writeMPURegister(byte reg, byte value) {
   return Wire.endTransmission() == 0;
 }
 
-bool readMPUAcceleration(float &x, float &y, float &z) {
+bool readMPUAcceleration(float& x, float& y, float& z) {
   Wire.beginTransmission(MPU_ADDR);
-  Wire.write(0x3B);                         // ACCEL_XOUT_H
+  Wire.write(0x3B);  // ACCEL_XOUT_H
   if (Wire.endTransmission(false) != 0) return false;
 
   // Only read accelerometer bytes: faster than fetching gyro + temperature.
   if (Wire.requestFrom((uint8_t)MPU_ADDR, (uint8_t)6,
-                       (uint8_t)true) != 6) return false;
+                       (uint8_t) true)
+      != 6) return false;
 
   int16_t rawX = (int16_t)((Wire.read() << 8) | Wire.read());
   int16_t rawY = (int16_t)((Wire.read() << 8) | Wire.read());
@@ -311,10 +321,8 @@ void initializeMPU(unsigned long now) {
 
   // Verify that a device is present at 0x68 and is an MPU-6050.
   Wire.beginTransmission(MPU_ADDR);
-  Wire.write(0x75);                         // WHO_AM_I
-  if (Wire.endTransmission(false) != 0 ||
-      Wire.requestFrom((uint8_t)MPU_ADDR, (uint8_t)1,
-                       (uint8_t)true) != 1) {
+  Wire.write(0x75);  // WHO_AM_I
+  if (Wire.endTransmission(false) != 0 || Wire.requestFrom((uint8_t)MPU_ADDR, (uint8_t)1, (uint8_t) true) != 1) {
     Serial.println(F("MPU6050 OFFLINE: check I2C wires"));
     return;
   }
@@ -326,9 +334,9 @@ void initializeMPU(unsigned long now) {
   }
 
   // Wake sensor, 44 Hz low-pass, 50 Hz sample-rate, +/-2 g range.
-  if (!writeMPURegister(0x6B, 0x01) ||   // PWR_MGMT_1
-      !writeMPURegister(0x1A, 0x03) ||   // CONFIG DLPF
-      !writeMPURegister(0x19, 19) ||     // SMPLRT_DIV
+  if (!writeMPURegister(0x6B, 0x01) ||  // PWR_MGMT_1
+      !writeMPURegister(0x1A, 0x03) ||  // CONFIG DLPF
+      !writeMPURegister(0x19, 19) ||    // SMPLRT_DIV
       !writeMPURegister(0x1C, 0x00)) {  // ACCEL_CONFIG
     Serial.println(F("MPU6050 setup failed"));
     return;
@@ -358,7 +366,7 @@ void initializeMPU(unsigned long now) {
 void updateMPU(unsigned long now) {
   if (!mpuReady) {
     if (now - lastMPURetry >= MPU_RETRY_MS) initializeMPU(now);
-    return;                              // Other GAYAK sensors keep working
+    return;  // Other GAYAK sensors keep working
   }
   if (now - lastMPURead < MPU_SAMPLE_MS) return;
   lastMPURead = now;
@@ -367,7 +375,7 @@ void updateMPU(unsigned long now) {
   if (!readMPUAcceleration(ax, ay, az)) {
     if (++mpuConsecutiveFails >= 3) {
       mpuReady = false;
-      quakeAlert = false;                // no false "safe" indication on LCD
+      quakeAlert = false;  // no false "safe" indication on LCD
       Serial.println(F("MPU6050 LOST - acceleration monitor OFFLINE"));
       lastMPURetry = now;
     }
@@ -423,8 +431,7 @@ void updateMPU(unsigned long now) {
   } else {
     if (quakeRmsG <= QUAKE_CLEAR_RMS_G) {
       if (quakeClearSince == 0) quakeClearSince = now;
-      if (now - quakeClearSince >= QUAKE_CLEAR_MS &&
-          now - quakeActivatedAt >= QUAKE_MIN_HOLD_MS) {
+      if (now - quakeClearSince >= QUAKE_CLEAR_MS && now - quakeActivatedAt >= QUAKE_MIN_HOLD_MS) {
         quakeAlert = false;
         quakeClearSince = 0;
         Serial.println(F("Shaking stopped - returning to monitoring"));
@@ -447,9 +454,9 @@ MotionLevel classifyMotion() {
 const char* motionLevelName(MotionLevel level) {
   switch (level) {
     case MOTION_INTENSE: return "INTENSE";
-    case MOTION_STRONG:  return "STRONG";
-    case MOTION_NOTICE:  return "MOTION";
-    default:             return "STABLE";
+    case MOTION_STRONG: return "STRONG";
+    case MOTION_NOTICE: return "MOTION";
+    default: return "STABLE";
   }
 }
 
@@ -457,9 +464,9 @@ const char* motionLevelName(MotionLevel level) {
 const char* motionLevelLabel(MotionLevel level) {
   switch (level) {
     case MOTION_INTENSE: return "Intense";
-    case MOTION_STRONG:  return "Strong";
-    case MOTION_NOTICE:  return "Motion";
-    default:             return "Stable";
+    case MOTION_STRONG: return "Strong";
+    case MOTION_NOTICE: return "Motion";
+    default: return "Stable";
   }
 }
 
@@ -500,9 +507,9 @@ float calculatePAGASAHeatIndexC(float tempC, float humidity) {
   float t2 = tempF * tempF;
   float r2 = humidity * humidity;
   float heatF = -42.379f + 2.04901523f * tempF + 10.14333127f * humidity
-          - 0.22475541f * tempF * humidity - 0.00683783f * t2
-          - 0.05481717f * r2 + 0.00122874f * t2 * humidity
-          + 0.00085282f * tempF * r2 - 0.00000199f * t2 * r2;
+                - 0.22475541f * tempF * humidity - 0.00683783f * t2
+                - 0.05481717f * r2 + 0.00122874f * t2 * humidity
+                + 0.00085282f * tempF * r2 - 0.00000199f * t2 * r2;
 
   if (humidity < 13.0f && tempF >= 80.0f && tempF <= 112.0f) {
     float adjustment = ((13.0f - humidity) * 0.25f)
@@ -517,7 +524,7 @@ float calculatePAGASAHeatIndexC(float tempC, float humidity) {
 
 const __FlashStringHelper* getHeatStatus(int hiTenths) {
   if (hiTenths >= 520) return F("EXT DANG");
-  if (hiTenths >= 420) return F("DANGER");
+  if (hiTenths >= 410) return F("DANGER");
   if (hiTenths >= 330) return F("EXT CAUT");
   if (hiTenths >= 270) return F("CAUTION");
   return F("NORMAL");
@@ -526,14 +533,13 @@ const __FlashStringHelper* getHeatStatus(int hiTenths) {
 // ================ STATUS LEDS ================
 
 void setLeds(bool green, bool yellow, bool red) {
-  digitalWrite(LED_GREEN_PIN,  green  ? HIGH : LOW);
+  digitalWrite(LED_GREEN_PIN, green ? HIGH : LOW);
   digitalWrite(LED_YELLOW_PIN, yellow ? HIGH : LOW);
-  digitalWrite(LED_RED_PIN,    red    ? HIGH : LOW);
+  digitalWrite(LED_RED_PIN, red ? HIGH : LOW);
 }
 
-// Priority: fire > smoke > shaking > MQ-2 state > MPU offline.
-// Warm-up stays RED, calibration stays YELLOW, and ready stays GREEN;
-// keeping these states solid prevents the status lights going dark mid-flow.
+// Fire/smoke/shaking and calibration retain priority. After MQ-2 calibration,
+// the LEDs follow the requested heat-index bands instead of staying green.
 void updateLeds(unsigned long now) {
   if (flameAlert) {
     setLeds(false, false, true);
@@ -546,8 +552,16 @@ void updateLeds(unsigned long now) {
     setLeds(false, false, true);
   } else if (mq2State == MQ2_CALIBRATING) {
     setLeds(false, true, false);
-  } else if (!mpuReady) {
-    // Do not show a green all-clear while the quake sensor is unavailable.
+  } else if (sensorOK && heatIndexTenths >= 520) {
+    setLeds(false, true, true);
+  } else if (sensorOK && heatIndexTenths >= 410) {
+    setLeds(false, false, true);
+  } else if (sensorOK && heatIndexTenths >= 330) {
+    setLeds(false, true, true);
+  } else if (sensorOK && heatIndexTenths >= 270) {
+    setLeds(false, true, false);
+  } else if (!mpuReady || !sensorOK) {
+    // Do not show a green all-clear when a required sensor is unavailable.
     setLeds(false, true, false);
   } else {
     setLeds(true, false, false);
@@ -562,7 +576,7 @@ void allBuzzersOff() {
   digitalWrite(BUZZER_FIRE_PIN, LOW);
 }
 
-const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte &length) {
+const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte& length) {
   switch (mode) {
     case BUZZER_SMOKE:
       length = sizeof(SMOKE_PATTERN) / sizeof(SMOKE_PATTERN[0]);
@@ -576,6 +590,9 @@ const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte &length) {
     case BUZZER_FIRE_SMOKE:
       length = sizeof(FIRE_SMOKE_PATTERN) / sizeof(FIRE_SMOKE_PATTERN[0]);
       return FIRE_SMOKE_PATTERN;
+    case BUZZER_HEAT:
+      length = sizeof(HEAT_PATTERN) / sizeof(HEAT_PATTERN[0]);
+      return HEAT_PATTERN;
     default:
       length = 0;
       return NULL;
@@ -599,12 +616,13 @@ void beginBuzzerStep(unsigned long now) {
 }
 
 // Call every loop; never use delay(), so all sensors keep updating.
-// Priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING > QUIET.
+// Priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HEAT > SHAKING > QUIET.
 void updateBuzzers(unsigned long now) {
   BuzzerAlarm requested = BUZZER_IDLE;
   if (flameAlert && mq2Alert) requested = BUZZER_FIRE_SMOKE;
   else if (flameAlert) requested = BUZZER_FIRE;
-  else if (mq2Alert)   requested = BUZZER_SMOKE;
+  else if (mq2Alert) requested = BUZZER_SMOKE;
+  else if (heatWarningActive && heatIndexTenths >= 520 && !heatAlertAcknowledged) requested = BUZZER_HEAT;
   else if (quakeAlert) requested = BUZZER_QUAKE;
 
   // Start the appropriate pattern immediately when alerts change.
@@ -684,9 +702,7 @@ void readSensor() {
   float newHumidity = dht.readHumidity();
   float newTemperature = dht.readTemperature();
 
-  bool bad = isnan(newHumidity) || isnan(newTemperature) ||
-             newHumidity < 0.0 || newHumidity > 100.0 ||
-             newTemperature < -40.0 || newTemperature > 80.0;
+  bool bad = isnan(newHumidity) || isnan(newTemperature) || newHumidity < 0.0 || newHumidity > 100.0 || newTemperature < -40.0 || newTemperature > 80.0;
 
   if (bad) {
     // One missed read is normal for a DHT22 (timing glitch). Keep the last
@@ -710,6 +726,8 @@ void readSensor() {
 
   heatIndex = calculatePAGASAHeatIndexC(temperature, humidity);
   heatIndexTenths = (int)roundf(heatIndex * 10.0f);
+  heatWarningActive = heatIndexTenths >= 410;
+  if (!heatWarningActive) heatAlertAcknowledged = false;
 
   sensorOK = true;
 
@@ -752,13 +770,15 @@ int readMQ2Averaged() {
 void sendSerialData(unsigned long now) {
   // An alert change goes out immediately; everything else every interval.
   bool alertChanged = (mq2Alert != lastSentSmoke) ||
-                      (flameAlert != lastSentFlame);
+                      (flameAlert != lastSentFlame) ||
+                      (heatAlertAcknowledged != lastSentHeatAcknowledged);
   if (!alertChanged && now - lastSerialSend < SERIAL_INTERVAL_MS) {
     return;
   }
   lastSerialSend = now;
   lastSentSmoke = mq2Alert;
   lastSentFlame = flameAlert;
+  lastSentHeatAcknowledged = heatAlertAcknowledged;
 
   Serial.print(F("DATA,"));
 
@@ -829,7 +849,10 @@ void sendSerialData(unsigned long now) {
   // Live flame pin level + learned idle level (for wiring diagnostics)
   Serial.print(digitalRead(FLAME_PIN));
   Serial.print(F(","));
-  Serial.println(flameIdleLevel);
+  Serial.print(flameIdleLevel);
+  Serial.print(F(","));
+  Serial.print(heatAlertAcknowledged ? 1 : 0);
+  Serial.println();
 }
 
 // ================ MQ-2 SMOKE DETECTION ================
@@ -877,8 +900,7 @@ void updateMQ2(unsigned long now) {
     baselineSum += mq2Filtered;
     baselineSamples++;
 
-    if (now - baselineStartTime >= MQ2_BASELINE_MS &&
-        baselineSamples > 0) {
+    if (now - baselineStartTime >= MQ2_BASELINE_MS && baselineSamples > 0) {
       mq2Baseline = baselineSum / (float)baselineSamples;
       mq2State = MQ2_READY;
       mq2ConfirmStart = 0;
@@ -925,9 +947,7 @@ void updateMQ2(unsigned long now) {
     }
     mq2Baseline += a * diff;
 
-  } else if (mq2Alert &&
-             mq2Slope <= MQ2_SLOPE_TOLERANCE &&
-             diff < mq2PeakDelta * MQ2_RECOVERY_FRACTION) {
+  } else if (mq2Alert && mq2Slope <= MQ2_SLOPE_TOLERANCE && diff < mq2PeakDelta * MQ2_RECOVERY_FRACTION) {
     // Smoke is gone but the sensor tail is still high:
     // pull the baseline up so the alert releases quickly.
     mq2Baseline += MQ2_BASELINE_RISE_RECOVERY * diff;
@@ -1127,7 +1147,7 @@ void printDiagnostics(unsigned long now) {
   Serial.print(F(" PEAK_G="));
   if (mpuReady) Serial.print(quakePeakG, 3);
   else Serial.print(F("null"));
-  quakePeakG = 0.0f; // peak since the previous 1-second diagnostic update
+  quakePeakG = 0.0f;  // peak since the previous 1-second diagnostic update
   Serial.print(F(" SHAKE="));
   Serial.print(quakeAlert ? F("YES") : F("NO"));
   Serial.print(F(" FREE_RAM="));
@@ -1148,20 +1168,24 @@ void updatePanelButton(unsigned long now) {
     panelButtonLastChange = now;
   }
 
-  if (now - panelButtonLastChange >= PANEL_BUTTON_DEBOUNCE_MS &&
-      reading != panelButtonStableState) {
+  if (now - panelButtonLastChange >= PANEL_BUTTON_DEBOUNCE_MS && reading != panelButtonStableState) {
     panelButtonStableState = reading;
     if (panelButtonStableState == LOW) {
-      currentPanel = (currentPanel + 1) % panelCount;
+      if (heatWarningActive && !heatAlertAcknowledged) {
+        heatAlertAcknowledged = true;
+      } else {
+        currentPanel = (currentPanel + 1) % panelCount;
+      }
     }
   }
 }
 
 void showPanel() {
-  // Fire outranks smoke, smoke outranks normal.
+  // Fire and smoke outrank heat; an unacknowledged HI warning outranks shaking.
   byte mode = MODE_NORMAL;
-  if (flameAlert)      mode = MODE_FIRE;
-  else if (mq2Alert)   mode = MODE_SMOKE;
+  if (flameAlert) mode = MODE_FIRE;
+  else if (mq2Alert) mode = MODE_SMOKE;
+  else if (heatWarningActive && !heatAlertAcknowledged) mode = MODE_HEAT;
   else if (quakeAlert) mode = MODE_QUAKE;
 
   // Clean slate whenever the display mode changes.
@@ -1182,9 +1206,20 @@ void showPanel() {
     return;
   }
 
+  if (mode == MODE_HEAT) {
+    printLineP(0, heatIndexTenths >= 520 ? F("HI EXT DANGER") : F("HI DANGER"));
+    char heatValue[17];
+    char hiText[8];
+    dtostrf(heatIndex, 1, 1, hiText);
+    snprintf_P(heatValue, sizeof(heatValue), PSTR("%s C  D11=Ack"), hiText);
+    printLine(1, heatValue);
+    return;
+  }
+
   if (mode == MODE_QUAKE) {
     printLineP(0, classifyMotion() == MOTION_INTENSE
-                  ? F("Intense Shaking") : F("Strong Shaking"));
+                    ? F("Intense Shaking")
+                    : F("Strong Shaking"));
     printLineP(1, F("Drop Cover Hold"));
     return;
   }
@@ -1218,7 +1253,8 @@ void showPanel() {
 
     if (mq2State == MQ2_WARMING_UP) {
       unsigned long left = (elapsed >= MQ2_WARMUP_MS)
-                             ? 0UL : (MQ2_WARMUP_MS - elapsed + 999UL) / 1000UL;
+                             ? 0UL
+                             : (MQ2_WARMUP_MS - elapsed + 999UL) / 1000UL;
       unsigned int minutes = (unsigned int)(left / 60UL);
       unsigned int seconds = (unsigned int)(left % 60UL);
       snprintf_P(value, sizeof(value), PSTR("%u:%02u"), minutes, seconds);
@@ -1227,7 +1263,8 @@ void showPanel() {
     } else {
       unsigned long calElapsed = millis() - baselineStartTime;
       unsigned long left = (calElapsed >= MQ2_BASELINE_MS)
-                             ? 0UL : (MQ2_BASELINE_MS - calElapsed + 999UL) / 1000UL;
+                             ? 0UL
+                             : (MQ2_BASELINE_MS - calElapsed + 999UL) / 1000UL;
       snprintf_P(value, sizeof(value), PSTR("%lus"), left);
       printLineP(0, F("MQ2 Calibrating"));
       printLabelValue(1, "Left:", value);
@@ -1266,7 +1303,7 @@ void showPanel() {
     value[valueLength] = '\0';
     printLabelValue(0, "HI:", value);
     if (heatIndexTenths >= 520) strcpy_P(status, PSTR("Ext Dang"));
-    else if (heatIndexTenths >= 420) strcpy_P(status, PSTR("Danger"));
+    else if (heatIndexTenths >= 410) strcpy_P(status, PSTR("Danger"));
     else if (heatIndexTenths >= 330) strcpy_P(status, PSTR("Ext Caut"));
     else if (heatIndexTenths >= 270) strcpy_P(status, PSTR("Caution"));
     else strcpy_P(status, PSTR("Normal"));
@@ -1278,7 +1315,7 @@ void showPanel() {
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
-  Wire.begin();                       // I2C shared by LCD + GY-521
+  Wire.begin();  // I2C shared by LCD + GY-521
 
   pinMode(MQ2_PIN, INPUT);
   pinMode(FLAME_PIN, INPUT);
@@ -1350,11 +1387,11 @@ void loop() {
   if (firstReading || now - lastSensorRead >= SENSOR_INTERVAL) {
     firstReading = false;
     lastSensorRead = now;
-    readSensor();            // blocks ~250 ms worst case
+    readSensor();  // blocks ~250 ms worst case
   }
 
   now = millis();
-  updateFlame(now);          // catch up right after the DHT22 block
+  updateFlame(now);  // catch up right after the DHT22 block
   updateMQ2(now);
   updateMPU(now);
   printDiagnostics(now);

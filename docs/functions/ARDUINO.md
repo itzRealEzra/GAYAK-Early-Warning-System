@@ -3,6 +3,7 @@
 One Markdown note per named function in the checked-out workspace.
 
 - [[arduino/setleds|`setLeds()`]] — `arduino/GAYAK.ino`
+- [[arduino/getheatstatus|`getHeatStatus()`]] — `arduino/GAYAK.ino`
 - [[arduino/calculatepagasaheatindexc|`calculatePAGASAHeatIndexC()`]] — `arduino/GAYAK.ino`
 - [[arduino/motionlevellabel|`motionLevelLabel()`]] — `arduino/GAYAK.ino`
 - [[arduino/printlabelvalue|`printLabelValue()`]] — `arduino/GAYAK.ino`

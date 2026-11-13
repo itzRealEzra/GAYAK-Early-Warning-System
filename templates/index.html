@@ -89,6 +89,18 @@
       <div class="banner-text"><strong id="quakeBannerTitle">STRONG SHAKING</strong><span>Local intense movement / acceleration warning — verify your surroundings.</span><small id="quakeStarted"></small></div>
     </div>
 
+    <div id="heatModal" class="heat-modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="heatModalTitle" aria-describedby="heatModalMessage">
+      <section class="heat-modal-card">
+        <div class="heat-modal-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></div>
+        <div class="heat-modal-content">
+          <strong id="heatModalTitle">HEAT INDEX ALERT</strong>
+          <span id="heatModalMessage">Heat index is in the danger range.</span>
+          <small id="heatModalValue"></small>
+          <button id="heatDismiss" type="button">Dismiss Popup</button>
+        </div>
+      </section>
+    </div>
+
     <!-- Reading cards -->
     <section class="cards">
       <article class="card card--temp" id="cardTemp">

@@ -10,7 +10,7 @@ source: "arduino/GAYAK.ino"
 
 ## Purpose
 
-Emits DATA CSV telemetry and sends immediately when alert state changes.
+Emits backward-compatible DATA CSV telemetry (10- and 13-field records remain accepted). Current firmware appends a 14th field for HI-warning acknowledgement so the local dashboard can dismiss its popup when D11 is pressed.
 
 ## Related notes
 
