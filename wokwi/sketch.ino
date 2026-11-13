@@ -169,7 +169,7 @@ const long SERIAL_BAUD = 115200;                   // must match GAYAK_BAUD in a
 unsigned long lastSerialSend = 0;
 bool lastSentSmoke = false;   // alert state in the last DATA record
 bool lastSentFlame = false;
-bool lastSentHeatAcknowledged = false;
+byte lastSentAcknowledgedAlertMask = 0;
 
 // ================ MPU-6050 STATE ================
 // Local filtered acceleration in g; not a seismic intensity classification.
@@ -214,6 +214,12 @@ const byte MODE_FIRE   = 2;
 const byte MODE_QUAKE  = 3;
 const byte MODE_HEAT   = 4;
 
+const byte ALERT_ACK_FIRE = 0x01;
+const byte ALERT_ACK_SMOKE = 0x02;
+const byte ALERT_ACK_QUAKE = 0x04;
+const byte ALERT_ACK_HEAT = 0x08;
+byte acknowledgedAlertMask = 0;
+
 byte lastDisplayMode = 255;   // forces a clean first draw
 
 // ================ DHT22 VARIABLES ================
@@ -236,7 +242,6 @@ float humidity = 0.0;
 float heatIndex = 0.0;
 int heatIndexTenths = 0;
 bool heatWarningActive = false;
-bool heatAlertAcknowledged = false;
 
 // LCD line cache prevents unnecessary flicker.
 char previousLine0[17] = "";
@@ -483,6 +488,23 @@ const __FlashStringHelper* getHeatStatus(int hiTenths) {
 
 // ================ STATUS LEDS ================
 
+byte getActiveAlertMask() {
+  byte active = 0;
+  if (flameAlert) active |= ALERT_ACK_FIRE;
+  if (mq2Alert) active |= ALERT_ACK_SMOKE;
+  if (quakeAlert) active |= ALERT_ACK_QUAKE;
+  if (heatWarningActive) active |= ALERT_ACK_HEAT;
+  return active;
+}
+
+void clearResolvedAlertAcknowledgements() {
+  acknowledgedAlertMask &= getActiveAlertMask();
+}
+
+bool alertIsUnacknowledged(byte alertBit) {
+  return (acknowledgedAlertMask & alertBit) == 0;
+}
+
 void setLeds(bool green, bool yellow, bool red) {
   digitalWrite(LED_GREEN_PIN,  green  ? HIGH : LOW);
   digitalWrite(LED_YELLOW_PIN, yellow ? HIGH : LOW);
@@ -494,11 +516,11 @@ void setLeds(bool green, bool yellow, bool red) {
 //   SMOKE           = YELLOW solid
 //   EXTREME DANGER / EXTREME CAUTION = YELLOW + RED
 void updateLeds(unsigned long now) {
-  if (flameAlert) {
+  if (flameAlert && alertIsUnacknowledged(ALERT_ACK_FIRE)) {
     setLeds(false, false, true);
-  } else if (mq2Alert) {
+  } else if (mq2Alert && alertIsUnacknowledged(ALERT_ACK_SMOKE)) {
     setLeds(false, true, false);
-  } else if (quakeAlert) {
+  } else if (quakeAlert && alertIsUnacknowledged(ALERT_ACK_QUAKE)) {
     // Distinctive fast red blink for vibration/shaking.
     setLeds(false, false, ((now / 250UL) % 2UL) == 0UL);
   } else if (mq2State == MQ2_WARMING_UP) {
@@ -589,11 +611,13 @@ void beginBuzzerStep(unsigned long now) {
 // Priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HEAT > SHAKING > QUIET.
 void updateBuzzers(unsigned long now) {
   BuzzerAlarm requested = BUZZER_IDLE;
-  if (flameAlert && mq2Alert) requested = BUZZER_FIRE_SMOKE;
-  else if (flameAlert) requested = BUZZER_FIRE;
-  else if (mq2Alert)   requested = BUZZER_SMOKE;
-  else if (heatWarningActive && heatIndexTenths >= 520 && !heatAlertAcknowledged) requested = BUZZER_HEAT;
-  else if (quakeAlert) requested = BUZZER_QUAKE;
+  bool fireUnacknowledged = flameAlert && alertIsUnacknowledged(ALERT_ACK_FIRE);
+  bool smokeUnacknowledged = mq2Alert && alertIsUnacknowledged(ALERT_ACK_SMOKE);
+  if (fireUnacknowledged && smokeUnacknowledged) requested = BUZZER_FIRE_SMOKE;
+  else if (fireUnacknowledged) requested = BUZZER_FIRE;
+  else if (smokeUnacknowledged) requested = BUZZER_SMOKE;
+  else if (heatWarningActive && heatIndexTenths >= 520 && alertIsUnacknowledged(ALERT_ACK_HEAT)) requested = BUZZER_HEAT;
+  else if (quakeAlert && alertIsUnacknowledged(ALERT_ACK_QUAKE)) requested = BUZZER_QUAKE;
 
   // Start the appropriate pattern immediately when alerts change.
   if (requested != buzzerMode) {
@@ -692,8 +716,6 @@ void readSensor() {
   heatIndex = dht.computeHeatIndex(temperature, humidity, false);
   heatIndexTenths = (int)roundf(heatIndex * 10.0f);
   heatWarningActive = heatIndexTenths >= 410;
-  if (!heatWarningActive) heatAlertAcknowledged = false;
-
   sensorOK = true;
 
   Serial.print(F("TEMP: "));
@@ -736,14 +758,14 @@ void sendSerialData(unsigned long now) {
   // An alert change goes out immediately; everything else every interval.
   bool alertChanged = (mq2Alert != lastSentSmoke) ||
                       (flameAlert != lastSentFlame) ||
-                      (heatAlertAcknowledged != lastSentHeatAcknowledged);
+                      (acknowledgedAlertMask != lastSentAcknowledgedAlertMask);
   if (!alertChanged && now - lastSerialSend < SERIAL_INTERVAL_MS) {
     return;
   }
   lastSerialSend = now;
   lastSentSmoke = mq2Alert;
   lastSentFlame = flameAlert;
-  lastSentHeatAcknowledged = heatAlertAcknowledged;
+  lastSentAcknowledgedAlertMask = acknowledgedAlertMask;
 
   Serial.print(F("DATA,"));
 
@@ -816,7 +838,9 @@ void sendSerialData(unsigned long now) {
   Serial.print(F(","));
   Serial.print(flameIdleLevel);
   Serial.print(F(","));
-  Serial.print(heatAlertAcknowledged ? 1 : 0);
+  Serial.print((acknowledgedAlertMask & ALERT_ACK_HEAT) != 0 ? 1 : 0);
+  Serial.print(F(","));
+  Serial.print(acknowledgedAlertMask);
   Serial.println();
 }
 
@@ -1141,8 +1165,9 @@ void updatePanelButton(unsigned long now) {
       reading != panelButtonStableState) {
     panelButtonStableState = reading;
     if (panelButtonStableState == LOW) {
-      if (heatWarningActive && !heatAlertAcknowledged) {
-        heatAlertAcknowledged = true;
+      byte activeAlerts = getActiveAlertMask();
+      if ((activeAlerts & ~acknowledgedAlertMask) != 0) {
+        acknowledgedAlertMask |= activeAlerts;
       } else {
         currentPanel = (currentPanel + 1) % panelCount;
       }
@@ -1153,10 +1178,10 @@ void updatePanelButton(unsigned long now) {
 void showPanel() {
   // Fire and smoke outrank heat; an unacknowledged HI warning outranks shaking.
   byte mode = MODE_NORMAL;
-  if (flameAlert)      mode = MODE_FIRE;
-  else if (mq2Alert)   mode = MODE_SMOKE;
-  else if (heatWarningActive && !heatAlertAcknowledged) mode = MODE_HEAT;
-  else if (quakeAlert) mode = MODE_QUAKE;
+  if (flameAlert && alertIsUnacknowledged(ALERT_ACK_FIRE)) mode = MODE_FIRE;
+  else if (mq2Alert && alertIsUnacknowledged(ALERT_ACK_SMOKE)) mode = MODE_SMOKE;
+  else if (heatWarningActive && alertIsUnacknowledged(ALERT_ACK_HEAT)) mode = MODE_HEAT;
+  else if (quakeAlert && alertIsUnacknowledged(ALERT_ACK_QUAKE)) mode = MODE_QUAKE;
 
   // Clean slate whenever the display mode changes.
   if (mode != lastDisplayMode) {
@@ -1348,6 +1373,7 @@ void loop() {
   updateFlame(now);          // catch up right after the DHT22 block
   updateMQ2(now);
   updateMPU(now);
+  clearResolvedAlertAcknowledgements();
   printDiagnostics(now);
   updateLeds(now);
   updateBuzzers(now);

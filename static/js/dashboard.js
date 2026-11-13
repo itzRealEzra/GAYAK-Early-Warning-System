@@ -408,6 +408,7 @@
     setText($("metaHi"), r.heat_status || DASH);
     setCardState($("cardHi"), heatKind(r.heat_status));
     renderHeatPopup(r.heat_index, r.heat_alert_acknowledged);
+    const acknowledgedAlertMask = Number(r.acknowledged_alert_mask) || 0;
 
     /* Gas / smoke */
     const smoke = !!r.mq2_alert;
@@ -428,6 +429,7 @@
 
     /* Flame / fire */
     const fire = !!r.fire_alert;
+    const fireUnacknowledged = fire && (acknowledgedAlertMask & 0x01) === 0;
     const haveFlame = r.flame_pin != null;
     if (fire) {
       setText($("valFire"), "FIRE");
@@ -449,6 +451,7 @@
 
     /* Separate QUAKE records: experimental vibration, not magnitude. */
     const quake = !!r.quake_alert && r.quake_online === true;
+    const quakeUnacknowledged = quake && (acknowledgedAlertMask & 0x04) === 0;
     const quakeOnline = r.quake_online;
     const rms = quakeOnline === true && r.quake_rms_g != null ? Number(r.quake_rms_g) : null;
     // Local acceleration classes are experimental; they are not earthquake magnitudes.
@@ -472,15 +475,16 @@
     setText($("mpuRms"), rms != null ? rms.toFixed(3) + " g" : DASH);
 
     /* Banners */
-    setClass($("fireBanner"), "hidden", !fire);
-    setClass($("smokeBanner"), "hidden", !smoke);
-    setClass($("quakeBanner"), "hidden", !quake);
-    if (quake) setText($("quakeBannerTitle"), motionLevel === "INTENSE" ?
+    const smokeUnacknowledged = smoke && (acknowledgedAlertMask & 0x02) === 0;
+    setClass($("fireBanner"), "hidden", !fireUnacknowledged);
+    setClass($("smokeBanner"), "hidden", !smokeUnacknowledged);
+    setClass($("quakeBanner"), "hidden", !quakeUnacknowledged);
+    if (quakeUnacknowledged) setText($("quakeBannerTitle"), motionLevel === "INTENSE" ?
       "INTENSE SHAKING" : "STRONG SHAKING");
-    if (fire) { const t = latestEventTime(events, "fire"); setText($("fireStarted"), t ? "Active since " + fmtTime(t) : ""); }
-    if (smoke) { const t = latestEventTime(events, "smoke"); setText($("smokeStarted"), t ? "Active since " + fmtTime(t) : ""); }
-    if (quake) { const t = latestEventTime(events, "quake"); setText($("quakeStarted"), t ? "Active since " + fmtTime(t) : ""); }
-    led = ledFor(conn, stale, state, smoke, fire, quake, quakeOnline, r.heat_index);
+    if (fireUnacknowledged) { const t = latestEventTime(events, "fire"); setText($("fireStarted"), t ? "Active since " + fmtTime(t) : ""); }
+    if (smokeUnacknowledged) { const t = latestEventTime(events, "smoke"); setText($("smokeStarted"), t ? "Active since " + fmtTime(t) : ""); }
+    if (quakeUnacknowledged) { const t = latestEventTime(events, "quake"); setText($("quakeStarted"), t ? "Active since " + fmtTime(t) : ""); }
+    led = ledFor(conn, stale, state, smokeUnacknowledged, fireUnacknowledged, quakeUnacknowledged, quakeOnline, r.heat_index);
     applyLed();
 
     /* Diagnostics */

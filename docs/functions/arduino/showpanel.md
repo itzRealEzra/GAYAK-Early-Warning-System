@@ -10,7 +10,7 @@ source: "arduino/GAYAK.ino"
 
 ## Purpose
 
-Renders the user-selected LCD panel, prioritizing fire/smoke, then any unacknowledged HI Danger (≥41°C) or Extreme Danger (≥52°C) warning, then shaking and sensor pages. The HI overlay shows a compact `HI: <value> C` reading without a button instruction; pressing D11 acknowledges it and clears the matching dashboard popup. It automatically clears below 41°C. Normal readings use title-case labels and right-aligned values, while calibration screens show compact remaining time.
+Renders the user-selected LCD panel, prioritizing unacknowledged fire/smoke, HI Danger (≥41°C), and shaking alerts before sensor pages. The HI overlay shows a compact `HI: <value> C` reading without a button instruction. Pressing D11 acknowledges all currently active alert sources and clears the LCD overlays while sensor readings remain live. HI popup acknowledgment is synchronized to the dashboard; fire/smoke/shaking banners also clear. The HI warning clears automatically below 41°C. Normal readings use title-case labels and right-aligned values, while calibration screens show compact remaining time.
 
 ## Related notes
 

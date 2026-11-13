@@ -60,7 +60,7 @@ GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE 
 - `TEMP_OFFSET` is a software temperature offset; adjust **only after comparing against a suitable calibrated thermometer** at the same measurement location. Keep default `0.0` without comparison.
 - Keep DHT22 reads at least about **2 seconds apart**.
 - Heat index is computed from temperature and relative humidity and is an estimated comfort/risk indicator. It does not replace PAGASA or other official advisories.
-- LCD panels advance on each debounced press of the D11 button; they no longer rotate automatically.
+- A debounced D11 press acknowledges all active fire, smoke, shaking, and HI alerts; when none need acknowledgment, it advances the LCD panel. Panels no longer rotate automatically.
 
 ## 5. Adjust buzzer patterns
 

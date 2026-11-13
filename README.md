@@ -29,10 +29,10 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **MQ-2:** relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a lower provisional trigger delta confirmed for 1.5 seconds.
 - **Flame module:** digital flame indication on the **physical hardware**, confirmed over 3 seconds to reject brief light changes. Aim it into the room away from windows/sky, adjust its sensitivity potentiometer in place, and use an opaque hood to narrow its field of view. Its digital output can still respond to a steady infrared source that crosses its threshold.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
-- **LCD:** press the D11 button to advance sensor panels; active fire/smoke/quake alerts override the selected panel. HI Danger (41–<52°C) and Extreme Danger (≥52°C) show an LCD warning until D11 acknowledges it or a valid HI reading falls below 41°C.
+- **LCD / D11 button:** one press acknowledges all currently active fire, smoke, shaking, and HI alerts, clears their LCD overlays and dashboard alert banners, silences their buzzer patterns, and dismisses an active HI popup. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. Sensor readings remain active; each alert can sound again after its source clears and triggers again. When there is no new alert to acknowledge, D11 advances the LCD panel.
 - **Heat-index LEDs after MQ-2 calibration:** Safe (<27°C) is green; Caution (27–<33°C) yellow; Extreme Caution (33–<41°C) yellow + red; Danger (41–<52°C) red; Extreme Danger (≥52°C) yellow + red.
-  - **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing the device's D11 button acknowledges the firmware warning, silences the Extreme Danger buzzer, and syncs the acknowledgement to clear the dashboard popup.
-- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning until D11 is pressed or HI falls below 41°C. Only one buzzer pattern runs at a time.
+  - **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing D11 acknowledges the active firmware alerts and syncs HI acknowledgment to clear the popup.
+- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous unacknowledged fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning. D11 acknowledges all currently active alert sources and silences their patterns. Each source rearms after its detection clears and later triggers again. Only one buzzer pattern runs at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
 ## Current Arduino Uno pinout
@@ -68,10 +68,10 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | HI Extreme Caution (33–<41°C) | Yellow + red solid | Silent |
 | HI Danger (41–<52°C) | Red solid; warning shown until acknowledged or HI <41°C | Silent |
 | HI Extreme Danger (≥52°C) | Yellow + red solid; warning shown until acknowledged or HI <41°C | Repeating two-pulse D9 pattern |
-| Gas/smoke | Yellow solid | D8 repeating |
-| Fire + smoke | Red solid | Two fast D10 pulses, then a longer D8 pulse |
-| Sustained shaking | Red fast blink | D9 rapid pulses |
-| Flame/fire | Red solid | Three short pulses on D10 |
+| Unacknowledged gas/smoke | Yellow solid | D8 repeating |
+| Unacknowledged fire + smoke | Red solid | Two fast D10 pulses, then a longer D8 pulse |
+| Unacknowledged sustained shaking | Red fast blink | D9 rapid pulses |
+| Unacknowledged flame/fire | Red solid | Three short pulses on D10 |
 
 ### Shaking and acceleration detection (experimental)
 
@@ -88,7 +88,7 @@ These thresholds are **prototype starting values**, not validated seismic intens
 
 ## Simulated vs. physical hardware
 
-The simulator uses a **Wokwi photoresistor module as an adjustable-light proxy** for the flame sensor, because it can expose a controllable DO signal. Changing *lux* is an **input demonstration, not a real flame detection test**. A pushbutton between **D11 and GND** advances the LCD panel; there is no acknowledgment switch or software power switch. Use the built-in DHT22, MQ-2, MPU-6050, and light-proxy properties to test readings.
+The simulator uses a **Wokwi photoresistor module as an adjustable-light proxy** for the flame sensor, because it can expose a controllable DO signal. Changing *lux* is an **input demonstration, not a real flame detection test**. A pushbutton between **D11 and GND** acknowledges all active alerts; when no alert needs acknowledgment, it advances the LCD panel. Use the built-in DHT22, MQ-2, MPU-6050, and light-proxy properties to test readings.
 
 Wokwi models **piezo** buzzers that require `tone()`. Your real **two-terminal active buzzers** use DC on/off through appropriately rated MOSFET/transistor driver circuits. **Do not copy the direct-connected Wokwi buzzer wiring to the real build.** Wokwi has **no real TP4056/18650 charging circuit** in this project.
 
@@ -115,7 +115,7 @@ The firmware recalculates HI from each valid DHT22 temperature and relative-humi
 4. Run `start_gayak.bat`, or `py app.py`.
 5. Open **http://127.0.0.1:5000**. If auto-detection uses the wrong COM port, run `set GAYAK_COM_PORT=COM4` in that CMD window before launching, replacing COM4 with your own port.
 
-USB Serial runs at **115200 baud**. `DATA` CSV telemetry carries temperature, humidity, heat status, MQ-2 and flame readings, plus an HI-warning acknowledgement field. The local parser accepts the current 14-field record and older 10-/13-field records. Separate `QUAKE,online,alert,rms_g,level` records carry MPU status; the parser also supports the earlier four-field format. The dashboard displays vibration, sensor health, and shaking events.
+USB Serial runs at **115200 baud**. `DATA` CSV telemetry carries temperature, humidity, heat status, MQ-2 and flame readings, plus HI acknowledgment and a four-bit alert acknowledgment mask. The local parser accepts the current 15-field record and older 10-/13-/14-field records. Separate `QUAKE,online,alert,rms_g,level` records carry MPU status; the parser also supports the earlier four-field format. The dashboard displays vibration, sensor health, and shaking events.
 
 ## Portable battery system — safety warning
 

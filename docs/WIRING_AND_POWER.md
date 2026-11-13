@@ -19,7 +19,7 @@ The GY-521 MPU-6050 is used for **intense shaking and acceleration** measurement
 | D8 | Smoke buzzer driver input | 5V two-pin active buzzer #1 |
 | D9 | Shaking buzzer driver input | 5V two-pin active buzzer #2 |
 | D10 | Fire buzzer driver input | SFM-27 3–24V active buzzer |
-| D11 | Pushbutton to GND | LCD panel advance; firmware uses `INPUT_PULLUP`, so no external resistor is needed |
+| D11 | Pushbutton to GND | Acknowledge all active alerts; otherwise advance LCD panel. `INPUT_PULLUP` means no external resistor is needed |
 | D0, D1 | USB Serial | Do not use these pins for alarms while the dashboard runs |
 
 ### Common I2C bus

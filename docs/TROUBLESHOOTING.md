@@ -5,7 +5,7 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 | Symptom | Likely cause | Check |
 | --- | --- | --- |
 | Wokwi wiring looks cluttered | Old or unorganized connections | Rearrange wires manually according to [Wokwi wiring guide](../wokwi/README.md); no imported diagram is necessary |
-| LCD panel does not advance | Button is not connected to D11/GND, or button is wired to two pins on the same side | Connect the switch between D11 and GND; firmware uses `INPUT_PULLUP`, and advances on each debounced press/release |
+| LCD panel does not advance | An alert is being acknowledged, or button is not connected to D11/GND / wired to two pins on the same side | Press once to acknowledge active alerts; otherwise connect the switch between D11 and GND. Firmware uses `INPUT_PULLUP` and advances on each debounced press/release |
 | Green/red LEDs swapped | Firmware or wires still have previous pin assignment | Current order is **D5 Green, D6 Yellow, D7 Red** |
 | LEDs dark or wrong status | Reversed LED, wrong pin, MQ-2 calibrating or MPU offline | Check **D5 Green, D6 Yellow, D7 Red**, each with **220Ω series resistor** toward the LED anode; cathode→GND. Read status output |
 | Wokwi piezo makes no noise | Running physical active-buzzer sketch, browser muted or disconnected pin | Use **wokwi/sketch.ino** with `tone()` and verify D8/D9/D10→piezo pin 2, pin 1→GND |

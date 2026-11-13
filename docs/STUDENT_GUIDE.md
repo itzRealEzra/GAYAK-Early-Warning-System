@@ -24,7 +24,7 @@ GAYAK is an educational Arduino Uno R3 trainer demonstrating multi-sensor acquis
 | Photoresistor (Wokwi only) | Simulated bright-light DO as flame proxy | Not an IR flame detector |
 | MPU-6050 / GY-521 | Local acceleration and intense shaking | Filtered motion levels do not reveal Richter magnitude, official seismic intensity, or earthquake origin |
 | LCD 16×2 (I2C) | Status and button-selected readings | Address can vary by backpack |
-| Pushbutton | Advances LCD panel on D11 | Connect between D11 and GND; internal pull-up is enabled |
+| Pushbutton | Acknowledges active alerts; otherwise advances LCD panel on D11 | Connect between D11 and GND; internal pull-up is enabled |
 | Status LEDs | Green/Yellow/Red visual indication | **One 220Ω current-limiting resistor on each LED** |
 | Three buzzers | Independent audible patterns | Real active buzzers need properly rated drivers |
 | PCB perfboard | Physical interconnect | Isolated-hole perfboard does not have automatic power rails |

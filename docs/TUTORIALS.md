@@ -13,14 +13,14 @@
 7. Connect the pushbutton between **D11 and GND**. Firmware enables `INPUT_PULLUP`, so pressing the button pulls D11 LOW; no external resistor is needed.
 8. Copy [`wokwi/sketch.ino`](../wokwi/sketch.ino) into your Wokwi sketch tab and [`wokwi/libraries.txt`](../wokwi/libraries.txt) into its libraries tab. Wokwi saves your **own** diagram automatically as you wire.
 9. Start simulation and allow initialization (~5s MQ-2 warm-up + ~3s baseline). Normal operation ends with **green D5** and no audible alarm.
-10. Change DHT22 values: sensor reads approximately every **2.2s**. Press and release the D11 button to advance the LCD panels.
+10. Change DHT22 values: sensor reads approximately every **2.2s**. Press D11 to acknowledge active alerts; when none need acknowledgment, it advances the LCD panels.
 11. Raise MQ-2 gas after calibration to test **yellow D6 + D8**. Adjust photoresistor lux above its threshold (about 100 lux) to test **red D7 + fire buzzer**; this is a simulated light-input proxy, not real flame sensing.
 12. Repeatedly change MPU6050 X/Y acceleration to test sustained intense shaking, **blinking red D7 + shaking buzzer**. Restore steady acceleration to clear the alarm after its hold/clear intervals.
-13. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. No acknowledgment button or fake power switch is used.
+13. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. D11 acknowledges active alerts; otherwise it advances the LCD panels. There is no fake power switch.
 
 ### What if changes seem delayed?
 - **DHT22** normally updates only once every ≥2 s.
-- **LCD** advances panels only after a debounced D11 button press; active alerts temporarily override the selected panel.
+- **LCD** uses a debounced D11 press to acknowledge all active alerts; when none need acknowledgment, the press advances panels. Unacknowledged alerts temporarily override the selected panel.
 - **MQ-2** must finish warm-up and calibration and then exceed a filtered analog *delta* for a confirmation period.
 - **MPU-6050** has a startup settling interval and a sustained-vibration confirmation threshold.
 - **Fire proxy** uses the digital output threshold and a short confirmation/clear interval.
