@@ -18,6 +18,6 @@ tags: [gayak, hardware, wiring]
 | D11 | Alert acknowledgment / LCD panel button; connect between D11 and GND, using `INPUT_PULLUP` |
 | D0 / D1 | Reserved for USB serial |
 
-Press D11 to acknowledge all currently active alerts, silence their buzzer patterns, and clear their LCD/LED indications. Sensor readings remain live, and each alert can trigger again after its source clears and reappears. When no new alert needs acknowledgment, the button advances the LCD panel. No external pull-up resistor is needed.
+Press D11 to acknowledge all currently active alerts, silence their buzzer patterns, and clear their LCD/LED indications. Sensor readings remain live. Alerts return after 30 seconds if a source remains active, and also re-arm after clearing and triggering again. When no new alert needs acknowledgment, the button advances the LCD panel. No external pull-up resistor is needed.
 
 Share ground and confirm module voltage and signal polarity. The sketch's prototype buzzer wiring uses series resistors; properly rated transistor/MOSFET drivers are recommended. Interpret MQ-2 as relative response. Do not treat simulated piezo connections as physical active-buzzer driver circuits. Use USB power for initial tests; battery/charger wiring requires correctly protected, regulated design. See [[GITHUB-VS-WORKSPACE]].

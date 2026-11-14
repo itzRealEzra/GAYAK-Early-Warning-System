@@ -212,6 +212,8 @@ const byte ALERT_ACK_SMOKE = 0x02;
 const byte ALERT_ACK_QUAKE = 0x04;
 const byte ALERT_ACK_HEAT = 0x08;
 byte acknowledgedAlertMask = 0;
+const unsigned long ALERT_ACK_REMINDER_MS = 30000UL;
+unsigned long alertAcknowledgedAt = 0;
 
 byte lastDisplayMode = 255;   // forces a clean first draw
 
@@ -541,8 +543,15 @@ byte getActiveAlertMask() {
   return active;
 }
 
-void clearResolvedAlertAcknowledgements() {
+void clearResolvedAlertAcknowledgements(unsigned long now) {
   acknowledgedAlertMask &= getActiveAlertMask();
+  if (acknowledgedAlertMask == 0) {
+    alertAcknowledgedAt = 0;
+  } else if (now - alertAcknowledgedAt >= ALERT_ACK_REMINDER_MS) {
+    // Re-alert if the same hazard remains active after a temporary silence.
+    acknowledgedAlertMask = 0;
+    alertAcknowledgedAt = 0;
+  }
 }
 
 bool alertIsUnacknowledged(byte alertBit) {
@@ -1199,6 +1208,7 @@ void updatePanelButton(unsigned long now) {
       byte activeAlerts = getActiveAlertMask();
       if ((activeAlerts & ~acknowledgedAlertMask) != 0) {
         acknowledgedAlertMask |= activeAlerts;
+        alertAcknowledgedAt = now;
       } else {
         currentPanel = (currentPanel + 1) % panelCount;
       }
@@ -1417,7 +1427,7 @@ void loop() {
   updateFlame(now);          // catch up right after the DHT22 block
   updateMQ2(now);
   updateMPU(now);
-  clearResolvedAlertAcknowledgements();
+  clearResolvedAlertAcknowledgements(now);
   printDiagnostics(now);
   updateLeds(now);
   updateBuzzers(now);

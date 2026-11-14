@@ -263,6 +263,7 @@
   let heatDangerActive = false;
   let heatPopupDismissed = false;
   let latestHeatIndex = null;
+  let lastFirmwareHeatAcknowledged = null;
 
   function renderHeatPopup(heatIndex, firmwareAcknowledged) {
     const numericHI = heatIndex == null ? null : Number(heatIndex);
@@ -276,7 +277,15 @@
         heatPopupDismissed = false;
       }
     }
-    if (firmwareAcknowledged === true) heatPopupDismissed = true;
+    if (firmwareAcknowledged === true) {
+      heatPopupDismissed = true;
+    } else if (firmwareAcknowledged === false && lastFirmwareHeatAcknowledged === true && heatDangerActive) {
+      // Firmware acknowledgment expired while HI is still dangerous.
+      heatPopupDismissed = false;
+    }
+    if (typeof firmwareAcknowledged === "boolean") {
+      lastFirmwareHeatAcknowledged = firmwareAcknowledged;
+    }
 
     const visible = heatDangerActive && !heatPopupDismissed;
     setClass($("heatModal"), "hidden", !visible);

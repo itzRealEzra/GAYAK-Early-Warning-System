@@ -29,10 +29,10 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **MQ-2:** high-sensitivity relative gas/smoke response, with a 2-minute warm-up, 20-second clean-air baseline calibration, and a small provisional ADC rise confirmed for 0.4 seconds. It can also react to other gases and is not a calibrated or certified smoke alarm.
 - **Flame module:** digital flame indication on the **physical hardware**, confirmed over 3 seconds to reject brief light changes. Aim it into the room away from windows/sky, adjust its sensitivity potentiometer in place, and use an opaque hood to narrow its field of view. Its digital output can still respond to a steady infrared source that crosses its threshold.
 - **GY-521 / MPU-6050:** measures three-axis acceleration and detects intense shaking using filtered acceleration; it does not determine earthquake magnitude.
-- **LCD / D11 button:** one press acknowledges all currently active fire, smoke, shaking, and HI alerts, clears their LCD overlays and dashboard alert banners, silences their buzzer patterns, and dismisses an active HI popup. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. Sensor readings remain active; each alert can sound again after its source clears and triggers again. When there is no new alert to acknowledge, D11 advances the LCD panel.
+- **LCD / D11 button:** one press acknowledges all currently active fire, smoke, shaking, and HI alerts, clears their LCD overlays and dashboard alert banners, silences their buzzer patterns, and dismisses an active HI popup. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. Sensor readings remain active; if a hazard persists, its alert returns after a 30-second silence. When there is no new alert to acknowledge, D11 advances the LCD panel.
 - **Heat-index LEDs after MQ-2 calibration:** Safe (<27°C) is green; Caution (27–<33°C) yellow; Extreme Caution (33–<41°C) yellow + red; Danger (41–<52°C) red; Extreme Danger (≥52°C) yellow + red.
   - **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing D11 acknowledges the active firmware alerts and syncs HI acknowledgment to clear the popup.
-- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous unacknowledged fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning. D11 acknowledges all currently active alert sources and silences their patterns. Each source rearms after its detection clears and later triggers again. Only one buzzer pattern runs at a time.
+- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous unacknowledged fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning. D11 temporarily silences all currently active sources; alarms repeat after 30 seconds if a source remains active, and also re-arm after clearing and triggering again. Only one buzzer pattern runs at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
 ## Current Arduino Uno pinout
@@ -66,8 +66,8 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | HI Safe (<27°C) | Green solid | Silent |
 | HI Caution (27–<33°C) | Yellow solid | Silent |
 | HI Extreme Caution (33–<41°C) | Yellow + red solid | Silent |
-| HI Danger (41–<52°C) | Red solid; warning shown until acknowledged or HI <41°C | Silent |
-| HI Extreme Danger (≥52°C) | Yellow + red solid; warning shown until acknowledged or HI <41°C | Repeating two-pulse D9 pattern |
+| HI Danger (41–<52°C) | Red solid; warning returns after 30-second D11 silence if HI stays high | Silent |
+| HI Extreme Danger (≥52°C) | Yellow + red solid; warning returns after 30-second D11 silence if HI stays high | Repeating two-pulse D9 pattern |
 | Unacknowledged gas/smoke | Yellow solid | D8 repeating |
 | Unacknowledged fire + smoke | Red solid | Two fast D10 pulses, then a longer D8 pulse |
 | Unacknowledged sustained shaking | Red fast blink | D9 rapid pulses |

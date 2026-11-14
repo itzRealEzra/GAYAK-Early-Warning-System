@@ -13,7 +13,7 @@ Temp:       58.0 °C
 Humid:          45 %
 ```
 
-Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. Warm-up and calibration pages show the remaining time at the right edge. Hazard messages use compact title-case instructions. Pressing D11 acknowledges every currently active fire, smoke, shaking, and HI alert, clears the LCD overlays and dashboard alert banners, and silences their buzzer patterns. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. If HI is dangerous, its popup is dismissed too. Sensors continue reporting active conditions. Each alert rearms when its source clears, so a later new detection can alarm again. When there is no unacknowledged alert, D11 advances the selected panel. HI warning state also clears automatically below 41°C.
+Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. Warm-up and calibration pages show the remaining time at the right edge. Hazard messages use compact title-case instructions. Pressing D11 acknowledges every currently active fire, smoke, shaking, and HI alert, clears the LCD overlays and dashboard alert banners, and silences their buzzer patterns. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. If HI is dangerous, its popup is dismissed too. Sensors continue reporting active conditions. An acknowledged alert returns after 30 seconds if its source remains active; it also rearms after the source clears and triggers again. When there is no unacknowledged alert, D11 advances the selected panel. HI warning state also clears automatically below 41°C.
 
 ## LED sequence
 
@@ -24,8 +24,8 @@ Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. W
 | Ready, HI Safe (<27°C) | Green, steady | Heat-index safe band |
 | HI Caution (27–<33°C) | Yellow, steady | Heat-index caution band |
 | HI Extreme Caution (33–<41°C) | Yellow + red, steady | Heat-index extreme caution band |
-| HI Danger (41–<52°C) | Red, steady | LCD warning until D11 acknowledgement or HI <41°C |
-| HI Extreme Danger (≥52°C) | Yellow + red, steady | LCD warning and repeating two-pulse D9 buzzer until D11 acknowledgement or HI <41°C |
+| HI Danger (41–<52°C) | Red, steady | LCD warning returns after 30-second D11 silence if HI stays high |
+| HI Extreme Danger (≥52°C) | Yellow + red, steady | LCD warning and repeating two-pulse D9 buzzer return after 30-second D11 silence if HI stays high |
 | MPU unavailable after MQ-2 is ready | Yellow, steady | No green all-clear while shaking monitor is offline |
 | Shaking alert | Red, fast blink | Sustained shaking detected |
 | Fire / smoke alert | Red / yellow, steady | Alert priority overrides startup status |

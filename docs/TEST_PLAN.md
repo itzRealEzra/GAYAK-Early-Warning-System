@@ -22,7 +22,7 @@
 | MQ-2 smoke | Raise gas control after baseline | D6 yellow + one short D8 pulse per second, LCD smoke alert | Lower gas/delta; clear delay |
 | Flame proxy | Increase photoresistor lux above DO threshold | D7 red + triple D10 pulse, LCD fire alert | Lower lux; clear delay |
 | Fire + smoke | Keep MQ-2 above threshold and trigger flame proxy | Combined sound: two fast D10 pulses then a longer D8 pulse | Clear flame; smoke-only pattern resumes if smoke remains |
-| LCD panel button | Press and release button wired D11 to GND | Acknowledges all active alerts; otherwise advances one panel and wraps; unacknowledged alerts override the selected panel | Confirm buzzer and alert overlays stop after acknowledgment; sensors still report the live condition |
+| LCD panel button | Press and release button wired D11 to GND | Acknowledges all active alerts for 30 seconds; otherwise advances one panel and wraps; unacknowledged alerts override the selected panel | Confirm buzzer and alert overlays stop, then reappear after 30 seconds if the sensor condition persists |
 | MPU-6050 strong shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.12 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, STRONG SHAKING, `QUAKE,...,STRONG` | Return to steady reading; allow clear/hold delay |
 | MPU-6050 intense shaking | Repeatedly change X/Y acceleration until filtered reading reaches at least 0.30 g | After sustained confirmation: D7 blinking, D9 rapid buzzer, INTENSE SHAKING, `QUAKE,...,INTENSE` | Return to steady reading; allow clear/hold delay |
 | Alert priority | Trigger smoke, then fire | Fire + smoke combined pattern takes priority over smoke-only | Remove fire; smoke-only pattern resumes if still active |

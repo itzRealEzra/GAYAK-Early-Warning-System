@@ -19,6 +19,7 @@
 | `QUAKE_CLEAR_RMS_G` | Motion/vibration clear threshold | 0.06 g | 0.06 g |
 | `QUAKE_CONFIRM_MS` | Required sustained motion | 800 ms | 500 ms |
 | `FLAME_CLEAR_TIME` | Required quiet interval to clear | 1500 ms | 500 ms |
+| `ALERT_ACK_REMINDER_MS` | Silence duration before a still-active alert is announced again | 30000 ms | 30000 ms |
 
 These are **initial experimental defaults**, not approved alarm thresholds. If a source constant changes, treat the actual code as authoritative.
 
