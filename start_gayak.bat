@@ -2,23 +2,11 @@
 setlocal
 cd /d "%~dp0"
 title GAYAK - Local Monitoring Dashboard
-color 0B
+color 07
 cls
 
 :: Dashboard port (override with: set GAYAK_PORT=5001)
 if not defined GAYAK_PORT set "GAYAK_PORT=5000"
-
-echo.
-echo  ============================================================
-echo                         G A Y A K
-echo                 EARLY WARNING SYSTEM
-echo  ============================================================
-echo   Local Sensor Dashboard
-echo   Developer: Ezra
-echo   Address:   http://127.0.0.1:%GAYAK_PORT%
-echo  ------------------------------------------------------------
-echo   Initializing dashboard services...
-echo.
 
 :: ------------------------------------------------------------------
 :: 1. Check / install the project virtual environment
@@ -43,7 +31,7 @@ if errorlevel 1 (
         exit /b 1
     )
 )
-echo [READY] Python environment is ready.
+".venv\Scripts\python.exe" console_ui.py startup "%GAYAK_PORT%"
 
 :: ------------------------------------------------------------------
 :: 2. Check the dashboard port is free.
@@ -54,7 +42,7 @@ echo [READY] Python environment is ready.
 set "PORT_PID="
 for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:":%GAYAK_PORT% .*LISTENING"') do set "PORT_PID=%%P"
 if defined PORT_PID (
-    echo WARNING: Port %GAYAK_PORT% is already in use by PID %PORT_PID%:
+    ".venv\Scripts\python.exe" console_ui.py status ERROR "Port %GAYAK_PORT% is already in use by PID %PORT_PID%."
     tasklist /FI "PID eq %PORT_PID%"
     echo.
     echo Close that program ^(taskkill /F /PID %PORT_PID%^), or use another port:
@@ -64,26 +52,20 @@ if defined PORT_PID (
     pause
     exit /b 1
 )
-echo [READY] Dashboard port %GAYAK_PORT% is available.
+".venv\Scripts\python.exe" console_ui.py status READY "Dashboard port %GAYAK_PORT% is available."
 
 :: ------------------------------------------------------------------
 :: 3. Open the dashboard full screen (Edge or Chrome app window), falling
 ::    back to the default browser. Runs in the background after a short delay.
 :: ------------------------------------------------------------------
 set "GAYAK_URL=http://127.0.0.1:%GAYAK_PORT%"
-echo [INFO] Opening the dashboard in a full-screen app window shortly.
-echo        Press F11 to leave full screen.
+".venv\Scripts\python.exe" console_ui.py status INFO "Opening the dashboard in a full-screen app window shortly. Press F11 to leave full screen."
 start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 4; $u=$env:GAYAK_URL; $e=@($env:ProgramFiles+'\Microsoft\Edge\Application\msedge.exe', ${env:ProgramFiles(x86)}+'\Microsoft\Edge\Application\msedge.exe', $env:ProgramFiles+'\Google\Chrome\Application\chrome.exe') | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($e) { Start-Process $e -ArgumentList ('--app='+$u),'--start-fullscreen' } else { Start-Process $u }"
 
 :: ------------------------------------------------------------------
 :: 4. Start Flask application (foreground so console stays available)
 :: ------------------------------------------------------------------
-echo.
-echo  ------------------------------------------------------------
-echo   GAYAK is starting at http://127.0.0.1:%GAYAK_PORT%
-echo   Press Ctrl+C to stop the dashboard server.
-echo   Keep this console open while the dashboard is running.
-echo  ------------------------------------------------------------
+".venv\Scripts\python.exe" console_ui.py status READY "Starting the server at %GAYAK_URL%. Press Ctrl+C to stop."
 echo.
 ".venv\Scripts\python.exe" app.py
 
