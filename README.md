@@ -12,7 +12,8 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 | --- | --- |
 | Learn what the project does | [Student guide](docs/STUDENT_GUIDE.md) |
 | Build and wire the Wokwi circuit yourself | [Manual Wokwi tutorial](docs/TUTORIALS.md#1-wokwi-simulation) |
-| Build a physical circuit | [Wiring and power guide](docs/WIRING_AND_POWER.md) |
+| Build and wire the physical prototype step by step | [Prototype build and wiring guide](docs/PROTOTYPE_BUILD_AND_WIRING.md) |
+| Review buzzer drivers and power safety | [Wiring and power guide](docs/WIRING_AND_POWER.md) |
 | Change sensitivity and timing | [Adjustments and calibration](docs/ADJUSTMENTS.md) |
 | Understand intense shaking and acceleration | [MPU-6050 detection guide](docs/MPU6050_SHAKING.md) |
 | Run the local web dashboard | [Dashboard tutorial](docs/TUTORIALS.md#3-windows-local-dashboard) |
