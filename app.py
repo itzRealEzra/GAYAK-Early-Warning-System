@@ -18,10 +18,13 @@ import sys
 import time
 import threading
 from collections import deque
+from datetime import datetime
 from typing import Deque
 
 from flask import Flask, Response, jsonify, render_template, stream_with_context
+from werkzeug.serving import WSGIRequestHandler
 
+from console_ui import color, enable_ansi
 from serial_reader import SerialReader
 
 app = Flask(__name__)
@@ -33,6 +36,36 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("GAYAK_PORT", "5000"))
 
 reader = SerialReader(port=COM_PORT, baudrate=BAUDRATE)
+
+
+class EzraRequestHandler(WSGIRequestHandler):
+    """Print compact, colored HTTP access logs with the dashboard timestamp."""
+
+    def log_request(self, code="-", size="-") -> None:
+        try:
+            request_line = f"{self.command} {self.path} {self.request_version}"
+        except AttributeError:
+            request_line = self.requestline
+        request_line = request_line.translate(self._control_char_table)
+
+        status_code = str(code)
+        if status_code.startswith("2"):
+            status_color = "green"
+        elif status_code.startswith("3"):
+            status_color = "cyan"
+        elif status_code.startswith("4"):
+            status_color = "yellow"
+        elif status_code.startswith("5"):
+            status_color = "red"
+        else:
+            status_color = "muted"
+
+        now = datetime.now()
+        timestamp = f"[{color('Ezra', 'violet')}][{now:%B %d %Y}][{now:%H:%M:%S}]"
+        address = color(self.address_string(), "muted")
+        request = color(f'"{request_line}"', "cyan")
+        status_text = color(status_code, status_color)
+        print(f"{address} - - {timestamp} {request} {status_text} {size or '-'}", flush=True)
 
 # Shutdown coordination
 _shutdown = threading.Event()
@@ -166,13 +199,15 @@ def api_stream():
 
 
 def main() -> None:
+    enable_ansi()
     signal.signal(signal.SIGINT, _handle_signal)
     if hasattr(signal, "SIGTERM"):
         signal.signal(signal.SIGTERM, _handle_signal)
 
     reader.start()
     try:
-        app.run(host=HOST, port=PORT, threaded=True, use_reloader=False)
+        app.run(host=HOST, port=PORT, threaded=True, use_reloader=False,
+                request_handler=EzraRequestHandler)
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
