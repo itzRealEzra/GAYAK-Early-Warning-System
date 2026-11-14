@@ -271,11 +271,17 @@ body {
 .setup-card { margin: 12px 0; padding: 20px 22px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 .setup-card h2 { margin: 0 0 10px; font-size: 16px; }
 .setup-card p { margin: 8px 0; color: var(--text-2); }
-.setup-card ol { padding-left: 22px; color: var(--text-2); }
+.setup-card ol, .setup-card ul { padding-left: 22px; color: var(--text-2); }
 .setup-card li { margin: 7px 0; padding-left: 2px; }
 .setup-card code, .setup-card kbd { padding: 2px 5px; background: var(--gray-soft); border-radius: 5px; color: var(--text); font-family: var(--mono); font-size: 0.9em; }
 .setup-card pre { overflow-x: auto; margin: 12px 0; padding: 14px 16px; background: #1d1d1f; border-radius: 9px; color: #f5f5f7; }
 .setup-card pre code { padding: 0; background: transparent; color: inherit; }
+.setup-table-wrap { overflow-x: auto; margin: 12px 0; }
+.setup-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.setup-table th, .setup-table td { padding: 8px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.setup-table th { background: var(--gray-soft); color: var(--text); }
+.setup-table td { color: var(--text-2); }
+.setup-warning { padding: 11px 13px; border-left: 4px solid var(--orange); border-radius: 5px; background: var(--orange-soft); color: #704500 !important; }
 .setup-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 16px; }
 .setup-button { display: inline-flex; justify-content: center; align-items: center; min-height: 40px; padding: 9px 15px; border: 1px solid var(--blue); border-radius: 9px; background: var(--blue); color: #fff; font-weight: 600; text-decoration: none; }
 .setup-button:hover { filter: brightness(0.94); }

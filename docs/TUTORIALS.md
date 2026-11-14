@@ -37,7 +37,7 @@
 5. Connect LCD SDA and MPU SDA to **A4**; connect both SCLs to **A5**. Respect 3.3V I2C logic limits using a level shifter when the LCD backpack pulls SDA/SCL to 5V.
 6. Wire your active buzzers through independently rated transistor/MOSFET low-side drivers, not directly to the Arduino; see [WIRING_AND_POWER.md](WIRING_AND_POWER.md).
 7. In Arduino IDE, install **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**, and **LiquidCrystal_I2C**; `Wire` is built in.
-8. Select **Board → Arduino Uno**, then your COM port, and open `arduino/GAYAK.ino`.
+8. Select **Board → Arduino Uno**, then your COM port, and open `arduino/GAYAK/GAYAK.ino`.
 9. Upload while powered via USB. If uploads fail, inspect wiring around D0/D1, the serial port and electrical shorts; no sensor should normally require disconnecting its analog wire.
 10. Open Serial Monitor at **115200 baud**, let the MQ-2 finish physical warm-up/baseline, and confirm MPU-6050 READY.
 11. Test visual states safely. Use simulated inputs or benign nonhazardous bench exercises; do not ignite materials or release fuel gas.
