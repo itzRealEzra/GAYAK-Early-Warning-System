@@ -11,6 +11,8 @@ Obsidian-friendly notes for this local project and its public GitHub repository.
 - [[SYSTEM-OVERVIEW]]
 - [[ARCHITECTURE]]
 - [[HARDWARE-AND-PINS]]
+- [[PROTOTYPE_BUILD_AND_WIRING]]
+- [[WIRING_AND_POWER]]
 - [[LCD-LED-STATUS]]
 - [[SERIAL-PROTOCOL]]
 - [[DASHBOARD]]
