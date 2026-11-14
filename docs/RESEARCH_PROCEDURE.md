@@ -50,11 +50,11 @@ Record the manufacturer/model and stated accuracy of each reference instrument. 
 
 ## 3. Build And Wire The Prototype
 
-Follow this physical assembly order and begin with the LCD. Perform all wiring with USB, battery, charger, and external buzzer supplies disconnected. Use the module labels and datasheets because pin order and voltage limits can differ between manufacturers. Record the actual parts used; the list below describes the current project configuration. For the full build illustrations and power notes, see [[PROTOTYPE_BUILD_AND_WIRING]] and [[WIRING_AND_POWER]].
+Build the prototype in two stages: first assemble and test the circuit from scratch on a breadboard; after the breadboard version works, transfer the circuit to the solderable PCB test board (prototype/perfboard) as the main board and solder the connections. Start the wiring with the LCD. Perform wiring and soldering with USB, battery, charger, and external buzzer supplies disconnected. Use the module labels and datasheets because pin order and voltage limits can differ between manufacturers. Record the actual parts used; the list below describes the current project configuration. For the full build illustrations and power notes, see [[PROTOTYPE_BUILD_AND_WIRING]] and [[WIRING_AND_POWER]].
 
 ### Step-By-Step Wiring Procedure
 
-1. **Prepare The Board And Work Area.** Place the Arduino Uno and breadboard on a dry, nonconductive surface. Identify each module's VCC, GND, and signal pins. Keep the 18650 cell, TP4056, and boost converter disconnected. Label the breadboard's supply and ground rails, but do not energize them yet.
+1. **Prepare The Breadboard Stage.** Place the Arduino Uno and breadboard on a dry, nonconductive surface. This breadboard is the temporary first build used to assemble the prototype from scratch and verify the circuit before soldering. Identify each module's VCC, GND, and signal pins. Keep the 18650 cell, TP4056, and boost converter disconnected. Label the breadboard's supply and ground rails, but do not energize them yet.
 2. **Wire The LCD First.** With power off, connect the I2C LCD backpack's VCC to the Uno 5V pin only if the backpack is rated for 5V, GND to Uno GND, SDA to A4, and SCL to A5. Keep the I2C connections short and check that SDA and SCL are not swapped. Record the LCD's I2C address; the firmware commonly uses `0x27`.
 3. **Add The GY-521 / MPU-6050 To I2C.** Connect its VCC to the voltage allowed by that specific GY-521 board and GND to common GND. To protect the MPU from a 5V LCD I2C pull-up, use a bidirectional I2C level shifter unless the exact modules are verified compatible: connect the shifter's HV reference to 5V, LV reference to 3.3V, and GND to common GND; connect the LCD and Uno A4 (SDA) / A5 (SCL) on the 5V side; connect the MPU SDA/SCL on the 3.3V side. If the modules are explicitly verified as I2C-voltage compatible, document the verified shared-bus arrangement instead. The common MPU-6050 address is `0x68`. Mount the module firmly to the test structure after electrical checks.
 4. **Wire The DHT22.** Connect the sensor's compatible VCC and GND, then DATA to D2. A bare DHT22 without a breakout pull-up needs a 4.7kΩ–10kΩ resistor from DATA to its compatible VCC. Record whether the sensor is bare or on a module.
@@ -63,7 +63,7 @@ Follow this physical assembly order and begin with the LCD. Perform all wiring w
 7. **Wire The Status LEDs.** Add one 220Ω series resistor per LED. Connect D5 through its resistor to the green LED anode, D6 through its resistor to the yellow LED anode, and D7 through its resistor to the red LED anode. Connect each LED cathode to GND. Check each LED's polarity; do not share a resistor between LEDs.
 8. **Wire The Pushbutton.** Connect a momentary, normally-open button between D11 and GND. The firmware uses `INPUT_PULLUP`, so the unpressed input is HIGH and a press reads LOW; no external pull-up resistor is required. Record the button type used.
 9. **Wire The Three Buzzer Drivers.** Give each active buzzer its own correctly rated low-side transistor/MOSFET driver. Connect D8 to the smoke-driver control, D9 to the shaking-driver control, and D10 to the fire-driver control. Use the required gate/base resistor and pull-down/bias parts, connect the buzzer to a supply within its actual rated range, and join the driver supply ground to Arduino GND. Do not power a physical buzzer from an Arduino GPIO. Add a flyback diode only when required for the selected inductive buzzer, following its datasheet. Keep the separate buzzer supply disconnected for initial logic checks.
-10. **Inspect And Document Before Power-Up.** Photograph the wiring, label modules and rails, and compare every connection against the table below. With all supplies still disconnected, verify polarity, common ground, correct I2C routing/level shifting, all three LED resistors, the D11-to-GND button path, and no short between 5V and GND. Record the board, module models, wiring revision, driver parts, and supply configuration. Leave the battery and charger disconnected for initial testing.
+10. **Inspect The Breadboard Before Power-Up.** Photograph the breadboard wiring, label modules and rails, and compare every connection against the table below. With all supplies still disconnected, verify polarity, common ground, correct I2C routing/level shifting, all three LED resistors, the D11-to-GND button path, and no short between 5V and GND. Record the module models, wiring map, driver parts, and supply configuration. Leave the battery and charger disconnected for initial testing.
 
 | Uno pin | Connection |
 | --- | --- |
@@ -77,19 +77,26 @@ Follow this physical assembly order and begin with the LCD. Perform all wiring w
 | D0 / D1 | Reserved for USB serial |
 | 5V / GND | Regulated sensor supply and common ground, subject to each module's ratings |
 
-Proceed to firmware upload and the initial power-up in the next section only after the unpowered inspection is complete. Do not add a battery/charger power path unless it has been separately designed and validated.
+Proceed to firmware upload and breadboard testing in the next section only after the unpowered inspection is complete. Transfer the circuit to the PCB test board only after the breadboard version has been checked and its wiring map recorded. Do not add a battery/charger power path unless it has been separately designed and validated.
 
-## 4. Prepare The Firmware And Data Log
+## 4. Test The Breadboard And Transfer To The PCB Test Board
 
 1. Upload `arduino/GAYAK/GAYAK.ino` to the Uno using the documented libraries and board settings.
 2. Open Serial Monitor at **115200 baud** for development trials. Close it before testing through the web dashboard because both programs cannot use the same COM port at once.
-3. Create one data sheet per test session. Assign each run a unique test ID, such as `SIM-MQ2-01` or `PHY-DHT-02`.
-4. Synchronize the observer's clock and choose a response-time method. For short confirmation delays, timestamped video or a logger is more repeatable than human reaction time alone.
-5. Save raw readings and logs before calculating summaries. Do not replace raw data with pass/fail labels.
+3. Power the breadboard build from USB only. Confirm the LCD starts and the Arduino detects the expected sensors; inspect serial diagnostics before connecting any separate buzzer supply.
+4. Perform a brief breadboard bring-up: confirm each sensor is detected, the LCD updates, the LEDs and button respond, and buzzer-driver control works with the buzzer supply disconnected. Use only safe input changes described in Section 6. Correct wiring or firmware issues on the breadboard first, then record the final working layout and take a clear reference photo. Do not solder a circuit that has not passed its breadboard checks; reserve the repeated formal trials for the completed soldered board.
+5. With all power disconnected, plan the PCB test-board layout from the verified breadboard wiring. Identify whether the board has isolated pads or connected copper strips; do not assume its holes form power rails. Mark the Uno connections, sensor headers, 5V and GND distribution, I2C lines, LED resistors, button, and three buzzer-driver channels.
+6. Transfer one subsystem at a time from the breadboard layout to the PCB test board. Solder the intended permanent components and jumper wires; use headers or connectors for the Uno and replaceable modules when practical. Keep power wiring and buzzer-current paths secure, and label the rails and signal connections.
+7. After soldering each subsystem, inspect the joints for bridges, loose wires, or reversed parts. Before applying power to the completed board, use a multimeter to check continuity against the wiring map and confirm there is no short between 5V and GND.
+8. Power the soldered board from USB for its first test. Recheck the LCD, sensors, LEDs, button, and buzzer-driver control one subsystem at a time. Keep the battery/charger disconnected and do not connect the external buzzer supply until its driver and supply ratings have been checked.
+9. Photograph the completed PCB test board and record any differences from the breadboard layout. Use this as-built board for the remaining physical trials; report deviations and repairs in the research notes.
+10. Create one data sheet per test session. Assign each run a unique test ID, such as `SIM-MQ2-01` or `PHY-MQ2-01`.
+11. Synchronize the observer's clock and choose a response-time method. For short confirmation delays, timestamped video or a logger is more repeatable than human reaction time alone.
+12. Save raw readings and logs before calculating summaries. Do not replace raw data with pass/fail labels.
 
 ## 5. Establish A Normal Baseline
 
-1. Place the prototype in its documented test location, away from direct sunlight, drafts from heaters, and unrelated sources of infrared or vibration.
+1. Place the completed, soldered PCB test-board prototype in its documented test location, away from direct sunlight, drafts from heaters, and unrelated sources of infrared or vibration. Record any functional checks performed earlier on the breadboard separately from the formal trials on this final board.
 2. For physical trials, record date/time, room conditions, sensor placement, reference temperature/RH if available, supply voltage, and whether the area appears normal and clear.
 3. Power the Uno by USB and record its startup LCD and LED sequence.
 4. Aim the digital flame module at a normal indoor scene during its idle-level learning at startup.
@@ -101,7 +108,7 @@ Do not hide false alerts by deleting startup or baseline readings. Keep excluded
 
 ## 6. Run Controlled Functional Trials
 
-Change **one input at a time**, restore the baseline between conditions, and use the same wait/record method on every repetition. Run at least three repetitions per condition for the project's proposed pilot protocol. Mark every row as simulated, electrically injected, or physically observed.
+Run formal physical trials on the completed soldered PCB test-board prototype. Change **one input at a time**, restore the baseline between conditions, and use the same wait/record method on every repetition. Run at least three repetitions per condition for the project's proposed pilot protocol. Mark every row as simulated, electrically injected, or physically observed; keep breadboard bring-up checks labeled separately as development checks.
 
 | Test condition | Safe procedure | Record / expected behavior to compare |
 | --- | --- | --- |
