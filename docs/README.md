@@ -13,6 +13,7 @@ Obsidian-friendly notes for this local project and its public GitHub repository.
 - [[HARDWARE-AND-PINS]]
 - [[PROTOTYPE_BUILD_AND_WIRING]]
 - [[WIRING_AND_POWER]]
+- [[RESEARCH_PROCEDURE]]
 - [[LCD-LED-STATUS]]
 - [[SERIAL-PROTOCOL]]
 - [[DASHBOARD]]
