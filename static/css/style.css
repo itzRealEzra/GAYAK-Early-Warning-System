@@ -179,6 +179,29 @@ body {
   transition: color 0.3s ease, background 0.3s ease;
 }
 .card-icon .icon { width: 18px; height: 18px; }
+.sensor-sprite {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  background-image: url("../images/sensor-sprite-sheet.png");
+  background-repeat: no-repeat;
+  background-size: 120px 180px;
+  image-rendering: pixelated;
+  animation: sensorSprite 1.2s steps(4, end) infinite;
+}
+.sensor-sprite--humidity { background-position-y: -30px; }
+.sensor-sprite--heat { background-position-y: -60px; }
+.sensor-sprite--gas { background-position-y: -90px; }
+.sensor-sprite--flame { background-position-y: -120px; }
+.sensor-sprite--shake { background-position-y: -150px; }
+@keyframes sensorSprite {
+  from { background-position-x: 0; }
+  to { background-position-x: -120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sensor-sprite { animation: none; background-position-x: -90px; }
+}
 .card--temp { --accent: #ff9500; --accent-soft: var(--orange-soft); }
 .card--hum  { --accent: var(--blue); --accent-soft: #e5f1ff; }
 .card--hi   { --accent: #ff6a3d; --accent-soft: #ffece6; }
