@@ -185,6 +185,7 @@ body {
   height: 30px;
   flex: none;
   overflow: hidden;
+  background-image: url("../images/sensor-temperature-cozy-24.png");
   background-repeat: no-repeat;
   background-size: 180px 120px;
   background-position: 0 0;
