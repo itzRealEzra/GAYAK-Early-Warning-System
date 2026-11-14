@@ -15,6 +15,7 @@ Obsidian-friendly notes for this local project and its public GitHub repository.
 - [[SERIAL-PROTOCOL]]
 - [[DASHBOARD]]
 - [[RUNNING-ON-WINDOWS]]
+- [[../INSTALLATION|Windows Installation Guide]]
 - [[GITHUB-VS-WORKSPACE]]
 - [[FUNCTIONS]]
 - [[FILE-REFERENCE]]

@@ -109,11 +109,9 @@ The firmware recalculates HI from each valid DHT22 temperature and relative-humi
 
 ## Local desktop dashboard (Windows)
 
-1. Install Python 3 and run `py -m pip install -r requirements.txt` from the repository root.
-2. Connect the Arduino via USB; upload the physical `.ino` file.
-3. **Close the Arduino IDE Serial Monitor** (only one application can own the COM port).
-4. Run `start_gayak.bat`, or `py app.py`.
-5. Open **http://127.0.0.1:5000**. If auto-detection uses the wrong COM port, run `set GAYAK_COM_PORT=COM4` in that CMD window before launching, replacing COM4 with your own port.
+Read the [Windows installation guide](INSTALLATION.md), or use the **Setup & Installation** link at the bottom of the running dashboard. Install Python 3 first, extract the repository, then run `install_gayak.bat` once to download Flask and PySerial into the project-local `.venv`.
+
+Upload the physical Arduino sketch, connect USB, close Arduino Serial Monitor/Plotter, then run `start_gayak.bat`. The script opens **http://127.0.0.1:5000** and starts the local Flask server. If auto-detection selects the wrong COM port, set `GAYAK_COM_PORT=COM4` in Command Prompt before launching, replacing COM4 with the Arduino's actual port.
 
 USB Serial runs at **115200 baud**. `DATA` CSV telemetry carries temperature, humidity, heat status, MQ-2 and flame readings, plus HI acknowledgment and a four-bit alert acknowledgment mask. The local parser accepts the current 15-field record and older 10-/13-/14-field records. Separate `QUAKE,online,alert,rms_g,level` records carry MPU status; the parser also supports the earlier four-field format. The dashboard displays vibration, sensor health, and shaking events.
 

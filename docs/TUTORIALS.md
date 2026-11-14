@@ -44,16 +44,16 @@
 
 ## 3. Windows local dashboard
 
-You will need Python 3, a USB cable, the physical Arduino sketch, and the files in this repository. The dashboard works locally—**no Wi-Fi or database**.
+You will need Python 3, a USB cable, the physical Arduino sketch, and the files in this repository. The dashboard works locally—**no Wi-Fi or database**. Open **Setup & Installation** in the dashboard footer for the same quick-start guide.
 
 ```bat
 cd C:\path\to\GAYAK-Early-Warning-System
-py -m pip install -r requirements.txt
+install_gayak.bat
 set GAYAK_COM_PORT=COM4
 start_gayak.bat
 ```
 
-Replace `COM4` with the actual port or leave the variable unset to try automatic detection. Navigate to `http://127.0.0.1:5000`. Another option is `py app.py`.
+Run `install_gayak.bat` once from the extracted repository folder. It creates `.venv` and installs the Python requirements. Replace `COM4` with the actual port or leave the variable unset to try automatic detection. Navigate to `http://127.0.0.1:5000`. The start batch uses the project environment; as a manual alternative after installation, run `.venv\Scripts\python.exe app.py`.
 
 The firmware emits two machine-readable records:
 

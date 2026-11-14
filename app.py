@@ -134,6 +134,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/setup")
+def setup_guide():
+    return render_template("setup.html")
+
+
 @app.route("/api/status")
 def api_status():
     return jsonify(build_payload())

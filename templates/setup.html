@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAYAK — Setup &amp; Installation</title>
+<meta name="description" content="Install and run the GAYAK local classroom monitoring dashboard on Windows.">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="setup-body">
+<main class="setup-shell">
+  <header class="setup-header">
+    <div>
+      <p class="setup-eyebrow">GAYAK LOCAL DASHBOARD</p>
+      <h1>Setup &amp; Installation</h1>
+      <p class="setup-intro">Prepare the Windows dashboard, install its Python packages, and connect the Arduino over USB.</p>
+    </div>
+    <a class="setup-button setup-button-secondary" href="{{ url_for('index') }}">Back To Dashboard</a>
+  </header>
+
+  <section class="setup-card">
+    <h2>1. Download The Project</h2>
+    <p>Download and extract the repository. Keep <code>install_gayak.bat</code>, <code>start_gayak.bat</code>, and <code>requirements.txt</code> together in the project folder.</p>
+    <div class="setup-actions">
+      <a class="setup-button" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System/archive/refs/heads/main.zip">Download Project ZIP</a>
+      <a class="setup-text-link" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System">View GitHub Repository</a>
+    </div>
+  </section>
+
+  <section class="setup-card">
+    <h2>2. Install Python</h2>
+    <p>Install Python 3 for Windows if it is not already installed. The installer uses the Python launcher (<code>py</code>) when available, or <code>python</code> as a fallback.</p>
+    <p><a class="setup-text-link" href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">Download Python From Python.org</a></p>
+  </section>
+
+  <section class="setup-card">
+    <h2>Arduino IDE Libraries</h2>
+    <p>In Arduino IDE Library Manager, install <strong>DHT sensor library</strong> by Adafruit, <strong>Adafruit Unified Sensor</strong>, and a compatible <strong>LiquidCrystal_I2C</strong> library. <code>Wire</code> is included with the Arduino Uno core.</p>
+  </section>
+
+  <section class="setup-card">
+    <h2>3. Install Dashboard Packages</h2>
+    <ol>
+      <li>Open the extracted project folder.</li>
+      <li>Double-click <code>install_gayak.bat</code>.</li>
+      <li>Allow it to download Flask and PySerial. This needs an internet connection the first time.</li>
+    </ol>
+    <p>The installer creates a project-local <code>.venv</code>, so the dashboard packages stay separate from other Python projects.</p>
+  </section>
+
+  <section class="setup-card">
+    <h2>4. Connect And Launch</h2>
+    <ol>
+      <li>Upload the physical sketch <code>arduino/GAYAK.ino</code> to the Arduino.</li>
+      <li>Connect the Arduino to the PC with USB.</li>
+      <li>Close Arduino Serial Monitor and Serial Plotter so the dashboard can use the COM port.</li>
+      <li>Double-click <code>start_gayak.bat</code>. It installs missing packages if needed and opens the dashboard.</li>
+    </ol>
+    <p>Open <code>http://127.0.0.1:5000</code> if the browser does not open automatically. Keep the console window open while using the dashboard; press <kbd>Ctrl</kbd> + <kbd>C</kbd> in that window to stop it.</p>
+  </section>
+
+  <section class="setup-card setup-card-note">
+    <h2>Choose The Arduino COM Port</h2>
+    <p>The dashboard tries to find the Arduino automatically. If it selects the wrong port, open Command Prompt in the project folder and run:</p>
+    <pre><code>set GAYAK_COM_PORT=COM4
+start_gayak.bat</code></pre>
+    <p>Replace <code>COM4</code> with the Arduino's port in Windows Device Manager. The dashboard listens only on this PC at <code>127.0.0.1</code>.</p>
+  </section>
+</main>
+</body>
+</html>
