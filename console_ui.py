@@ -106,7 +106,7 @@ def print_startup(port: str) -> None:
     print(color(bar, "violet"))
     print(f"Developer: {color('Ezra', 'violet')}")
     print(f"Dashboard: {color(f'http://127.0.0.1:{port}', 'cyan')}")
-    status("READY", "Python environment is ready.")
+    status("READ", "Environment is ready.")
     status("READ", "Project files:")
     count = print_project_tree(Path(__file__).resolve().parent)
     print(color(f"{count} project files listed.", "muted"))
