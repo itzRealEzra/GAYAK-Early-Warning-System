@@ -104,32 +104,32 @@
     <!-- Reading cards -->
     <section class="cards">
       <article class="card card--temp" id="cardTemp">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-thermometer"/></svg></span><span class="card-title">Temperature</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite" aria-hidden="true"></span></span><span class="card-title">Temperature</span></div>
         <div class="card-value" id="valTemp">&#8212;</div>
         <div class="card-meta" id="metaTemp">Sensor unavailable</div>
       </article>
       <article class="card card--hum" id="cardHum">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-droplet"/></svg></span><span class="card-title">Humidity</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite sensor-sprite--humidity" aria-hidden="true"></span></span><span class="card-title">Humidity</span></div>
         <div class="card-value" id="valHum">&#8212;</div>
         <div class="card-meta" id="metaHum">Sensor unavailable</div>
       </article>
       <article class="card card--hi" id="cardHi">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></span><span class="card-title" title="Heat Index">HI</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite sensor-sprite--heat" aria-hidden="true"></span></span><span class="card-title" title="Heat Index">HI</span></div>
         <div class="card-value" id="valHi">&#8212;</div>
         <div class="card-meta" id="metaHi">&#8212;</div>
       </article>
       <article class="card card--gas" id="cardGas">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-smoke"/></svg></span><span class="card-title">Gas / Smoke</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite sensor-sprite--gas" aria-hidden="true"></span></span><span class="card-title">Gas / Smoke</span></div>
         <div class="card-value" id="valGas">&#8212;</div>
         <div class="card-meta" id="metaGas">&#8212;</div>
       </article>
       <article class="card card--fire" id="cardFire">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg></span><span class="card-title">Flame</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite sensor-sprite--flame" aria-hidden="true"></span></span><span class="card-title">Flame</span></div>
         <div class="card-value" id="valFire">&#8212;</div>
         <div class="card-meta" id="metaFire">&#8212;</div>
       </article>
       <article class="card card--quake" id="cardQuake">
-        <div class="card-head"><span class="card-icon"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></span><span class="card-title">MPU-6050 Acceleration</span></div>
+        <div class="card-head"><span class="card-icon"><span class="sensor-sprite sensor-sprite--shake" aria-hidden="true"></span></span><span class="card-title">Shake / Vibration</span></div>
         <div class="card-value" id="valQuake">—</div>
         <div class="card-meta" id="metaQuake">Sensor unavailable</div>
       </article>
@@ -162,8 +162,8 @@
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>MPU-6050 Shaking &amp; Acceleration</h2><span id="mpuPill" class="pill">—</span></div>
-      <dl class="stats"><div><dt>Filtered acceleration (RMS g)</dt><dd id="mpuRms">—</dd></div><div><dt>Classification</dt><dd>Local motion level, not earthquake magnitude</dd></div></dl>
+      <div class="panel-head"><h2><span class="sensor-sprite sensor-sprite--shake" aria-hidden="true"></span>Shake / Vibration</h2><span id="mpuPill" class="pill">—</span></div>
+      <dl class="stats"><div><dt>Filtered acceleration (RMS g)</dt><dd id="mpuRms">—</dd></div><div><dt>Classification</dt><dd>Local motion level</dd></div></dl>
     </section>
 
     <!-- Charts -->
