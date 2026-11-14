@@ -184,23 +184,48 @@ body {
   width: 30px;
   height: 30px;
   flex: none;
-  background-image: url("../images/sensor-sprite-sheet.png");
+  overflow: hidden;
   background-repeat: no-repeat;
-  background-size: 120px 180px;
+  background-size: 180px 120px;
+  background-position: 0 0;
   image-rendering: pixelated;
-  animation: sensorSprite 1.2s steps(4, end) infinite;
+  contain: strict;
+  animation: sensorSprite24 1s steps(1, end) infinite;
 }
-.sensor-sprite--humidity { background-position-y: -30px; }
-.sensor-sprite--heat { background-position-y: -60px; }
-.sensor-sprite--gas { background-position-y: -90px; }
-.sensor-sprite--flame { background-position-y: -120px; }
-.sensor-sprite--shake { background-position-y: -150px; }
-@keyframes sensorSprite {
-  from { background-position-x: 0; }
-  to { background-position-x: -120px; }
+.sensor-sprite--humidity { background-image: url("../images/sensor-humidity-cozy-24.png"); }
+.sensor-sprite--heat { background-image: url("../images/sensor-heat-index-cozy-24.png"); }
+.sensor-sprite--gas { background-image: url("../images/sensor-gas-smoke-cozy-24.png"); }
+.sensor-sprite--flame { background-image: url("../images/sensor-flame-cozy-24.png"); }
+.sensor-sprite--shake { background-image: url("../images/sensor-mpu6050-cozy-24.png"); }
+@keyframes sensorSprite24 {
+  0% { background-position: 0 0; }
+  4.1667% { background-position: -30px 0; }
+  8.3333% { background-position: -60px 0; }
+  12.5% { background-position: -90px 0; }
+  16.6667% { background-position: -120px 0; }
+  20.8333% { background-position: -150px 0; }
+  25% { background-position: 0 -30px; }
+  29.1667% { background-position: -30px -30px; }
+  33.3333% { background-position: -60px -30px; }
+  37.5% { background-position: -90px -30px; }
+  41.6667% { background-position: -120px -30px; }
+  45.8333% { background-position: -150px -30px; }
+  50% { background-position: 0 -60px; }
+  54.1667% { background-position: -30px -60px; }
+  58.3333% { background-position: -60px -60px; }
+  62.5% { background-position: -90px -60px; }
+  66.6667% { background-position: -120px -60px; }
+  70.8333% { background-position: -150px -60px; }
+  75% { background-position: 0 -90px; }
+  79.1667% { background-position: -30px -90px; }
+  83.3333% { background-position: -60px -90px; }
+  87.5% { background-position: -90px -90px; }
+  91.6667% { background-position: -120px -90px; }
+  95.8333% { background-position: -150px -90px; }
+  100% { background-position: 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sensor-sprite { animation: none; background-position-x: -90px; }
+  .sensor-sprite { animation: none; background-position: 0 0; }
 }
 .card--temp { --accent: #ff9500; --accent-soft: var(--orange-soft); }
 .card--hum  { --accent: var(--blue); --accent-soft: #e5f1ff; }
