@@ -1,14 +1,23 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+title GAYAK - Local Monitoring Dashboard
+color 0B
+cls
 
 :: Dashboard port (override with: set GAYAK_PORT=5001)
 if not defined GAYAK_PORT set "GAYAK_PORT=5000"
 
-echo ========================================
-echo GAYAK - Hazard Monitoring System
-echo Local dashboard: http://127.0.0.1:%GAYAK_PORT%
-echo ========================================
+echo.
+echo  ============================================================
+echo                         G A Y A K
+echo                 EARLY WARNING SYSTEM
+echo  ============================================================
+echo   Local Sensor Dashboard
+echo   Developer: Ezra
+echo   Address:   http://127.0.0.1:%GAYAK_PORT%
+echo  ------------------------------------------------------------
+echo   Initializing dashboard services...
 echo.
 
 :: ------------------------------------------------------------------
@@ -34,7 +43,7 @@ if errorlevel 1 (
         exit /b 1
     )
 )
-echo [OK] Dependencies ready.
+echo [READY] Python environment is ready.
 
 :: ------------------------------------------------------------------
 :: 2. Check the dashboard port is free.
@@ -55,22 +64,26 @@ if defined PORT_PID (
     pause
     exit /b 1
 )
-echo [OK] Port %GAYAK_PORT% is free.
+echo [READY] Dashboard port %GAYAK_PORT% is available.
 
 :: ------------------------------------------------------------------
 :: 3. Open the dashboard full screen (Edge or Chrome app window), falling
 ::    back to the default browser. Runs in the background after a short delay.
 :: ------------------------------------------------------------------
 set "GAYAK_URL=http://127.0.0.1:%GAYAK_PORT%"
-echo [INFO] Dashboard opens full screen in a few seconds (press F11 to leave full screen).
+echo [INFO] Opening the dashboard in a full-screen app window shortly.
+echo        Press F11 to leave full screen.
 start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 4; $u=$env:GAYAK_URL; $e=@($env:ProgramFiles+'\Microsoft\Edge\Application\msedge.exe', ${env:ProgramFiles(x86)}+'\Microsoft\Edge\Application\msedge.exe', $env:ProgramFiles+'\Google\Chrome\Application\chrome.exe') | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($e) { Start-Process $e -ArgumentList ('--app='+$u),'--start-fullscreen' } else { Start-Process $u }"
 
 :: ------------------------------------------------------------------
 :: 4. Start Flask application (foreground so console stays available)
 :: ------------------------------------------------------------------
 echo.
-echo Starting GAYAK dashboard server...
-echo Press Ctrl+C to stop. Keep this console open for troubleshooting.
+echo  ------------------------------------------------------------
+echo   GAYAK is starting at http://127.0.0.1:%GAYAK_PORT%
+echo   Press Ctrl+C to stop the dashboard server.
+echo   Keep this console open while the dashboard is running.
+echo  ------------------------------------------------------------
 echo.
 ".venv\Scripts\python.exe" app.py
 
