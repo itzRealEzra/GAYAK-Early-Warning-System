@@ -25,4 +25,4 @@ Obsidian-friendly notes for this local project and its public GitHub repository.
 
 Function lists: [[functions/PYTHON]], [[functions/ARDUINO]], [[functions/DASHBOARD_JS]].
 
-Notes describe local commit `bf8d4c6`; GitHub `main` was checked at `b70ced2`. Read [[GITHUB-VS-WORKSPACE]] before applying upstream guides to local hardware.
+Hardware and firmware behavior in these notes was checked against local project commit `81298e0`; this documentation is published on GitHub `main` through commit `41952a6`. Read [[GITHUB-VS-WORKSPACE]] before applying upstream guides to local hardware.
