@@ -225,9 +225,6 @@ body {
   95.8333% { background-position: -150px -90px; }
   100% { background-position: 0 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .sensor-sprite { animation: none; background-position: 0 0; }
-}
 .card--temp { --accent: #ff9500; --accent-soft: var(--orange-soft); }
 .card--hum  { --accent: var(--blue); --accent-soft: #e5f1ff; }
 .card--hi   { --accent: #ff6a3d; --accent-soft: #ffece6; }
