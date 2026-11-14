@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GAYAK — Setup &amp; Installation</title>
+<title>GAYAK — Dashboard Setup</title>
 <meta name="description" content="Install and run the GAYAK local classroom monitoring dashboard on Windows.">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -12,15 +12,26 @@
   <header class="setup-header">
     <div>
       <p class="setup-eyebrow">GAYAK LOCAL DASHBOARD</p>
-      <h1>Complete Setup &amp; Installation</h1>
-      <p class="setup-intro">Build and wire the prototype, upload the Arduino firmware, install the dashboard, and connect it over USB.</p>
+      <h1>Dashboard Setup</h1>
+      <p class="setup-intro">Install the dashboard on a Windows PC and connect your already-programmed Arduino to view live sensor readings.</p>
     </div>
     <a class="setup-button setup-button-secondary" href="{{ url_for('index') }}">Back To Dashboard</a>
   </header>
 
   <section class="setup-card">
+    <h2>What You Need</h2>
+    <ul>
+      <li>A Windows 10 or 11 PC</li>
+      <li>The assembled GAYAK Arduino with firmware already uploaded</li>
+      <li>A USB data cable and Python 3 for Windows</li>
+      <li>This project downloaded to the PC</li>
+    </ul>
+    <p><strong>Arduino IDE is not needed</strong> to run the dashboard. The Arduino must remain connected and powered for live sensor readings.</p>
+  </section>
+
+  <section class="setup-card">
     <h2>1. Download The Project</h2>
-    <p>Download and extract the repository. Keep <code>install_gayak.bat</code>, <code>start_gayak.bat</code>, and <code>requirements.txt</code> together in the project folder.</p>
+    <p>Download and extract the project ZIP. Keep the files together in the extracted folder.</p>
     <div class="setup-actions">
       <a class="setup-button" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System/archive/refs/heads/main.zip">Download Project ZIP</a>
       <a class="setup-text-link" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System">View GitHub Repository</a>
@@ -28,82 +39,46 @@
   </section>
 
   <section class="setup-card">
-    <h2>2. Install Arduino IDE</h2>
-    <p>Download and install Arduino IDE for Windows. You will use it to install firmware libraries and upload the project sketch.</p>
-    <p><a class="setup-text-link" href="https://www.arduino.cc/en/software/" target="_blank" rel="noopener noreferrer">Download Arduino IDE</a> · <a class="setup-text-link" href="https://support.arduino.cc/hc/en-us/articles/360019833020-Download-and-install-Arduino-IDE" target="_blank" rel="noopener noreferrer">Official Install Instructions</a></p>
-  </section>
-
-  <section class="setup-card">
-    <h2>3. Wire The Hardware</h2>
-    <p>Gather an Uno, DHT22, MQ-2 (AO), digital flame module (DO), GY-521/MPU-6050, 16×2 I2C LCD, three LEDs, D11 pushbutton, three active buzzers, suitable buzzer drivers, jumper wires, and a breadboard/perfboard.</p>
-    <p>Use USB power for first tests. Connect grounds together and check each module's supply voltage. See the <a class="setup-text-link" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System/blob/main/docs/WIRING_AND_POWER.md" target="_blank" rel="noopener noreferrer">full wiring and power guide</a> before assembly.</p>
-    <div class="setup-table-wrap">
-      <table class="setup-table">
-        <thead><tr><th>Uno Pin</th><th>Connection</th></tr></thead>
-        <tbody>
-          <tr><td>D2</td><td>DHT22 DATA</td></tr>
-          <tr><td>D3</td><td>Flame sensor DO</td></tr>
-          <tr><td>A0</td><td>MQ-2 AO</td></tr>
-          <tr><td>A4 / A5</td><td>LCD and GY-521 shared SDA / SCL</td></tr>
-          <tr><td>D5 / D6 / D7</td><td>Green / yellow / red LEDs, each with its own 220Ω resistor</td></tr>
-          <tr><td>D8 / D9 / D10</td><td>Smoke / shaking / fire buzzer driver inputs</td></tr>
-          <tr><td>D11</td><td>Pushbutton to GND (`INPUT_PULLUP`)</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="setup-warning">Do not connect physical active buzzers directly to Arduino GPIO. Use appropriately rated transistor/MOSFET driver circuits. Leave the 18650/TP4056 battery disconnected during initial USB tests.</p>
-    <p class="setup-warning">A bare DHT22 may need a data pull-up resistor; some sensor boards include one. Check LCD backpack pull-ups against GY-521 I2C voltage limits and use level shifting as needed.</p>
-  </section>
-
-  <section class="setup-card">
-    <h2>4. Set Up Arduino IDE</h2>
+    <h2>2. Install Python And Dashboard Packages</h2>
     <ol>
-      <li>If needed, install the <strong>Arduino AVR Boards</strong> package from <strong>Tools → Board → Boards Manager</strong>. See the <a class="setup-text-link" href="https://support.arduino.cc/hc/en-us/articles/360016119519-Add-boards-to-Arduino-IDE" target="_blank" rel="noopener noreferrer">board package guide</a>.</li>
-      <li>In <strong>Tools → Manage Libraries</strong>, install <strong>DHT sensor library</strong> by Adafruit, <strong>Adafruit Unified Sensor</strong>, and a compatible <strong>LiquidCrystal_I2C</strong> library. <code>Wire</code> is included with the Uno core.</li>
-      <li>Open <code>arduino/GAYAK/GAYAK.ino</code>, select <strong>Tools → Board → Arduino Uno</strong>, then select the Arduino's COM port from <strong>Tools → Port</strong>.</li>
-      <li>During startup, aim the flame module at a normal indoor scene so firmware can learn its idle state. Keep MQ-2 in clean air for baseline calibration, then click <strong>Upload</strong>.</li>
-      <li>Optionally open Serial Monitor at <strong>115200 baud</strong> to confirm readings. Close Serial Monitor before running the dashboard.</li>
+      <li>If Python 3 is not installed, <a class="setup-text-link" href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">download it for Windows</a>. Enable the option to add Python to PATH if offered.</li>
+      <li>Open the extracted project folder and double-click <code>install_gayak.bat</code>.</li>
+      <li>Allow the script to download Flask and PySerial. Internet access is needed for the initial setup.</li>
     </ol>
-    <p>The physical MQ-2 uses a 2-minute warm-up and a 20-second clean-air baseline. Let the flame module learn its normal indoor idle state at boot. Use Wokwi or benign bench inputs for testing; do not create smoke or flame indoors.</p>
+    <p>The installer creates a project-local <code>.venv</code>; it does not install dashboard packages system-wide.</p>
   </section>
 
   <section class="setup-card">
-    <h2>5. Install Python And Dashboard Packages</h2>
+    <h2>3. Connect The Arduino And Start</h2>
     <ol>
-      <li>Install Python 3 for Windows if it is not already installed.</li>
-      <li>From the extracted project folder, double-click <code>install_gayak.bat</code>.</li>
-      <li>Allow the script to download Flask and PySerial. Internet is needed for the first install.</li>
+      <li>Connect the already-programmed Arduino to the PC with a USB <strong>data</strong> cable and power it on.</li>
+      <li>Close Arduino Serial Monitor, Serial Plotter, or other serial terminal apps if open; only one app can use the COM port at a time.</li>
+      <li>Double-click <code>start_gayak.bat</code>.</li>
+      <li>If the browser does not open automatically, visit <code>http://127.0.0.1:5000</code>.</li>
     </ol>
-    <p>The script creates a project-local <code>.venv</code> and installs packages there, separate from other Python projects.</p>
-    <p><a class="setup-text-link" href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener noreferrer">Download Python From Python.org</a></p>
+    <p>Keep the command window open while using the dashboard. Press <kbd>Ctrl</kbd> + <kbd>C</kbd> there to stop the server. The dashboard runs locally and does not require Wi-Fi or a database.</p>
   </section>
 
   <section class="setup-card">
-    <h2>6. Connect And Launch</h2>
-    <ol>
-      <li>Connect the uploaded Arduino to the PC with a USB data cable.</li>
-      <li>Close Arduino Serial Monitor and Serial Plotter; only one program can use the COM port at a time.</li>
-      <li>Double-click <code>start_gayak.bat</code>. It checks the project environment and opens the dashboard.</li>
-    </ol>
-    <p>Open <code>http://127.0.0.1:5000</code> if the browser does not open automatically. Keep the console window open while using the dashboard; press <kbd>Ctrl</kbd> + <kbd>C</kbd> there to stop the server. The page is local to this PC; it does not need Wi-Fi or a database.</p>
-  </section>
-
-  <section class="setup-card">
-    <h2>7. Confirm The First Run</h2>
+    <h2>4. Check Live Readings</h2>
     <ul>
-      <li>Check that the dashboard's <strong>System</strong>, <strong>Arduino USB</strong>, and <strong>Live Feed</strong> indicators connect.</li>
-      <li>Let MQ-2 finish its 2-minute warm-up and 20-second clean-air baseline.</li>
-      <li>Confirm temperature, humidity, HI, gas/smoke, flame, and MPU-6050 readings appear.</li>
-      <li>Use Wokwi or benign bench inputs for alarm checks. Do not make smoke or a flame to test the prototype.</li>
+      <li>Confirm the dashboard's <strong>System</strong>, <strong>Arduino USB</strong>, and <strong>Live Feed</strong> indicators connect.</li>
+      <li>After power-up, the Arduino runs the MQ-2 warm-up and clean-air baseline (about 2 minutes 20 seconds). The dashboard displays the Arduino's sensor data; it does not perform sensor calibration.</li>
+      <li>Confirm temperature, humidity, HI, gas/smoke, flame, and MPU-6050 readings update.</li>
     </ul>
   </section>
 
   <section class="setup-card setup-card-note">
-    <h2>Choose The Arduino COM Port</h2>
-    <p>The dashboard tries to find the Arduino automatically. If it selects the wrong port, open Command Prompt in the project folder and run:</p>
+    <h2>If The Arduino Is Not Detected</h2>
+    <p>The dashboard tries to select the Arduino automatically. If needed, find its COM port in Windows Device Manager and run this from Command Prompt in the project folder:</p>
     <pre><code>set GAYAK_COM_PORT=COM4
 start_gayak.bat</code></pre>
-    <p>Replace <code>COM4</code> with the Arduino's port in Windows Device Manager. The dashboard listens only on this PC at <code>127.0.0.1</code>.</p>
+    <p>Replace <code>COM4</code> with the actual port. Check that the cable supports data and that no other program is using the port.</p>
+  </section>
+
+  <section class="setup-card setup-card-note">
+    <h2>Changing The Arduino Firmware</h2>
+    <p>This is only needed if you want to modify or re-upload the Arduino code. A developer can use Arduino IDE and the <a class="setup-text-link" href="https://github.com/itzRealEzra/GAYAK-Early-Warning-System/blob/main/docs/TUTORIALS.md" target="_blank" rel="noopener noreferrer">firmware and hardware tutorial</a>. The dashboard client does not need to install Arduino IDE.</p>
   </section>
 </main>
 </body>
