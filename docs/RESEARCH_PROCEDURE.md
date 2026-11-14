@@ -48,15 +48,36 @@ The current project [[TEST_PLAN]] proposes **three repeated functional trials pe
 
 Record the manufacturer/model and stated accuracy of each reference instrument. Establish the allowed difference from reference readings **before** reviewing the results; do not choose a tolerance afterward to make trials pass.
 
-## 3. Assemble And Document The Prototype
+## 3. Build And Wire The Prototype
 
-1. Assemble the physical circuit by following [[PROTOTYPE_BUILD_AND_WIRING]] and [[WIRING_AND_POWER]].
-2. Photograph the completed circuit and label the sensors, power source, and Arduino connections.
-3. Record the actual board and module models, firmware revision, pin map, buzzer driver parts, and whether the test uses USB or another validated supply.
-4. Inspect polarity, shared ground, I2C voltage compatibility, LED resistors, buzzer drivers, and 5V-to-GND continuity before power-up.
-5. Keep the battery and charger disconnected during initial work. Use a separate, documented power configuration only if it has been reviewed and validated.
+Follow this physical assembly order and begin with the LCD. Perform all wiring with USB, battery, charger, and external buzzer supplies disconnected. Use the module labels and datasheets because pin order and voltage limits can differ between manufacturers. Record the actual parts used; the list below describes the current project configuration. For the full build illustrations and power notes, see [[PROTOTYPE_BUILD_AND_WIRING]] and [[WIRING_AND_POWER]].
 
-The current physical pin map is D2 DHT22, D3 flame DO, A0 MQ-2 AO, A4/A5 shared LCD and GY-521 I2C, D5/D6/D7 green/yellow/red LEDs, D8/D9/D10 smoke/shaking/fire driver inputs, and D11 button-to-GND. D0/D1 remain reserved for USB serial.
+### Step-By-Step Wiring Procedure
+
+1. **Prepare The Board And Work Area.** Place the Arduino Uno and breadboard on a dry, nonconductive surface. Identify each module's VCC, GND, and signal pins. Keep the 18650 cell, TP4056, and boost converter disconnected. Label the breadboard's supply and ground rails, but do not energize them yet.
+2. **Wire The LCD First.** With power off, connect the I2C LCD backpack's VCC to the Uno 5V pin only if the backpack is rated for 5V, GND to Uno GND, SDA to A4, and SCL to A5. Keep the I2C connections short and check that SDA and SCL are not swapped. Record the LCD's I2C address; the firmware commonly uses `0x27`.
+3. **Add The GY-521 / MPU-6050 To I2C.** Connect its VCC to the voltage allowed by that specific GY-521 board and GND to common GND. To protect the MPU from a 5V LCD I2C pull-up, use a bidirectional I2C level shifter unless the exact modules are verified compatible: connect the shifter's HV reference to 5V, LV reference to 3.3V, and GND to common GND; connect the LCD and Uno A4 (SDA) / A5 (SCL) on the 5V side; connect the MPU SDA/SCL on the 3.3V side. If the modules are explicitly verified as I2C-voltage compatible, document the verified shared-bus arrangement instead. The common MPU-6050 address is `0x68`. Mount the module firmly to the test structure after electrical checks.
+4. **Wire The DHT22.** Connect the sensor's compatible VCC and GND, then DATA to D2. A bare DHT22 without a breakout pull-up needs a 4.7kΩ–10kΩ resistor from DATA to its compatible VCC. Record whether the sensor is bare or on a module.
+5. **Wire The MQ-2 Module.** Connect module VCC to the supply specified for that board, module GND to common GND, and AO to A0. Leave DO unconnected because this firmware uses the analog output. Confirm the AO voltage cannot exceed the Uno's 0–5V analog-input range, and make sure the supply can handle the MQ-2 heater current. Do not assess smoke response until the programmed warm-up and clean-air baseline are complete.
+6. **Wire The Digital Flame Module.** Connect its compatible VCC and GND, then DO to D3. This project's module has no AO output, so it provides only a thresholded digital state. Aim it at a normal indoor scene during startup learning and keep it away from windows and direct sunlight. Do not use an actual fire for a research trial.
+7. **Wire The Status LEDs.** Add one 220Ω series resistor per LED. Connect D5 through its resistor to the green LED anode, D6 through its resistor to the yellow LED anode, and D7 through its resistor to the red LED anode. Connect each LED cathode to GND. Check each LED's polarity; do not share a resistor between LEDs.
+8. **Wire The Pushbutton.** Connect a momentary, normally-open button between D11 and GND. The firmware uses `INPUT_PULLUP`, so the unpressed input is HIGH and a press reads LOW; no external pull-up resistor is required. Record the button type used.
+9. **Wire The Three Buzzer Drivers.** Give each active buzzer its own correctly rated low-side transistor/MOSFET driver. Connect D8 to the smoke-driver control, D9 to the shaking-driver control, and D10 to the fire-driver control. Use the required gate/base resistor and pull-down/bias parts, connect the buzzer to a supply within its actual rated range, and join the driver supply ground to Arduino GND. Do not power a physical buzzer from an Arduino GPIO. Add a flyback diode only when required for the selected inductive buzzer, following its datasheet. Keep the separate buzzer supply disconnected for initial logic checks.
+10. **Inspect And Document Before Power-Up.** Photograph the wiring, label modules and rails, and compare every connection against the table below. With all supplies still disconnected, verify polarity, common ground, correct I2C routing/level shifting, all three LED resistors, the D11-to-GND button path, and no short between 5V and GND. Record the board, module models, wiring revision, driver parts, and supply configuration. Leave the battery and charger disconnected for initial testing.
+
+| Uno pin | Connection |
+| --- | --- |
+| A4 / A5 | LCD SDA/SCL and MPU SDA/SCL through a compatible shared I2C bus |
+| D2 | DHT22 DATA |
+| D3 | Digital flame module DO |
+| A0 | MQ-2 AO |
+| D5 / D6 / D7 | Green / yellow / red LEDs, each with its own 220Ω resistor |
+| D8 / D9 / D10 | Smoke / shaking / fire buzzer-driver control inputs |
+| D11 | Momentary button to GND |
+| D0 / D1 | Reserved for USB serial |
+| 5V / GND | Regulated sensor supply and common ground, subject to each module's ratings |
+
+Proceed to firmware upload and the initial power-up in the next section only after the unpowered inspection is complete. Do not add a battery/charger power path unless it has been separately designed and validated.
 
 ## 4. Prepare The Firmware And Data Log
 
