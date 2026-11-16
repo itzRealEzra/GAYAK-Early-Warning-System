@@ -55,7 +55,27 @@ if defined PORT_PID (
 ".venv\Scripts\python.exe" console_ui.py status READY "Dashboard port %GAYAK_PORT% is available."
 
 :: ------------------------------------------------------------------
-:: 3. Open the dashboard full screen (Edge or Chrome app window), falling
+:: 3. Compile and upload the project firmware before Flask opens the COM
+::    port. The CLI and Arduino dependencies install automatically once.
+::    Set GAYAK_SKIP_UPLOAD=1 to run the dashboard without flashing.
+:: ------------------------------------------------------------------
+if /I "%GAYAK_SKIP_UPLOAD%"=="1" (
+    ".venv\Scripts\python.exe" console_ui.py status WARN "Skipping firmware upload because GAYAK_SKIP_UPLOAD=1."
+) else (
+    ".venv\Scripts\python.exe" console_ui.py status INFO "Connecting to the Arduino and uploading the current firmware before dashboard startup."
+    ".venv\Scripts\python.exe" upload_firmware.py
+    if errorlevel 1 (
+        ".venv\Scripts\python.exe" console_ui.py status ERROR "Firmware upload failed. The dashboard was not started."
+        echo.
+        echo To run the dashboard without uploading, set GAYAK_SKIP_UPLOAD=1 and start again.
+        echo.
+        pause
+        exit /b 1
+    )
+)
+
+:: ------------------------------------------------------------------
+:: 4. Open the dashboard full screen (Edge or Chrome app window), falling
 ::    back to the default browser. Runs in the background after a short delay.
 :: ------------------------------------------------------------------
 set "GAYAK_URL=http://127.0.0.1:%GAYAK_PORT%"
@@ -63,7 +83,7 @@ set "GAYAK_URL=http://127.0.0.1:%GAYAK_PORT%"
 start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 4; $u=$env:GAYAK_URL; $e=@($env:ProgramFiles+'\Microsoft\Edge\Application\msedge.exe', ${env:ProgramFiles(x86)}+'\Microsoft\Edge\Application\msedge.exe', $env:ProgramFiles+'\Google\Chrome\Application\chrome.exe') | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($e) { Start-Process $e -ArgumentList ('--app='+$u),'--start-fullscreen' } else { Start-Process $u }"
 
 :: ------------------------------------------------------------------
-:: 4. Start Flask application (foreground so console stays available)
+:: 5. Start Flask application (foreground so console stays available)
 :: ------------------------------------------------------------------
 ".venv\Scripts\python.exe" console_ui.py status READY "Starting the server at %GAYAK_URL%. Press Ctrl+C to stop."
 echo.
