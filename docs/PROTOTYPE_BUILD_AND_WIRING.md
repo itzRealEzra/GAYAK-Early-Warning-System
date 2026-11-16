@@ -156,7 +156,7 @@ The firmware uses `INPUT_PULLUP`. The input is normally HIGH and becomes LOW whe
 
 ## 8. Build The Three Buzzer Driver Channels
 
-The firmware assigns D8 to smoke, D9 to shaking, and D10 to fire. Each pin should control one separate MOSFET driver; the Arduino pin is a control signal, not the buzzer's power source.
+The firmware assigns D8 to smoke and the first shaking phase, D9 to heat warnings and the first shaking phase, and D10 to fire and the second shaking phase. Each pin should control its own separate MOSFET driver; the Arduino pin is a control signal, not the buzzer's power source.
 
 Repeat this low-side driver circuit for each channel:
 
@@ -171,9 +171,9 @@ Common GND ───────────────────────
        └───────────────────────────── supply (−)
 ```
 
-- Smoke buzzer driver input: D8
-- Shaking buzzer driver input: D9
-- Fire buzzer driver input: D10
+- D8 driver input: 5V active buzzer #1 for smoke and the first shaking phase
+- D9 driver input: 5V active buzzer #2 for heat warnings and the first shaking phase
+- D10 driver input: SFM-27 for fire and the second shaking phase
 - Join the buzzer supply negative, MOSFET source, and Arduino GND.
 - Use the buzzer's specified operating voltage and a supply rated for its measured current. The SFM-27 label range alone does not establish that a particular unit will be loud enough or draw a safe current at 5V or 12V.
 - If the buzzer is inductive, install a suitable flyback diode across it as directed by its manufacturer (usually stripe/cathode toward positive).
