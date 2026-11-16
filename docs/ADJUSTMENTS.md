@@ -12,6 +12,7 @@
 | `MQ2_CONFIRM_MS` | Extra time the delta must remain above threshold | 0 ms | 0 ms |
 | `MQ2_TRIGGER_DELTA` | Filtered ADC rise above clean-air baseline that activates smoke | 4 | 4 |
 | `MQ2_CLEAR_DELTA` | Delta below which an active smoke alert can clear | 2 | 2 |
+| `MQ2_BASELINE_RISE_IDLE` | Idle baseline tracking of rising readings (0 disables it) | 0.0 | 0.0 |
 | `MPU_SAMPLE_MS` | MPU read target interval | 20 ms (~50 Hz) | 20 ms |
 | `MOTION_NOTICE_RMS_G` | Start displaying unconfirmed movement | 0.04 g | 0.04 g |
 | `QUAKE_TRIGGER_RMS_G` | STRONG SHAKING / alert confirmation threshold | 0.12 g | 0.12 g |
@@ -29,7 +30,7 @@ These are **initial experimental defaults**, not approved alarm thresholds. If a
 1. Allow warm-up with the sensor in clean ambient air. The firmware waits 120 s, then collects a 20 s clean-air baseline on each startup. First-use or long-stored sensing elements may require additional manufacturer-recommended conditioning beyond this prototype startup delay.
 2. Read Serial Monitor at **115200 baud**. Observe `RAW`, `FILTERED`, `BASE`, `DELTA` and `STATE`.
 3. Record ten baseline/delta readings in normal ambient air at similar humidity and temperature.
-4. The physical default is intentionally very sensitive: a filtered rise of 4 ADC counts above the clean-air baseline triggers on the first qualifying sample, with no added confirmation delay. Samples are taken about every 100 ms and a quick-rise filter is still applied, so this is not literally instantaneous. If it false-triggers, investigate wiring, power-supply noise, warm-up, and baseline drift; then raise `MQ2_TRIGGER_DELTA` or add a small `MQ2_CONFIRM_MS` in controlled steps.
+4. The physical default is intentionally very sensitive: a filtered rise of 4 ADC counts above the clean-air baseline triggers on the first qualifying sample, with no added confirmation delay. Samples are taken about every 100 ms and a quick-rise filter is still applied, so this is not literally instantaneous. Idle baseline upward tracking is disabled so a gradual increase is not learned away as normal air; this can also cause nuisance alerts from environmental drift. If it false-triggers, investigate wiring, power-supply noise, warm-up, and baseline drift; then raise `MQ2_TRIGGER_DELTA` or add a small `MQ2_CONFIRM_MS` in controlled steps.
 5. Keep `MQ2_CLEAR_DELTA` below `MQ2_TRIGGER_DELTA` for hysteresis. The current trigger/clear values are 4/2 counts. These are prototype response settings, not an absolute smoke concentration threshold.
 6. Re-test three trials and record both detection and clearing times. The output is an **ADC delta, not calibrated smoke ppm**.
 
