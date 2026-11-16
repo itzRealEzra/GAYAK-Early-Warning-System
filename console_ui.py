@@ -19,7 +19,7 @@ _COLORS = {
     "bold": "\x1b[1m",
 }
 _RESET = "\x1b[0m"
-_SKIP_DIRECTORIES = {".git", ".venv", "venv", "__pycache__", ".obsidian"}
+_SKIP_DIRECTORIES = {".git", ".venv", ".tools", "venv", "__pycache__", ".obsidian"}
 
 
 def enable_ansi() -> bool:
