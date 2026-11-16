@@ -22,8 +22,8 @@ Work from the simplest fault first: **power → ground → pins → libraries �
 | MQ-2 never clears | High gas input, slow baseline recovery, wrong threshold | Return simulator gas value to normal, inspect RAW/FILTERED/BASE/DELTA |
 | Sensor data updates slowly | DHT22 reads at ≥2s or alerts require confirmation | LCD panels are manually advanced with the D11 button; see [adjustments](ADJUSTMENTS.md) |
 | Arduino upload fails (`resp=0x00`) | Wrong COM port, Serial Monitor/dash app holds port, loose USB, short | Stop Flask/Serial Monitor; check board/port, cable and D0/D1 wiring |
-| Dashboard shows DISCONNECTED | COM port unavailable or Python app not running | Check Device Manager, `GAYAK_COM_PORT`, USB cable |
-| Dashboard is stale or readings absent | Bad serial baud/data, MPU offline or no DATA | Confirm 115200 baud, `DATA` records and matching firmware |
+| Dashboard shows DISCONNECTED / RECONNECTING | COM port unavailable, USB unplugged, or another app owns the port | Leave Flask running; the serial reader retries and re-detects the Arduino. Check Device Manager, close Serial Monitor/Plotter, and reconnect USB if needed |
+| Dashboard is stale or readings absent | Bad serial baud/data, MPU offline or no valid DATA | Confirm 115200 baud and matching firmware. After the stale timeout, the reader reopens the serial connection automatically; server restart is not required |
 | No earthquake card in dashboard | Old browser cache/files | Update `templates/index.html`, `static/js/dashboard.js`, `serial_reader.py`; hard-refresh the browser |
 | Battery supply resets system | Undersized boost, unprotected/weak pack, wiring/ground fault | Disconnect battery; test stable regulated 5V on bench, review [power safety](WIRING_AND_POWER.md) |
 | Battery charger becomes hot | Wrong cells/pack, charge current, wiring, lack of protection | Disconnect immediately; do not charge until qualified inspection |
