@@ -22,7 +22,7 @@ Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module 
 | Yellow LED | **D6 → 220Ω → anode A** | Cathode C → GND |
 | Red LED | **D7 → 220Ω → anode A** | Cathode C → GND |
 | Smoke piezo buzzer | **D8 → buzzer pin 2 (+)** | Buzzer pin 1 (−) → GND |
-| Shaking piezo buzzer | **D9 → buzzer pin 2 (+)** | Buzzer pin 1 (−) → GND |
+| Shaking piezo buzzer | **D9 → buzzer pin 2 (+)** | Buzzer pin 1 (−) → GND; approximates the first phase of the physical shake pattern |
 | Fire piezo buzzer | **D10 → buzzer pin 2 (+)** | Buzzer pin 1 (−) → GND |
 | I2C LCD | SDA → **A4**, SCL → **A5** | VCC → 5V; GND → GND |
 | MPU6050 | SDA → **A4**, SCL → **A5** | VCC/GND in simulation; AD0 → GND (`0x68`) |
@@ -37,7 +37,7 @@ Arduino Uno R3; one DHT22; one MQ-2/Gas Sensor; one Photoresistor Sensor module 
 4. Change DHT22 temperature and humidity; readings update about every **2.2 seconds**. Press and release the D11 button to advance the LCD panel; alerts temporarily override the selected panel.
 5. After baseline calibration, increase MQ-2 simulated gas concentration. Smoke alone uses **D6 yellow LED + one short D8 pulse each second**.
 6. Increase the photoresistor's **lux** until DO switches LOW (roughly >100 lux with the default simulated threshold). This tests a **digital fire-input signal** and activates **D7 red LED + three short D10 pulses followed by a pause**. With both flame and MQ-2 alerts active, the combined sound is **two fast D10 pulses followed by one longer D8 pulse**. Decrease lux to clear. This is **not an actual fire sensor test**.
-7. Repeatedly vary the MPU6050 X/Y accelerations to simulate strong/intense shaking. The filtered motion classification can change before the confirmed alarm; shaking activates **D7 blinking red + alternating D9/D8 pulses** when sustained.
+7. Repeatedly vary the MPU6050 X/Y accelerations to simulate strong/intense shaking. The filtered motion classification can change before the confirmed alarm; sustained shaking activates **D7 blinking red + D9 then D10 piezo pulses**. The physical board sounds D8 + D9 together, then its D10 SFM buzzer.
 8. After all conditions clear, verify **D5 green LED ON** and buzzers OFF. Open Serial Monitor at **115200 baud** to see `DATA` and `QUAKE` telemetry.
 
 ### Wokwi versus physical hardware
