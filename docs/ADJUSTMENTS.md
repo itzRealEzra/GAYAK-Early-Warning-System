@@ -66,11 +66,11 @@ GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE 
 
 ## 5. Adjust buzzer patterns
 
-Edit the `*_PATTERN` step arrays in each sketch. Each step is `{ buzzer pin, duration in ms }`; use pin `0` for silence. The patterns are non-blocking and advance with `millis()`.
+Edit the `*_PATTERN` step arrays. The physical Arduino sketch uses `{ buzzer mask, duration in ms }`; combine `BUZZER_MASK_*` values to sound multiple buzzers together, and use `BUZZER_MASK_NONE` for silence. Wokwi keeps one piezo pin per step. Both patterns are non-blocking and advance with `millis()`.
 
 - **Smoke:** one short D8 pulse each second.
 - **Fire:** three short D10 pulses, then a pause.
-- **Shaking:** alternate D9 and D8, then pause briefly.
+- **Shaking (physical hardware):** D8 + D9 together for 500 ms, D10 SFM for 500 ms, then pause for 150 ms. Wokwi approximates the first phase with its D9 piezo, then plays D10.
 - **Fire + smoke:** two fast D10 pulses followed by a longer D8 pulse.
 
 When changing durations, preserve a distinct rhythm for each condition. Wokwi `tone()` drives piezo elements; physical active buzzers use DC drivers and cannot be made louder by changing a `tone()` frequency.
