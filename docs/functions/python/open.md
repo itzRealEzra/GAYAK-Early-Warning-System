@@ -10,7 +10,7 @@ source: "serial_reader.py"
 
 ## Purpose
 
-Opens the selected serial port, waits for board reset, clears startup bytes, and records failures.
+Opens the configured or auto-detected serial port, waits for board reset, clears startup bytes, and records failures. If the configured COM port has disappeared, it tries to find an Arduino-compatible port under its new name before the next retry.
 
 ## Related notes
 
