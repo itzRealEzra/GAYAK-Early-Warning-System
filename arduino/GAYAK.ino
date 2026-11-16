@@ -12,7 +12,7 @@
 
  Smoke: one short pulse on D8 each second.
  Fire: three short pulses on D10 followed by a pause.
- Shaking: D9 and D8 alternate, followed by a short pause.
+ Shaking: D8 and D9 buzz together, followed by the D10 SFM buzzer.
  Fire + smoke: two fast D10 pulses then a longer D8 pulse.
  Alarm priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HI > SHAKING.
 
@@ -20,7 +20,7 @@
  earthquake warning system. MPU6050 detects motion, not earthquake origin.
 */
 
-// GAYAK Early Warning System - MPU-6050 + alternating active buzzers
+// GAYAK Early Warning System - MPU-6050 + active buzzer patterns
 // Arduino Uno R3. LED pins corrected: D5=GREEN, D6=YELLOW, D7=RED.
 // Prototype intense shaking/acceleration detection, not a certified seismic alarm.
 // LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
@@ -91,34 +91,37 @@ const float MPU_ENERGY_ALPHA    = 0.08f;  // RMS-like vibration smoother
 const float TEMP_OFFSET = 0.0;
 
 // ================ DISTINCT BUZZER ALARMS ================
-// Rhythms are made with the existing active buzzers; only one sounds at a time.
+// Shake uses both 5V active buzzers together, then the SFM-27 on D10.
 enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE, BUZZER_HEAT };
-struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
+enum BuzzerMask { BUZZER_MASK_NONE = 0, BUZZER_MASK_SMOKE = 1, BUZZER_MASK_QUAKE = 2, BUZZER_MASK_FIRE = 4 };
+struct BuzzerStep { byte buzzerMask; unsigned int durationMs; }; // combine masks; zero = silence
 
 // Smoke: one short pulse each second on D8.
 const BuzzerStep SMOKE_PATTERN[] = {
-  { BUZZER_SMOKE_PIN, 180 }, { 0, 820 }
+  { BUZZER_MASK_SMOKE, 180 }, { BUZZER_MASK_NONE, 820 }
 };
 // Fire: three short pulses on the fire buzzer, then a clear pause.
 const BuzzerStep FIRE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
+  { BUZZER_MASK_FIRE, 180 }, { BUZZER_MASK_NONE, 120 },
+  { BUZZER_MASK_FIRE, 180 }, { BUZZER_MASK_NONE, 120 },
+  { BUZZER_MASK_FIRE, 180 }, { BUZZER_MASK_NONE, 900 }
 };
-// Shaking: alternating buzzers with a short break between each pair.
+// Shaking: D8 + D9 together, then D10 SFM-27, then a short silent gap.
 const BuzzerStep QUAKE_PATTERN[] = {
-  { BUZZER_QUAKE_PIN, 250 }, { BUZZER_SMOKE_PIN, 250 }, { 0, 100 }
+  { BUZZER_MASK_QUAKE | BUZZER_MASK_SMOKE, 500 },
+  { BUZZER_MASK_FIRE, 500 },
+  { BUZZER_MASK_NONE, 150 }
 };
 // Fire + smoke: two fast fire pulses followed by one longer smoke-buzzer pulse.
 const BuzzerStep FIRE_SMOKE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+  { BUZZER_MASK_FIRE, 120 }, { BUZZER_MASK_NONE, 100 },
+  { BUZZER_MASK_FIRE, 120 }, { BUZZER_MASK_NONE, 100 },
+  { BUZZER_MASK_SMOKE, 500 }, { BUZZER_MASK_NONE, 800 }
 };
 // Extreme heat: a distinct two-pulse warning on the shaking buzzer (D9).
 const BuzzerStep HEAT_PATTERN[] = {
-  { BUZZER_QUAKE_PIN, 500 }, { 0, 250 },
-  { BUZZER_QUAKE_PIN, 500 }, { 0, 1000 }
+  { BUZZER_MASK_QUAKE, 500 }, { BUZZER_MASK_NONE, 250 },
+  { BUZZER_MASK_QUAKE, 500 }, { BUZZER_MASK_NONE, 1000 }
 };
 
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
@@ -594,7 +597,7 @@ void updateLeds(unsigned long now) {
   }
 }
 
-// ================ ACTIVE BUZZER ALTERNATION ================
+// ================ ACTIVE BUZZER PATTERN OUTPUT ================
 
 void allBuzzersOff() {
   digitalWrite(BUZZER_SMOKE_PIN, LOW);
@@ -635,9 +638,10 @@ void beginBuzzerStep(unsigned long now) {
 
   buzzerStep %= length;
   allBuzzersOff();
-  if (pattern[buzzerStep].pin != 0) {
-    digitalWrite(pattern[buzzerStep].pin, HIGH);
-  }
+  byte buzzerMask = pattern[buzzerStep].buzzerMask;
+  if (buzzerMask & BUZZER_MASK_SMOKE) digitalWrite(BUZZER_SMOKE_PIN, HIGH);
+  if (buzzerMask & BUZZER_MASK_QUAKE) digitalWrite(BUZZER_QUAKE_PIN, HIGH);
+  if (buzzerMask & BUZZER_MASK_FIRE) digitalWrite(BUZZER_FIRE_PIN, HIGH);
   buzzerPhaseStarted = now;
 }
 
