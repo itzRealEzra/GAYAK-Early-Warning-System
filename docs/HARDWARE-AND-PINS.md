@@ -12,9 +12,9 @@ tags: [gayak, hardware, wiring]
 | A0 | MQ-2 analog output |
 | A4 / A5 | I2C SDA / SCL for LCD (commonly address `0x27`) |
 | A4 / A5 | Shared I2C SDA / SCL for GY-521 / MPU-6050 (address `0x68`) |
-| D8 | Active buzzer for smoke | 
-| D9 | Active buzzer for shaking | 
-| D10 | Active fire buzzer (SFM-27) |
+| D8 | 5V active buzzer for smoke and the first shaking phase |
+| D9 | 5V active buzzer for heat warnings and the first shaking phase |
+| D10 | Active fire buzzer (SFM-27), also used for the second shaking phase |
 | D11 | Alert acknowledgment / LCD panel button; connect between D11 and GND, using `INPUT_PULLUP` |
 | D0 / D1 | Reserved for USB serial |
 
