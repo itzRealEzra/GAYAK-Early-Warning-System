@@ -18,7 +18,8 @@
 
  Smoke: one short D8 pulse each second.
  Fire: three short D10 pulses followed by a pause.
- Shaking: D9 and D8 alternate, followed by a short pause.
+ Shaking hardware: D8 and D9 together, then the D10 SFM buzzer. Wokwi
+ approximates the combined first phase with the D9 piezo, then plays D10.
  Fire + smoke: two fast D10 pulses then a longer D8 pulse.
  Alarm priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.
 
@@ -26,7 +27,7 @@
  earthquake warning system. MPU6050 detects motion, not earthquake origin.
 */
 
-// GAYAK Early Warning System - MPU-6050 + alternating active buzzers
+// GAYAK Early Warning System - MPU-6050 + alert-specific buzzer patterns
 // Arduino Uno R3. LED pins corrected: D5=GREEN, D6=YELLOW, D7=RED.
 // Prototype intense shaking/acceleration detection, not a certified seismic alarm.
 // LCD (0x27) + GY-521 (0x68) share SDA=A4, SCL=A5.
@@ -113,9 +114,10 @@ const BuzzerStep FIRE_PATTERN[] = {
   { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
   { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
 };
-// Shaking: alternate buzzers with a short break between each pair.
+// Shake simulation approximates D8 + D9 hardware phase with one D9 piezo,
+// then plays the D10 SFM-27 phase and a short silent gap.
 const BuzzerStep QUAKE_PATTERN[] = {
-  { BUZZER_QUAKE_PIN, 250 }, { BUZZER_SMOKE_PIN, 250 }, { 0, 100 }
+  { BUZZER_QUAKE_PIN, 500 }, { BUZZER_FIRE_PIN, 500 }, { 0, 150 }
 };
 // Fire + smoke: two fast fire pulses followed by one longer smoke-buzzer pulse.
 const BuzzerStep FIRE_SMOKE_PATTERN[] = {
@@ -552,7 +554,7 @@ void updateLeds(unsigned long now) {
   }
 }
 
-// ================ ACTIVE BUZZER ALTERNATION ================
+// ================ ACTIVE BUZZER PATTERN OUTPUT ================
 
 void allBuzzersOff() {
 #if GAYAK_WOKWI_SIM
@@ -567,7 +569,7 @@ void allBuzzersOff() {
 
 void soundBuzzer(byte pin) {
 #if GAYAK_WOKWI_SIM
-  // Wokwi's piezo proxy needs a square wave. Only one buzzer active at once.
+  // Wokwi's piezo proxy needs a square wave; the simulation uses one pin per step.
   unsigned int hz = pin == BUZZER_FIRE_PIN ? 950 :
                     pin == BUZZER_SMOKE_PIN ? 750 : 1550;
   tone(pin, hz);
