@@ -2,7 +2,7 @@
 
 **Arduino Uno R3 | Temperature · Humidity · HI · Gas/Smoke · Flame · Vibration**
 
-GAYAK is a **student-built hazard-monitoring prototype**. It displays live measurements on a 16×2 I2C LCD and sends USB serial telemetry to an optional **offline Flask dashboard** running locally on a Windows PC. It also uses three status LEDs and three alternating buzzer channels.
+GAYAK is a **student-built hazard-monitoring prototype**. It displays live measurements on a 16×2 I2C LCD and sends USB serial telemetry to an optional **offline Flask dashboard** running locally on a Windows PC. It also uses three status LEDs and three active-buzzer outputs.
 
 > **Educational prototype, not a certified life-safety product.** The MPU-6050 detects local shaking, **not earthquake magnitude, epicenter, or proof that an earthquake occurred**. MQ-2 readings are relative analog measurements, not certified gas concentrations. Do not depend on GAYAK for evacuation or personal safety decisions.
 
@@ -34,7 +34,7 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 - **LCD / D11 button:** one press acknowledges all currently active fire, smoke, shaking, and HI alerts, clears their LCD overlays and dashboard alert banners, silences their buzzer patterns, and dismisses an active HI popup. Fire/smoke/shaking LED alerts clear; HI LEDs continue to show the current heat band. Sensor readings remain active; if a hazard persists, its alert returns after a 30-second silence. When there is no new alert to acknowledge, D11 advances the LCD panel.
 - **Heat-index LEDs after MQ-2 calibration:** Safe (<27°C) is green; Caution (27–<33°C) yellow; Extreme Caution (33–<41°C) yellow + red; Danger (41–<52°C) red; Extreme Danger (≥52°C) yellow + red.
   - **Heat-index popup:** the local dashboard opens a warning at HI ≥41°C. Its dismiss button or a valid HI reading below 41°C clears it; pressing D11 acknowledges the active firmware alerts and syncs HI acknowledgment to clear the popup.
-- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking alternates D9/D8; simultaneous unacknowledged fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning. D11 temporarily silences all currently active sources; alarms repeat after 30 seconds if a source remains active, and also re-arm after clearing and triggering again. Only one buzzer pattern runs at a time.
+- **Distinct buzzer alarms:** smoke gives one short D8 pulse per second; fire gives three short D10 pulses then a pause; shaking sounds D8 + D9 together, then the D10 SFM buzzer, then a short pause. Simultaneous unacknowledged fire + smoke gives two fast D10 pulses followed by a longer D8 pulse. Extreme Danger adds a repeating two-pulse D9 warning. D11 temporarily silences all currently active sources; alarms repeat after 30 seconds if a source remains active, and also re-arm after clearing and triggering again. Only one alarm category takes priority at a time.
 - **Offline dashboard:** Flask + PySerial + Server-Sent Events (SSE); no database, Wi-Fi, cloud, or internet needed after setup.
 
 ## Current Arduino Uno pinout
@@ -46,9 +46,9 @@ GAYAK is a **student-built hazard-monitoring prototype**. It displays live measu
 | D5 | **GREEN LED** via 220Ω resistor |
 | D6 | **YELLOW LED** via 220Ω resistor |
 | D7 | **RED LED** via 220Ω resistor |
-| D8 | 5V active buzzer #1, SMOKE (use rated driver) |
-| D9 | 5V active buzzer #2, SHAKING (use rated driver) |
-| D10 | SFM-27 3–24V active buzzer, FIRE (use rated driver) |
+| D8 | 5V active buzzer #1, SMOKE and first SHAKING phase (use rated driver) |
+| D9 | 5V active buzzer #2, HI and first SHAKING phase (use rated driver) |
+| D10 | SFM-27 3–24V active buzzer, FIRE and second SHAKING phase (use rated driver) |
 | D11 | Panel button; connect button between D11 and GND (`INPUT_PULLUP`) |
 | A0 | MQ-2 AO |
 | A4 | LCD + MPU-6050 SDA |
@@ -72,7 +72,7 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 | HI Extreme Danger (≥52°C) | Yellow + red solid; warning returns after 30-second D11 silence if HI stays high | Repeating two-pulse D9 pattern |
 | Unacknowledged gas/smoke | Yellow solid | D8 repeating |
 | Unacknowledged fire + smoke | Red solid | Two fast D10 pulses, then a longer D8 pulse |
-| Unacknowledged sustained shaking | Red fast blink | D9 rapid pulses |
+| Unacknowledged sustained shaking | Red fast blink | D8 + D9 together, then D10 SFM |
 | Unacknowledged flame/fire | Red solid | Three short pulses on D10 |
 
 ### Shaking and acceleration detection (experimental)
@@ -86,7 +86,7 @@ Digital pins **D0 and D1 are reserved for USB Serial**. The real device does not
 
 These thresholds are **prototype starting values**, not validated seismic intensity values or a prediction of earthquakes. Alarm activation requires sustained filtered acceleration, so a displayed motion level may change before a buzzer sounds. Tilting or handling the MPU-6050 can also affect the reading. Validate against normal classroom vibrations and mount the sensor securely.
 
-**Sound priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.** When both smoke and flame are detected, the combined pattern plays. Only one buzzer sounds at a time. LCD fire/smoke status remains fire-first.
+**Sound priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.** When both smoke and flame are detected, the combined pattern plays. Only one alarm category runs at a time; the shaking pattern uses D8 and D9 together before D10. LCD fire/smoke status remains fire-first.
 
 ## Simulated vs. physical hardware
 
