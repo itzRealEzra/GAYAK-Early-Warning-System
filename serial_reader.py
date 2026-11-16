@@ -5,7 +5,9 @@ delimited records over USB serial, parses DATA records and maintains the
 latest valid sensor readings in memory. Diagnostic LOG lines are ignored.
 
 If no port is configured, the reader auto-detects an Arduino-compatible
-USB-serial port so data flows to the dashboard without manual setup.
+USB-serial port so data flows to the dashboard without manual setup. If the
+serial port closes, moves to a new COM name, or stops delivering valid DATA,
+the reader retries in the background without restarting Flask.
 """
 
 from __future__ import annotations
@@ -87,7 +89,8 @@ class SerialReader:
         self._cond = threading.Condition()
         self.version = 0
         self.last_update: Optional[float] = None
-        self.connection_state = "DISCONNECTED"  # DISCONNECTED | CONNECTED | ERROR
+        self.connection_state = "DISCONNECTED"  # DISCONNECTED | RECONNECTING | CONNECTED | ERROR
+        self._connected_at: Optional[float] = None
         self._quake_at: Optional[float] = None
 
     # ------------------------------------------------------------------ #
@@ -113,15 +116,22 @@ class SerialReader:
     # Port handling (single owner)
     # ------------------------------------------------------------------ #
     def _pick_port(self) -> Optional[str]:
-        """Return the configured port, or auto-detect an Arduino port."""
+        """Prefer the configured port, but rediscover Arduino if its COM name changed."""
+        ports = serial.tools.list_ports.comports()
         if self.configured_port:
+            configured = self.configured_port.lower()
+            if any(p.device.lower() == configured for p in ports):
+                return self.configured_port
+            for p in ports:
+                if _looks_like_arduino(p):
+                    print(f"[serial] Configured port {self.configured_port} is unavailable; found Arduino on {p.device}")
+                    return p.device
             return self.configured_port
-        for p in serial.tools.list_ports.comports():
+        for p in ports:
             if _looks_like_arduino(p):
                 print(f"[serial] Auto-detected Arduino on {p.device}")
                 return p.device
         # Fall back to the first available serial port.
-        ports = serial.tools.list_ports.comports()
         if ports:
             print(f"[serial] No Arduino hint found, using first port: {ports[0].device}")
             return ports[0].device
@@ -140,6 +150,7 @@ class SerialReader:
                 time.sleep(2.0)
                 self._serial.reset_input_buffer()
                 self.port = port
+                self._connected_at = time.time()
                 return True
             except (serial.SerialException, OSError) as exc:
                 self._serial = None
@@ -169,6 +180,7 @@ class SerialReader:
                 "quake_rms_g": None,
                 "quake_level": None,
             }
+            self.last_update = None
         self._quake_at = None
         self._notify()
 
@@ -185,6 +197,8 @@ class SerialReader:
             return self.version
 
     def _close(self) -> None:
+        self.connection_state = "DISCONNECTED"
+        self._connected_at = None
         self._reset_readings()
         with self._port_lock:
             if self._serial is not None:
@@ -195,6 +209,22 @@ class SerialReader:
                 self._serial = None
             self.port = None
 
+    def _connection_is_stale(self) -> bool:
+        """Detect an open COM port that has stopped delivering valid DATA."""
+        now = time.time()
+        with self._data_lock:
+            last_update = self.last_update
+        reference_time = last_update if last_update is not None else self._connected_at
+        return reference_time is not None and now - reference_time > self.stale_threshold
+
+    def _begin_reconnect(self, reason: str) -> None:
+        """Close a silent/broken port and publish a reconnecting state."""
+        print(f"[serial] {reason}; reconnecting without restarting the dashboard")
+        self._close()
+        if not self._stop.is_set():
+            self.connection_state = "RECONNECTING"
+            self._notify()
+
     # ------------------------------------------------------------------ #
     # Main read loop
     # ------------------------------------------------------------------ #
@@ -202,7 +232,9 @@ class SerialReader:
         while not self._stop.is_set():
             if self._serial is None:
                 if not self._open():
-                    self.connection_state = "DISCONNECTED"
+                    if self.connection_state != "RECONNECTING":
+                        self.connection_state = "RECONNECTING"
+                        self._notify()
                     self._stop.wait(self.reconnect_delay)
                     continue
 
@@ -212,12 +244,16 @@ class SerialReader:
             try:
                 line = self._serial.readline()
             except (serial.SerialException, OSError) as exc:
-                print(f"[serial] Read error: {exc}")
-                self._close()
-                self.connection_state = "DISCONNECTED"
+                self._begin_reconnect(f"Serial read error: {exc}")
+                self._stop.wait(self.reconnect_delay)
                 continue
 
             if not line:
+                if self._connection_is_stale():
+                    self._begin_reconnect(
+                        f"No valid Arduino DATA for {self.stale_threshold:g}s"
+                    )
+                    self._stop.wait(self.reconnect_delay)
                 continue
             try:
                 text = line.decode("utf-8", errors="replace").strip()
@@ -228,6 +264,11 @@ class SerialReader:
             # last_update is stamped inside _parse_data, only for a valid
             # DATA record. LOG lines must not keep the link looking "fresh".
             self._handle_line(text)
+            if self._connection_is_stale():
+                self._begin_reconnect(
+                    f"No valid Arduino DATA for {self.stale_threshold:g}s"
+                )
+                self._stop.wait(self.reconnect_delay)
 
     # ------------------------------------------------------------------ #
     # Parsing
