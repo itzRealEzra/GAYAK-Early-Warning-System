@@ -175,8 +175,8 @@ body {
 .card-icon {
   flex: none; width: 30px; height: 30px; border-radius: 9px;
   display: grid; place-items: center;
-  color: var(--accent, var(--text-2)); background: var(--accent-soft, var(--gray-soft));
-  transition: color 0.3s ease, background 0.3s ease;
+  color: var(--accent, var(--text-2)); background: transparent;
+  transition: color 0.3s ease;
 }
 .card-icon .icon { width: 18px; height: 18px; }
 .sensor-sprite {
