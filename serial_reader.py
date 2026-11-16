@@ -146,9 +146,15 @@ class SerialReader:
             if self._serial is not None:
                 return True
             try:
-                self._serial = serial.Serial(port, self.baudrate, timeout=self.timeout)
-                # Allow the Arduino to reset after the port is opened.
-                time.sleep(2.0)
+                # Keep DTR low before opening the port. On an Uno, the normal
+                # DTR pulse resets the board; the startup uploader already
+                # performs the required firmware reset before Flask starts.
+                connection = serial.Serial(port=None, baudrate=self.baudrate, timeout=self.timeout)
+                connection.dtr = False
+                connection.port = port
+                connection.open()
+                self._serial = connection
+                time.sleep(0.1)
                 self._serial.reset_input_buffer()
                 self.port = port
                 self._connected_at = time.time()
