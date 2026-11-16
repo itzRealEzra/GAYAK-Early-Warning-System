@@ -63,7 +63,7 @@ Wokwi is accelerated for classroom demonstrations; **these are defaults, not cal
 2. Hold the MPU-6050 stationary for at least the startup settling period; allow the LCD to initialize.
 3. In the Serial Monitor at **115200 baud**, inspect messages beginning with `QUAKE,`. The record fields are `QUAKE,online,alert,filtered_rms_g,level`.
 4. In Wokwi, **repeatedly** change the X or Y acceleration back and forth, rather than leaving one nonzero value fixed. Record when the displayed filtered reading passes 0.04g, 0.12g, and 0.30g.
-5. Hold a sustained simulated shaking pattern long enough to trigger the D9 shaking buzzer and flashing red D7 LED. Note the confirmation interval.
+5. Hold a sustained shaking pattern long enough to trigger the flashing red D7 LED. On the physical board, D8 and D9 sound together for 500 ms, then the D10 SFM buzzer sounds for 500 ms, followed by a 150 ms pause. Wokwi approximates the combined first phase with its D9 piezo, then plays D10. Note the confirmation interval.
 6. Stop adjusting acceleration and wait for the quiet/hold intervals. Record the time until the alarm clears.
 7. Repeat a **minimum of three trials** at each test condition and log unexpected triggering, missing readings, or I2C failures.
 
