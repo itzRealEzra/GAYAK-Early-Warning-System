@@ -8,7 +8,7 @@
 2. Add **DHT22, MQ-2 Gas Sensor, Photoresistor Sensor (fire-input proxy), MPU6050, 16x2 I2C LCD, one pushbutton, three LEDs (green/yellow/red), three 220Ω resistors, and three Wokwi piezo buzzers**.
 3. Wire DHT22 data → **D2**, MQ-2 AOUT → **A0**, and photoresistor DO → **D3**. Power their VCC/GND from the simulated 5V/GND rails.
 4. Wire **D5 → 220Ω → Green LED anode**, **D6 → 220Ω → Yellow LED anode**, and **D7 → 220Ω → Red LED anode**. Connect each cathode to GND.
-5. Wire piezo buzzer pin 2 to **D8 (smoke)**, **D9 (shaking)**, and **D10 (fire)**; wire each piezo pin 1 to GND. **No buzzer resistors in Wokwi.** Real two-terminal active buzzers need drivers.
+5. Wire piezo buzzer pin 2 to **D8 (smoke)**, **D9 (shake/HI)**, and **D10 (fire/second shake phase)**; wire each piezo pin 1 to GND. **No buzzer resistors in Wokwi.** Real two-terminal active buzzers need separate rated drivers. Physical shaking sounds D8 + D9 together, then D10.
 6. Set the LCD to **I2C** at address **0x27**. Connect LCD SDA + MPU SDA to **A4**, and LCD SCL + MPU SCL to **A5**. Power them in simulation, share GND, and connect MPU AD0 to GND for **0x68**.
 7. Connect the pushbutton between **D11 and GND**. Firmware enables `INPUT_PULLUP`, so pressing the button pulls D11 LOW; no external resistor is needed.
 8. Copy [`wokwi/sketch.ino`](../wokwi/sketch.ino) into your Wokwi sketch tab and [`wokwi/libraries.txt`](../wokwi/libraries.txt) into its libraries tab. Wokwi saves your **own** diagram automatically as you wire.
