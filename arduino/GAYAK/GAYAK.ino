@@ -149,7 +149,7 @@ const float MQ2_RISE_ALPHA = 0.5f;   // faster response to rising sensor reading
 const float MQ2_FALL_ALPHA = 0.6f;
 
 // Baseline tracking (only applied while delta < MQ2_TRIGGER_DELTA)
-const float MQ2_BASELINE_RISE_IDLE = 0.001f;  // was 0.0005f: follows slow thermal/humidity drift
+const float MQ2_BASELINE_RISE_IDLE = 0.0f;    // do not absorb a gradual rising smoke/gas signal
 const float MQ2_BASELINE_FALL = 0.02f;        // fast downward drift
 const float MQ2_BASELINE_RISE_ALERT = 0.05f;  // releases a stuck offset
 
