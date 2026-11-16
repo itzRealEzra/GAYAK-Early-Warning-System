@@ -1206,8 +1206,8 @@ void showPanel() {
   }
 
   if (mode == MODE_SMOKE) {
-    printLineP(0, F("SMOKE ALERT!"));
-    printLineP(1, F("EVACUATE NOW!"));
+    printLineP(0, F("   Smoke/Gas    "));
+    printLineP(1, F("   Detected!!   "));
     return;
   }
 
