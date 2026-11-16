@@ -62,7 +62,7 @@ Build the prototype in two stages: first assemble and test the circuit from scra
 6. **Wire The Digital Flame Module.** Connect its compatible VCC and GND, then DO to D3. This project's module has no AO output, so it provides only a thresholded digital state. Aim it at a normal indoor scene during startup learning and keep it away from windows and direct sunlight. Do not use an actual fire for a research trial.
 7. **Wire The Status LEDs.** Add one 220Ω series resistor per LED. Connect D5 through its resistor to the green LED anode, D6 through its resistor to the yellow LED anode, and D7 through its resistor to the red LED anode. Connect each LED cathode to GND. Check each LED's polarity; do not share a resistor between LEDs.
 8. **Wire The Pushbutton.** Connect a momentary, normally-open button between D11 and GND. The firmware uses `INPUT_PULLUP`, so the unpressed input is HIGH and a press reads LOW; no external pull-up resistor is required. Record the button type used.
-9. **Wire The Three Buzzer Drivers.** Give each active buzzer its own correctly rated low-side transistor/MOSFET driver. Connect D8 to the smoke-driver control, D9 to the shaking-driver control, and D10 to the fire-driver control. Use the required gate/base resistor and pull-down/bias parts, connect the buzzer to a supply within its actual rated range, and join the driver supply ground to Arduino GND. Do not power a physical buzzer from an Arduino GPIO. Add a flyback diode only when required for the selected inductive buzzer, following its datasheet. Keep the separate buzzer supply disconnected for initial logic checks.
+9. **Wire The Three Buzzer Drivers.** Give each active buzzer its own correctly rated low-side transistor/MOSFET driver. Connect D8 to 5V active buzzer #1, D9 to 5V active buzzer #2, and D10 to the SFM-27. During shaking, D8 and D9 sound together before D10. Use the required gate/base resistor and pull-down/bias parts, connect each buzzer to a supply within its actual rated range, and join the driver supply ground to Arduino GND. Do not power a physical buzzer from an Arduino GPIO. Add a flyback diode only when required for the selected inductive buzzer, following its datasheet. Keep the separate buzzer supply disconnected for initial logic checks.
 10. **Inspect The Breadboard Before Power-Up.** Photograph the breadboard wiring, label modules and rails, and compare every connection against the table below. With all supplies still disconnected, verify polarity, common ground, correct I2C routing/level shifting, all three LED resistors, the D11-to-GND button path, and no short between 5V and GND. Record the module models, wiring map, driver parts, and supply configuration. Leave the battery and charger disconnected for initial testing.
 
 | Uno pin | Connection |
@@ -72,7 +72,7 @@ Build the prototype in two stages: first assemble and test the circuit from scra
 | D3 | Digital flame module DO |
 | A0 | MQ-2 AO |
 | D5 / D6 / D7 | Green / yellow / red LEDs, each with its own 220Ω resistor |
-| D8 / D9 / D10 | Smoke / shaking / fire buzzer-driver control inputs |
+| D8 / D9 / D10 | Buzzer-driver controls: smoke and shake / heat and shake / fire and shake |
 | D11 | Momentary button to GND |
 | D0 / D1 | Reserved for USB serial |
 | 5V / GND | Regulated sensor supply and common ground, subject to each module's ratings |
