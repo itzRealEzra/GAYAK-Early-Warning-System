@@ -132,16 +132,16 @@ const unsigned long MQ2_SAMPLE_INTERVAL = 100UL;
 const unsigned long MQ2_CLEAR_TIME      = 1500UL;
 const unsigned long MQ2_DEBUG_INTERVAL  = 1000UL;
 
-// False-alarm protection
+// ADC averaging/filtering remains enabled; no extra smoke confirmation delay.
 const int MQ2_OVERSAMPLE = 16;                   // ADC reads averaged per sample
-const unsigned long MQ2_CONFIRM_MS = 400UL;      // short confirmation for small smoke-related rises
+const unsigned long MQ2_CONFIRM_MS = 0UL;         // alert on first filtered sample that reaches trigger
 
 // Provisional ADC-difference thresholds (NOT calibrated concentrations).
-const int MQ2_TRIGGER_DELTA   = 8;    // high-sensitivity provisional relative ADC rise
-const int MQ2_CLEAR_DELTA     = 4;    // hysteresis below trigger
+const int MQ2_TRIGGER_DELTA   = 4;    // very sensitive provisional relative ADC rise
+const int MQ2_CLEAR_DELTA     = 2;    // hysteresis below trigger
 
-// Asymmetric filter: slow to rise, fast to fall
-const float MQ2_RISE_ALPHA = 0.25f;   // responds faster to rising smoke readings
+// Asymmetric filter: quick to rise, fast to fall
+const float MQ2_RISE_ALPHA = 0.5f;    // faster response to rising sensor readings
 const float MQ2_FALL_ALPHA = 0.6f;
 
 // Baseline tracking (only applied while delta < MQ2_TRIGGER_DELTA)
@@ -988,7 +988,7 @@ void updateMQ2(unsigned long now) {
 
   if (!mq2Alert) {
 
-    // Smoke = delta held above the trigger for MQ2_CONFIRM_MS without a dip.
+    // With MQ2_CONFIRM_MS=0, alert on the first sampled filtered delta at threshold.
     if (delta >= MQ2_TRIGGER_DELTA) {
 
       if (mq2ConfirmStart == 0) {
