@@ -6,8 +6,9 @@ latest valid sensor readings in memory. Diagnostic LOG lines are ignored.
 
 If no port is configured, the reader auto-detects an Arduino-compatible
 USB-serial port so data flows to the dashboard without manual setup. If the
-serial port closes, moves to a new COM name, or stops delivering valid DATA,
-the reader retries in the background without restarting Flask.
+serial port closes or disappears, the reader retries in the background without
+restarting Flask. A silent but still-present port is kept open to avoid
+repeatedly resetting the Arduino.
 """
 
 from __future__ import annotations
@@ -217,6 +218,16 @@ class SerialReader:
         reference_time = last_update if last_update is not None else self._connected_at
         return reference_time is not None and now - reference_time > self.stale_threshold
 
+    def _current_port_is_present(self) -> bool:
+        """Return whether Windows still enumerates the serial port we opened."""
+        port = self.port
+        if not port:
+            return False
+        return any(
+            item.device.lower() == port.lower()
+            for item in serial.tools.list_ports.comports()
+        )
+
     def _begin_reconnect(self, reason: str) -> None:
         """Close a silent/broken port and publish a reconnecting state."""
         print(f"[serial] {reason}; reconnecting without restarting the dashboard")
@@ -249,9 +260,9 @@ class SerialReader:
                 continue
 
             if not line:
-                if self._connection_is_stale():
+                if self._connection_is_stale() and not self._current_port_is_present():
                     self._begin_reconnect(
-                        f"No valid Arduino DATA for {self.stale_threshold:g}s"
+                        f"Arduino port {self.port} is no longer present"
                     )
                     self._stop.wait(self.reconnect_delay)
                 continue
@@ -264,9 +275,9 @@ class SerialReader:
             # last_update is stamped inside _parse_data, only for a valid
             # DATA record. LOG lines must not keep the link looking "fresh".
             self._handle_line(text)
-            if self._connection_is_stale():
+            if self._connection_is_stale() and not self._current_port_is_present():
                 self._begin_reconnect(
-                    f"No valid Arduino DATA for {self.stale_threshold:g}s"
+                    f"Arduino port {self.port} is no longer present"
                 )
                 self._stop.wait(self.reconnect_delay)
 
