@@ -115,7 +115,7 @@ Run formal physical trials on the completed soldered PCB test-board prototype. C
 | Startup and calibration | Restart under documented normal conditions; do not introduce smoke or flame | Startup indications, MQ-2 warm-up/baseline duration, false alerts, serial status |
 | Temperature and humidity | Use Wokwi controls or a controlled environment; for physical readings, place a reference meter near the DHT22 without touching it | DHT22 temperature/RH, firmware HI, LCD/dashboard value, difference from reference or independent HI calculation |
 | HI category boundaries | In simulation or controlled input, set values below and around 27°C, 33°C, 41°C, and 52°C HI thresholds | Displayed HI category and LED/popup behavior; note that audible HI warning is used for Extreme Danger according to firmware |
-| MQ-2 alert logic | Prefer Wokwi's MQ-2 control or a documented safe electrical test input with the sensor output safely isolated | Input/ADC or delta, confirmation time, LCD/LED/buzzer/serial alert and clear behavior |
+| MQ-2 alert logic | Prefer Wokwi's MQ-2 control or a documented safe electrical test input with the sensor output safely isolated | Input/ADC delta, time from threshold crossing to alert output, LCD/LED/buzzer/serial alert, and clear behavior; the current firmware adds no smoke confirmation delay |
 | Flame alert logic | Use Wokwi's photoresistor only as a **digital-input proxy**, or a documented safe DO electrical test with the module isolated | DO/proxy state, confirmation and clear times, outputs; do not report the light proxy as a physical flame-sensitivity test |
 | MPU motion logic | Use Wokwi controlled acceleration values or a documented repeatable, low-risk vibration fixture; secure the physical module | Filtered RMS g, motion level, alert confirmation/clear timing, LED/buzzer/serial/dashboard state |
 | Combined smoke + flame | In simulation or controlled input only, activate both test signals | Confirm the programmed fire-plus-smoke priority/pattern; label the run simulated or electrical |
@@ -135,7 +135,7 @@ For every alert trial:
 5. Calculate detection time as `detection timestamp − stimulus start` and clear time as `clear timestamp − stimulus removal`.
 6. Record buzzer timing separately if it has a different confirmation, priority, or acknowledgment delay.
 
-The firmware filters and confirms several inputs. For example, flame confirmation is about 3 seconds; MQ-2 includes warm-up/baseline and a confirmation interval; MPU shaking requires sustained motion. Record those delays rather than labeling them as missed detections.
+The firmware filters and confirms several inputs. Flame confirmation is about 3 seconds, and MPU shaking requires sustained motion. The MQ-2 has a 2-minute startup warm-up and 20-second clean-air baseline; after it is ready, the alert triggers on the first sampled filtered delta at the threshold with no added confirmation delay. Its sampling interval is about 100 ms, while the sensor's own response and signal filtering still affect measured latency. Record the actual time rather than describing the response as instantaneous.
 
 ## 8. Use A Trial Recording Sheet
 
