@@ -39,7 +39,7 @@ Read [wiring guide](WIRING_AND_POWER.md). Label each pin in the [student pin map
 Use the [manual Wokwi wiring tutorial](TUTORIALS.md#1-wokwi-simulation) to connect the circuit yourself (no premade diagram file). Each LED uses its own **220Ω** series resistor. Modify one input at a time. Record the LCD, LED, buzzer, and serial output. Observe that the sensor value may change before the confirmed alarm does, because the program filters or confirms inputs.
 
 ### Activity 3 — Understand alert priority (15–20 min)
-Trigger smoke, then trigger simulated fire without clearing smoke. Expected: fire's red LED/LCD and combined fire + smoke buzzer pattern take priority. Restore both inputs and note the delay before reset. Next, trigger shaking and identify its alternating buzzer pattern.
+Trigger smoke, then trigger simulated fire without clearing smoke. Expected: fire's red LED/LCD and combined fire + smoke buzzer pattern take priority. Restore both inputs and note the delay before reset. Next, trigger shaking and identify its buzzer sequence: physical hardware sounds D8 + D9 together, then D10 SFM; Wokwi approximates the first phase with its D9 piezo.
 
 ### Activity 4 — Calibrate carefully (20–30 min)
 Read [adjustments](ADJUSTMENTS.md). Record the normal MQ-2 analog baseline, then adjust one threshold **in simulation**. Explain false positives and false negatives. Do not claim an acceleration threshold equals Richter magnitude.
@@ -59,9 +59,9 @@ D3  Flame digital DO      A4  LCD SDA + MPU SDA
 D5  GREEN LED             A5  LCD SCL + MPU SCL
 D6  YELLOW LED            D0/D1 Reserved USB Serial
 D7  RED LED
-D8  5V ACTIVE BUZZER #1 (SMOKE) via driver
-D9  5V ACTIVE BUZZER #2 (SHAKING) via driver
-D10 SFM-27 3–24V (FIRE) via driver
+D8  5V ACTIVE BUZZER #1 (SMOKE + SHAKE) via driver
+D9  5V ACTIVE BUZZER #2 (HI + SHAKE) via driver
+D10 SFM-27 3–24V (FIRE + SHAKE) via driver
 D11 LCD panel button → GND
 ```
 
