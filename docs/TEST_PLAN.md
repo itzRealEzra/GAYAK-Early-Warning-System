@@ -14,12 +14,12 @@
 
 ## Functional trials (record each three times)
 
-| Test | Stimulus | Expected after confirmation | Clear condition |
+| Test | Stimulus | Expected response | Clear condition |
 | --- | --- | --- | --- |
 | DHT22 temperature | Raise simulated temperature | Updated temperature and heat index at next sensor read/LCD panel | Return value |
 | DHT22 humidity | Change simulated humidity | Updated humidity and recalculated heat index | Return value |
 | Normal LEDs | Normal sensors after calibration | D5 green ON, D6/D7 OFF | Recalibrate or alarm |
-| MQ-2 smoke | Raise gas control after baseline | D6 yellow + one short D8 pulse per second, LCD smoke alert | Lower gas/delta; clear delay |
+| MQ-2 smoke | Raise gas control after baseline | On the first sampled filtered delta at or above the trigger: D6 yellow, one short D8 pulse per second, and LCD smoke alert; no added smoke confirmation delay | Lower gas/delta; clear delay |
 | Flame proxy | Increase photoresistor lux above DO threshold | D7 red + triple D10 pulse, LCD fire alert | Lower lux; clear delay |
 | Fire + smoke | Keep MQ-2 above threshold and trigger flame proxy | Combined sound: two fast D10 pulses then a longer D8 pulse | Clear flame; smoke-only pattern resumes if smoke remains |
 | LCD panel button | Press and release button wired D11 to GND | Acknowledges all active alerts for 30 seconds; otherwise advances one panel and wraps; unacknowledged alerts override the selected panel | Confirm buzzer and alert overlays stop, then reappear after 30 seconds if the sensor condition persists |
@@ -57,7 +57,7 @@
 
 ## Pass/fail criteria
 
-A trial passes only if the observed LCD, LED, buzzer, and serial behavior match the documented expected state **after** the specified filter/confirmation delays. Record actual detection and clearing times and anomalous events; do not claim “100% accuracy” from three simulator trials. Simulation results validate **program logic**, not physical sensor accuracy or field suitability.
+A trial passes only if the observed LCD, LED, buzzer, and serial behavior match the documented expected state after the relevant sampling, filtering, and sensor-specific confirmation behavior. Record actual detection and clearing times and anomalous events; do not claim “100% accuracy” from three simulator trials. Simulation results validate **program logic**, not physical sensor accuracy or field suitability.
 
 ## Classroom report
 
