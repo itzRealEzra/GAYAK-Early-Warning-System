@@ -10,7 +10,7 @@ source: "serial_reader.py"
 
 ## Purpose
 
-Reconnects and reads lines on a background thread, decoding and dispatching input.
+Reads lines on a background thread and retries serial connections without restarting Flask. It reopens a port after read errors or when valid Arduino `DATA` records stop arriving, and rediscovers the Arduino if Windows assigns another COM name.
 
 ## Related notes
 
