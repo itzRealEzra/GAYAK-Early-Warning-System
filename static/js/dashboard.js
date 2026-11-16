@@ -395,6 +395,9 @@
     } else if (conn === "CONNECTED") {
       setText($("sysStatus"), "Stale data");        setDot($("sysDot"), "warn");
       setText($("arduinoStatus"), "No data");       setDot($("usbDot"), "warn");
+    } else if (conn === "RECONNECTING") {
+      setText($("sysStatus"), "Reconnecting");      setDot($("sysDot"), "warn");
+      setText($("arduinoStatus"), "Searching...");  setDot($("usbDot"), "warn");
     } else if (conn === "ERROR") {
       setText($("sysStatus"), "Error");             setDot($("sysDot"), "warn");
       setText($("arduinoStatus"), "Port error");    setDot($("usbDot"), "bad");
