@@ -10,7 +10,7 @@ source: "static/js/dashboard.js"
 
 ## Purpose
 
-Chooses the indicator state from connection, freshness, sensor and alert state.
+Chooses the indicator state from connection, freshness, sensor and alert state. For a valid HI of 52°C or higher, it selects the combined yellow/red state with blinking enabled, matching the Arduino's Extreme Danger LED behavior.
 
 ## Related notes
 
