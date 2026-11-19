@@ -308,7 +308,7 @@
     if (state === "CALIBRATING") return { color: "yellow", blink: true,  label: "Calibrating", title: "Calibrating" };
     if (state === "MONITORING" && heatIndex != null && Number.isFinite(Number(heatIndex))) {
       const hi = Number(heatIndex);
-      if (hi >= 52) return { color: "yellowred", blink: false, label: "HI Extreme danger", title: "HI EXTREME DANGER" };
+      if (hi >= 52) return { color: "yellowred", blink: true, label: "HI Extreme danger", title: "HI EXTREME DANGER" };
       if (hi >= 41) return { color: "red", blink: false, label: "HI Danger", title: "HI DANGER" };
       if (hi >= 33) return { color: "yellowred", blink: false, label: "HI Extreme caution", title: "HI EXTREME CAUTION" };
       if (hi >= 27) return { color: "yellow", blink: false, label: "HI Caution", title: "HI CAUTION" };
