@@ -73,7 +73,7 @@ Edit the `*_PATTERN` step arrays. The physical Arduino sketch uses `{ buzzer mas
 - **Shaking (physical hardware):** D8 + D9 together for 500 ms, D10 SFM for 500 ms, then pause for 150 ms. Wokwi approximates the first phase with its D9 piezo, then plays D10.
 - **Fire + smoke:** two fast D10 pulses followed by a longer D8 + D10 pulse. Wokwi sequences D8 then D10 for that final phase.
 - **HI Danger (41–<52°C):** repeating siren-style on/off cadence on D10. The active SFM-27 has a fixed tone, so it cannot perform a pitch sweep.
-- **HI Extreme Danger (≥52°C):** yellow and red LEDs blink together with a 500 ms on/off half-period; the SFM-27 on D10 plays a repeating triple-pulse warning.
+- **HI Extreme Danger (≥52°C):** yellow and red LEDs alternate every 500 ms; the SFM-27 on D10 plays a repeating triple-pulse warning.
 
 When changing durations, preserve a distinct rhythm for each condition. Wokwi `tone()` drives piezo elements; physical active buzzers use DC drivers and cannot be made louder by changing a `tone()` frequency.
 
