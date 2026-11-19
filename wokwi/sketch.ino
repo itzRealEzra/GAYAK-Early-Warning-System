@@ -5,9 +5,9 @@
 #define GAYAK_WOKWI_SIM 1
 
 /*
- GAYAK - Complete Arduino Uno R3 firmware and three active buzzers
+ GAYAK - Complete Arduino Uno R3 firmware and three buzzer sound proxies
 
- WOKWI BUZZER PROXY: direct D8/D9/D10 -> piezo(+) and piezo(-) -> GND.
+ WOKWI BUZZER PROXY: D8/D9/D10 -> piezo(+) and piezo(-) -> GND.
  Wokwi piezo buzzers are simulated, with no series 1k ohm resistors.
  Physical active buzzers need rated switching drivers for safe full-volume operation.
 
@@ -16,11 +16,10 @@
  D11 LCD panel button, A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
- Smoke: short D8 + D10 pulses each second (sequenced because tone() is one-channel).
+ Smoke: short D8 then D10 pulses each second (tone() supports one channel).
  Fire: three short D10 pulses followed by a pause.
- Shaking hardware: D8 and D9 together, then the D10 SFM buzzer. Wokwi
- approximates the combined first phase with the D9 piezo, then plays D10.
- Fire + smoke: two fast D10 pulses followed by D8 and D10 pulses.
+ Shaking: D8 + D9 together on hardware; Wokwi sequences D9 then D10.
+ Fire + smoke: two fast D10 pulses followed by a D8 then D10 pulse.
  HI Danger: siren-style D10 pulses; HI Extreme Danger: urgent triple D10 pulses.
  Alarm priority: FIRE + SMOKE > FIRE > SMOKE > HI > SHAKING.
 
@@ -74,6 +73,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 const unsigned long SENSOR_INTERVAL = 2200UL; // DHT22 minimum 2 seconds
 const unsigned long PANEL_BUTTON_DEBOUNCE_MS = 40UL;
+const unsigned long EXTREME_HEAT_LED_BLINK_MS = 500UL; // HI Extreme Danger blink half-period
 
 // ================ MPU-6050 ACCELERATION / SHAKING SETTINGS ================
 // Experimental local motion levels; NOT earthquake magnitude or official intensity.
@@ -101,12 +101,11 @@ const unsigned long LED_BLINK_MS = 500UL;   // blink half-period (warm-up / cali
 const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = green solid
 
 // ================ DISTINCT BUZZER ALARMS ================
-// Rhythm patterns work with the Wokwi piezo proxies and physical active buzzers.
+// D10/SFM is present in every alert pattern; Wokwi sequences tones by pin.
 enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE, BUZZER_HEAT_DANGER, BUZZER_HEAT };
 struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
 
-// A single tone() channel is supported: alternate D8 and D10 to approximate
-// the physical D8 + D10 smoke pulse while ensuring the SFM proxy always sounds.
+// One tone() channel is supported: sequence D8 and the D10 SFM proxy.
 const BuzzerStep SMOKE_PATTERN[] = {
   { BUZZER_SMOKE_PIN, 90 }, { BUZZER_SFM_PIN, 90 }, { 0, 820 }
 };
@@ -549,7 +548,8 @@ void updateLeds(unsigned long now) {
   } else if (mq2State == MQ2_CALIBRATING) {
     setLeds(false, true, false);
   } else if (sensorOK && heatIndexTenths >= 520) {
-    setLeds(false, true, true);
+    bool blinkOn = ((now / EXTREME_HEAT_LED_BLINK_MS) % 2UL) == 0UL;
+    setLeds(false, blinkOn, blinkOn);
   } else if (sensorOK && heatIndexTenths >= 410) {
     setLeds(false, false, true);
   } else if (sensorOK && heatIndexTenths >= 330) {
