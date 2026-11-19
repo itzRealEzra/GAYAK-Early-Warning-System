@@ -16,7 +16,7 @@
 10. Change DHT22 values: sensor reads approximately every **2.2s**. Press D11 to acknowledge active alerts; when none need acknowledgment, it advances the LCD panels.
 11. Raise MQ-2 gas after calibration to test **yellow D6 + D8 followed by D10**. Adjust photoresistor lux above its threshold (about 100 lux) to test **red D7 + three short D10 pulses**; this is a simulated light-input proxy, not real flame sensing.
 12. Repeatedly change MPU6050 X/Y acceleration to test sustained intense shaking, **blinking red D7 + shaking buzzer**. Restore steady acceleration to clear the alarm after its hold/clear intervals.
-13. Raise DHT22 temperature/humidity until HI reaches **41°C** to hear the siren-style D10 cadence. At **52°C**, HI Extreme Danger flashes the yellow and red LEDs together (500 ms on / 500 ms off) and uses a faster D10 triple pulse. The active SFM-27 keeps a fixed tone; the siren cue comes from the on/off rhythm.
+13. Raise DHT22 temperature/humidity until HI reaches **41°C** to hear the siren-style D10 cadence. At **52°C**, HI Extreme Danger alternates the yellow and red LEDs every 500 ms and uses a faster D10 triple pulse. The active SFM-27 keeps a fixed tone; the siren cue comes from the on/off rhythm.
 14. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. D11 acknowledges active alerts; otherwise it advances the LCD panels. There is no fake power switch.
 
 ### What if changes seem delayed?
