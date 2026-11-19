@@ -25,7 +25,7 @@ Temperature/humidity and heat-index/status rotate with the MPU and MQ-2 pages. W
 | HI Caution (27–<33°C) | Yellow, steady | Heat-index caution band |
 | HI Extreme Caution (33–<41°C) | Yellow + red, steady | Heat-index extreme caution band |
 | HI Danger (41–<52°C) | Red, steady | LCD warning and siren-style D10 cadence return after 30-second D11 silence if HI stays high |
-| HI Extreme Danger (≥52°C) | Yellow + red blink together (500 ms on / 500 ms off) | LCD warning and faster triple-pulse D10 pattern return after 30-second D11 silence if HI stays high |
+| HI Extreme Danger (≥52°C) | Yellow and red alternate, 500 ms per color | LCD warning and faster triple-pulse D10 pattern return after 30-second D11 silence if HI stays high |
 | MPU unavailable after MQ-2 is ready | Yellow, steady | No green all-clear while shaking monitor is offline |
 | Shaking alert | Red, fast blink | Sustained shaking detected |
 | Fire / smoke alert | Red / yellow, steady | Alert priority overrides startup status |
