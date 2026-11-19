@@ -1,6 +1,6 @@
 // Wokwi GAYAK: sensor controls plus D11-to-GND LCD panel button; no faux power switch.
 // Photoresistor module on D3 is a visible-light proxy, NOT a real flame sensor.
-// LEDs: D5 GREEN, D6 YELLOW, D7 RED; buzzers: D8 SMOKE, D9 QUAKE, D10 FIRE.
+// LEDs: D5 GREEN, D6 YELLOW, D7 RED; the D10 SFM proxy sounds every alarm.
 // Wokwi piezos use tone(); the real two-terminal active buzzers use DC drivers.
 #define GAYAK_WOKWI_SIM 1
 
@@ -16,12 +16,13 @@
  D11 LCD panel button, A0 MQ-2 analog, A4 SDA (LCD + GY-521), A5 SCL (LCD + GY-521).
  Serial baud: 115200.
 
- Smoke: one short D8 pulse each second.
+ Smoke: short D8 + D10 pulses each second (sequenced because tone() is one-channel).
  Fire: three short D10 pulses followed by a pause.
  Shaking hardware: D8 and D9 together, then the D10 SFM buzzer. Wokwi
  approximates the combined first phase with the D9 piezo, then plays D10.
- Fire + smoke: two fast D10 pulses then a longer D8 pulse.
- Alarm priority: FIRE + SMOKE > FIRE > SMOKE > SHAKING.
+ Fire + smoke: two fast D10 pulses followed by D8 and D10 pulses.
+ HI Danger: siren-style D10 pulses; HI Extreme Danger: urgent triple D10 pulses.
+ Alarm priority: FIRE + SMOKE > FIRE > SMOKE > HI > SHAKING.
 
  NOTE: This is a laboratory prototype, not a certified life-safety or
  earthquake warning system. MPU6050 detects motion, not earthquake origin.
@@ -62,7 +63,7 @@
 // Physical active buzzers must use a properly rated driver circuit.
 #define BUZZER_SMOKE_PIN 8    // 5V active buzzer #1
 #define BUZZER_QUAKE_PIN 9    // 5V active buzzer #2
-#define BUZZER_FIRE_PIN  10   // SFM-27 (3-24V) active buzzer
+#define BUZZER_SFM_PIN   10   // SFM-27 (3-24V) active buzzer; common alarm output
 
 // ================ COMPONENTS ================
 
@@ -101,33 +102,42 @@ const bool GREEN_BLINK_WHEN_READY = false;  // true = green blinks, false = gree
 
 // ================ DISTINCT BUZZER ALARMS ================
 // Rhythm patterns work with the Wokwi piezo proxies and physical active buzzers.
-enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE, BUZZER_HEAT };
+enum BuzzerAlarm { BUZZER_IDLE, BUZZER_SMOKE, BUZZER_QUAKE, BUZZER_FIRE, BUZZER_FIRE_SMOKE, BUZZER_HEAT_DANGER, BUZZER_HEAT };
 struct BuzzerStep { byte pin; unsigned int durationMs; }; // pin 0 = silence
 
-// Smoke: one short pulse each second on D8.
+// A single tone() channel is supported: alternate D8 and D10 to approximate
+// the physical D8 + D10 smoke pulse while ensuring the SFM proxy always sounds.
 const BuzzerStep SMOKE_PATTERN[] = {
-  { BUZZER_SMOKE_PIN, 180 }, { 0, 820 }
+  { BUZZER_SMOKE_PIN, 90 }, { BUZZER_SFM_PIN, 90 }, { 0, 820 }
 };
 // Fire: three short pulses on the fire buzzer, then a clear pause.
 const BuzzerStep FIRE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 120 },
-  { BUZZER_FIRE_PIN, 180 }, { 0, 900 }
+  { BUZZER_SFM_PIN, 180 }, { 0, 120 },
+  { BUZZER_SFM_PIN, 180 }, { 0, 120 },
+  { BUZZER_SFM_PIN, 180 }, { 0, 900 }
 };
 // Shake simulation approximates D8 + D9 hardware phase with one D9 piezo,
 // then plays the D10 SFM-27 phase and a short silent gap.
 const BuzzerStep QUAKE_PATTERN[] = {
-  { BUZZER_QUAKE_PIN, 500 }, { BUZZER_FIRE_PIN, 500 }, { 0, 150 }
+  { BUZZER_QUAKE_PIN, 500 }, { BUZZER_SFM_PIN, 500 }, { 0, 150 }
 };
-// Fire + smoke: two fast fire pulses followed by one longer smoke-buzzer pulse.
+// Fire + smoke: two fast SFM pulses followed by sequenced D8 and SFM pulses.
 const BuzzerStep FIRE_SMOKE_PATTERN[] = {
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_FIRE_PIN, 120 }, { 0, 100 },
-  { BUZZER_SMOKE_PIN, 500 }, { 0, 800 }
+  { BUZZER_SFM_PIN, 120 }, { 0, 100 },
+  { BUZZER_SFM_PIN, 120 }, { 0, 100 },
+  { BUZZER_SMOKE_PIN, 250 }, { BUZZER_SFM_PIN, 250 }, { 0, 800 }
 };
+// Active SFM-27 has a fixed pitch; use its changing on/off rhythm for a siren cue.
+const BuzzerStep HEAT_DANGER_PATTERN[] = {
+  { BUZZER_SFM_PIN, 350 }, { 0, 250 },
+  { BUZZER_SFM_PIN, 350 }, { 0, 250 },
+  { BUZZER_SFM_PIN, 700 }, { 0, 700 }
+};
+// HI Extreme Danger: a faster, repeating triple-pulse warning on the SFM-27.
 const BuzzerStep HEAT_PATTERN[] = {
-  { BUZZER_QUAKE_PIN, 500 }, { 0, 250 },
-  { BUZZER_QUAKE_PIN, 500 }, { 0, 1000 }
+  { BUZZER_SFM_PIN, 120 }, { 0, 100 },
+  { BUZZER_SFM_PIN, 120 }, { 0, 100 },
+  { BUZZER_SFM_PIN, 120 }, { 0, 700 }
 };
 
 BuzzerAlarm buzzerMode = BUZZER_IDLE;
@@ -560,17 +570,17 @@ void allBuzzersOff() {
 #if GAYAK_WOKWI_SIM
   noTone(BUZZER_SMOKE_PIN);
   noTone(BUZZER_QUAKE_PIN);
-  noTone(BUZZER_FIRE_PIN);
+  noTone(BUZZER_SFM_PIN);
 #endif
   digitalWrite(BUZZER_SMOKE_PIN, LOW);
   digitalWrite(BUZZER_QUAKE_PIN, LOW);
-  digitalWrite(BUZZER_FIRE_PIN, LOW);
+  digitalWrite(BUZZER_SFM_PIN, LOW);
 }
 
 void soundBuzzer(byte pin) {
 #if GAYAK_WOKWI_SIM
   // Wokwi's piezo proxy needs a square wave; the simulation uses one pin per step.
-  unsigned int hz = pin == BUZZER_FIRE_PIN ? 950 :
+  unsigned int hz = pin == BUZZER_SFM_PIN ? 950 :
                     pin == BUZZER_SMOKE_PIN ? 750 : 1550;
   tone(pin, hz);
 #else
@@ -593,6 +603,9 @@ const BuzzerStep* getBuzzerPattern(BuzzerAlarm mode, byte &length) {
     case BUZZER_FIRE_SMOKE:
       length = sizeof(FIRE_SMOKE_PATTERN) / sizeof(FIRE_SMOKE_PATTERN[0]);
       return FIRE_SMOKE_PATTERN;
+    case BUZZER_HEAT_DANGER:
+      length = sizeof(HEAT_DANGER_PATTERN) / sizeof(HEAT_DANGER_PATTERN[0]);
+      return HEAT_DANGER_PATTERN;
     case BUZZER_HEAT:
       length = sizeof(HEAT_PATTERN) / sizeof(HEAT_PATTERN[0]);
       return HEAT_PATTERN;
@@ -619,7 +632,7 @@ void beginBuzzerStep(unsigned long now) {
 }
 
 // Call every loop; never use delay(), so all sensors keep updating.
-// Priority: FIRE + SMOKE > FIRE > SMOKE > EXTREME HEAT > SHAKING > QUIET.
+// Priority: FIRE + SMOKE > FIRE > SMOKE > HI > SHAKING > QUIET.
 void updateBuzzers(unsigned long now) {
   BuzzerAlarm requested = BUZZER_IDLE;
   bool fireUnacknowledged = flameAlert && alertIsUnacknowledged(ALERT_ACK_FIRE);
@@ -628,6 +641,7 @@ void updateBuzzers(unsigned long now) {
   else if (fireUnacknowledged) requested = BUZZER_FIRE;
   else if (smokeUnacknowledged) requested = BUZZER_SMOKE;
   else if (heatWarningActive && heatIndexTenths >= 520 && alertIsUnacknowledged(ALERT_ACK_HEAT)) requested = BUZZER_HEAT;
+  else if (heatWarningActive && heatIndexTenths >= 410 && alertIsUnacknowledged(ALERT_ACK_HEAT)) requested = BUZZER_HEAT_DANGER;
   else if (quakeAlert && alertIsUnacknowledged(ALERT_ACK_QUAKE)) requested = BUZZER_QUAKE;
 
   // Start the appropriate pattern immediately when alerts change.
@@ -1324,7 +1338,7 @@ void setup() {
   allBuzzersOff();
   pinMode(BUZZER_SMOKE_PIN, OUTPUT);
   pinMode(BUZZER_QUAKE_PIN, OUTPUT);
-  pinMode(BUZZER_FIRE_PIN, OUTPUT);
+  pinMode(BUZZER_SFM_PIN, OUTPUT);
   allBuzzersOff();
 
   // Lamp test: all three LEDs on during the splash screen.
