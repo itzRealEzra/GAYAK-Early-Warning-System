@@ -66,9 +66,9 @@ The current physical firmware uses this pin map:
 | D5 | Green LED through its own 220Ω resistor | LED cathode returns to GND |
 | D6 | Yellow LED through its own 220Ω resistor | LED cathode returns to GND |
 | D7 | Red LED through its own 220Ω resistor | LED cathode returns to GND |
-| D8 | Smoke buzzer MOSFET gate/driver input | Active HIGH in the sketch |
-| D9 | Shaking buzzer MOSFET gate/driver input | Active HIGH in the sketch |
-| D10 | Fire buzzer MOSFET gate/driver input | Active HIGH in the sketch |
+| D8 | Smoke and first shaking-phase MOSFET gate/driver input | Active HIGH in the sketch |
+| D9 | First shaking-phase MOSFET gate/driver input | Active HIGH in the sketch |
+| D10 | SFM-27 common alarm MOSFET gate/driver input | Active HIGH for every alarm pattern |
 | D11 | Momentary button to GND | Uses `INPUT_PULLUP`; no external pull-up is needed |
 | D0 / D1 | USB serial | Leave free for upload and dashboard communication |
 | 5V / GND | Regulated supply and common ground | Begin on USB power only |
@@ -156,7 +156,7 @@ The firmware uses `INPUT_PULLUP`. The input is normally HIGH and becomes LOW whe
 
 ## 8. Build The Three Buzzer Driver Channels
 
-The firmware assigns D8 to smoke and the first shaking phase, D9 to heat warnings and the first shaking phase, and D10 to fire and the second shaking phase. Each pin should control its own separate MOSFET driver; the Arduino pin is a control signal, not the buzzer's power source.
+The firmware assigns D8 to smoke and the first shaking phase, D9 to the first shaking phase, and D10 to the SFM-27 for every alarm. Each pin should control its own separate MOSFET driver; the Arduino pin is a control signal, not the buzzer's power source.
 
 Repeat this low-side driver circuit for each channel:
 
@@ -171,9 +171,10 @@ Common GND ───────────────────────
        └───────────────────────────── supply (−)
 ```
 
-- D8 driver input: 5V active buzzer #1 for smoke and the first shaking phase
-- D9 driver input: 5V active buzzer #2 for heat warnings and the first shaking phase
-- D10 driver input: SFM-27 for fire and the second shaking phase
+- D8 driver input: 5V active buzzer #1 adds sound during smoke and the first shaking phase
+- D9 driver input: 5V active buzzer #2 sounds during the first shaking phase
+- D10 driver input: SFM-27 for smoke, fire, HI Danger/Extreme Danger, and the second shaking phase
+- HI Danger uses an on/off siren cadence on the fixed-tone active SFM-27; the output cannot sweep pitch.
 - Join the buzzer supply negative, MOSFET source, and Arduino GND.
 - Use the buzzer's specified operating voltage and a supply rated for its measured current. The SFM-27 label range alone does not establish that a particular unit will be loud enough or draw a safe current at 5V or 12V.
 - If the buzzer is inductive, install a suitable flyback diode across it as directed by its manufacturer (usually stripe/cathode toward positive).
