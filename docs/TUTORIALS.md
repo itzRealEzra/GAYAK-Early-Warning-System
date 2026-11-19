@@ -8,15 +8,16 @@
 2. Add **DHT22, MQ-2 Gas Sensor, Photoresistor Sensor (fire-input proxy), MPU6050, 16x2 I2C LCD, one pushbutton, three LEDs (green/yellow/red), three 220Ω resistors, and three Wokwi piezo buzzers**.
 3. Wire DHT22 data → **D2**, MQ-2 AOUT → **A0**, and photoresistor DO → **D3**. Power their VCC/GND from the simulated 5V/GND rails.
 4. Wire **D5 → 220Ω → Green LED anode**, **D6 → 220Ω → Yellow LED anode**, and **D7 → 220Ω → Red LED anode**. Connect each cathode to GND.
-5. Wire piezo buzzer pin 2 to **D8 (smoke)**, **D9 (shake/HI)**, and **D10 (fire/second shake phase)**; wire each piezo pin 1 to GND. **No buzzer resistors in Wokwi.** Real two-terminal active buzzers need separate rated drivers. Physical shaking sounds D8 + D9 together, then D10.
+5. Wire piezo buzzer pin 2 to **D8 (smoke / first shake phase)**, **D9 (first shake phase)**, and **D10 (SFM proxy for every alarm)**; wire each piezo pin 1 to GND. **No buzzer resistors in Wokwi.** Real two-terminal active buzzers need separate rated drivers. Physical shaking sounds D8 + D9 together, then D10; physical smoke sounds D8 + D10 together.
 6. Set the LCD to **I2C** at address **0x27**. Connect LCD SDA + MPU SDA to **A4**, and LCD SCL + MPU SCL to **A5**. Power them in simulation, share GND, and connect MPU AD0 to GND for **0x68**.
 7. Connect the pushbutton between **D11 and GND**. Firmware enables `INPUT_PULLUP`, so pressing the button pulls D11 LOW; no external resistor is needed.
 8. Copy [`wokwi/sketch.ino`](../wokwi/sketch.ino) into your Wokwi sketch tab and [`wokwi/libraries.txt`](../wokwi/libraries.txt) into its libraries tab. Wokwi saves your **own** diagram automatically as you wire.
 9. Start simulation and allow initialization (~5s MQ-2 warm-up + ~3s baseline). Normal operation ends with **green D5** and no audible alarm.
 10. Change DHT22 values: sensor reads approximately every **2.2s**. Press D11 to acknowledge active alerts; when none need acknowledgment, it advances the LCD panels.
-11. Raise MQ-2 gas after calibration to test **yellow D6 + D8**. Adjust photoresistor lux above its threshold (about 100 lux) to test **red D7 + fire buzzer**; this is a simulated light-input proxy, not real flame sensing.
+11. Raise MQ-2 gas after calibration to test **yellow D6 + D8 followed by D10**. Adjust photoresistor lux above its threshold (about 100 lux) to test **red D7 + three short D10 pulses**; this is a simulated light-input proxy, not real flame sensing.
 12. Repeatedly change MPU6050 X/Y acceleration to test sustained intense shaking, **blinking red D7 + shaking buzzer**. Restore steady acceleration to clear the alarm after its hold/clear intervals.
-13. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. D11 acknowledges active alerts; otherwise it advances the LCD panels. There is no fake power switch.
+13. Raise DHT22 temperature/humidity until HI reaches **41°C** to hear the siren-style D10 cadence. At **52°C**, HI Extreme Danger uses a faster triple pulse. The active SFM-27 keeps a fixed tone; the siren cue comes from the on/off rhythm.
+14. Use Serial Monitor at **115200 baud** to inspect `DATA` and `QUAKE` lines. Stop/Start simulation to restart. D11 acknowledges active alerts; otherwise it advances the LCD panels. There is no fake power switch.
 
 ### What if changes seem delayed?
 - **DHT22** normally updates only once every ≥2 s.
