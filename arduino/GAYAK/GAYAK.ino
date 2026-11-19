@@ -69,7 +69,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 const unsigned long SENSOR_INTERVAL = 2500UL;
 const unsigned long PANEL_BUTTON_DEBOUNCE_MS = 40UL;
-const unsigned long EXTREME_HEAT_LED_BLINK_MS = 500UL; // HI Extreme Danger blink half-period
+const unsigned long EXTREME_HEAT_LED_PHASE_MS = 500UL; // time spent on each HI Extreme Danger color
 
 // ================ MPU-6050 ACCELERATION / SHAKING SETTINGS ================
 // Experimental local motion levels; NOT earthquake magnitude or official intensity.
@@ -603,7 +603,7 @@ void updateLeds(unsigned long now) {
   } else if (mq2State == MQ2_CALIBRATING) {
     setLeds(false, true, false);
   } else if (sensorOK && heatIndexTenths >= 520) {
-    bool yellowPhaseOn = ((now / EXTREME_HEAT_LED_BLINK_MS) % 2UL) == 0UL;
+    bool yellowPhaseOn = ((now / EXTREME_HEAT_LED_PHASE_MS) % 2UL) == 0UL;
     setLeds(false, yellowPhaseOn, !yellowPhaseOn);
   } else if (sensorOK && heatIndexTenths >= 410) {
     setLeds(false, false, true);
