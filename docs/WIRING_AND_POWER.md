@@ -16,9 +16,9 @@ The GY-521 MPU-6050 is used for **intense shaking and acceleration** measurement
 | D5 | GREEN LED + 220Ω series | LED cathode → GND |
 | D6 | YELLOW LED + 220Ω series | LED cathode → GND |
 | D7 | RED LED + 220Ω series | LED cathode → GND |
-| D8 | Smoke and first shaking-phase driver input | 5V two-pin active buzzer #1 |
-| D9 | Heat warning and first shaking-phase driver input | 5V two-pin active buzzer #2 |
-| D10 | Fire and second shaking-phase driver input | SFM-27 3–24V active buzzer |
+| D8 | Extra smoke sound and first shaking-phase driver input | 5V two-pin active buzzer #1 |
+| D9 | First shaking-phase driver input | 5V two-pin active buzzer #2 |
+| D10 | Common alarm output for smoke, fire, HI, and shaking | SFM-27 3–24V active buzzer |
 | D11 | Pushbutton to GND | Acknowledge all active alerts; otherwise advance LCD panel. `INPUT_PULLUP` means no external resistor is needed |
 | D0, D1 | USB Serial | Do not use these pins for alarms while the dashboard runs |
 
@@ -54,6 +54,7 @@ COMMON GND ──────────────────── MOSFET S
 
 - Choose a **logic-level device** whose on-resistance and current ratings are suitable at **4.5–5V gate drive**; check the actual MOSFET's pinout and data sheet.
 - The SFM-27 can use a **regulated 5V supply only if its exact variant supports 5V at the measured operating current**. A stated 3–24V range does not guarantee loudness at the bottom of that range.
+- The SFM-27 is an **active, fixed-tone buzzer**. HI Danger uses a repeating on/off cadence to suggest a siren; it cannot sweep pitch through D10.
 - If the buzzer is electromagnetic/inductive, fit a flyback diode across it (cathode/stripe to positive rail, anode to MOSFET drain) per its manufacturer's guidance. Pure piezos may not need it.
 - A resistor placed in series with a buzzer may limit current but also **starve it of voltage and sound**. It is not a substitute for a properly rated driver.
 - Measure supply current with all relevant modules operating and **allow margin**; three buzzer branches should not depend on Uno pin current limits.
@@ -69,9 +70,9 @@ A typical perfboard has **isolated solder pads**; no rails are connected unless 
 2. Create separate **regulated +5V** and **GND** distribution conductors of sufficient size.
 3. Keep the 5V supply path separated from signal lines and provide strain relief for all battery and USB leads.
 4. Mount three buzzer MOSFETs/drivers with their gate resistors and gate pull-down resistors; join all MOSFET sources to the shared GND.
-5. Connect D8→5V active buzzer #1, D9→5V active buzzer #2, and D10→SFM-27 drivers. D8 and D9 also sound together during shaking, followed by D10. Connect each buzzer (+) to its specified regulated voltage, not an Arduino GPIO.
+5. Connect D8→5V active buzzer #1, D9→5V active buzzer #2, and D10→SFM-27 drivers. D10 is the common output for every alarm. D8 adds sound during smoke alerts; D8 and D9 sound together during the first shaking phase, followed by D10. Connect each buzzer (+) to its specified regulated voltage, not an Arduino GPIO.
 6. Route the DHT22, flame, MQ-2, LCD, MPU, and the D11-to-GND panel button as in the pinout above.
-7. Label **5V / GND / D5 green / D6 yellow / D7 red / D8 smoke + shake / D9 heat + shake / D10 fire + shake**.
+7. Label **5V / GND / D5 green / D6 yellow / D7 red / D8 smoke + shake / D9 shake / D10 all alarms + second shake phase**.
 8. Before power-up, use a multimeter to confirm **no continuity from 5V to GND**, no reversed buzzer polarity, and each expected terminal is connected to its intended pad.
 
 ## 4. 18650 + TP4056 + SPST switch (optional portable build)
