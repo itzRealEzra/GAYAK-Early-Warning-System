@@ -10,7 +10,7 @@ source: "static/js/dashboard.js"
 
 ## Purpose
 
-Updates header lamps and browser tab title/favicon. When `ledFor()` marks the HI Extreme Danger state as blinking, it flashes both yellow and red indicator lamps together using the 500 ms half-period.
+Updates header lamps and browser tab title/favicon. When `ledFor()` marks the HI Extreme Danger state as alternating, it shows yellow for 500 ms, then red for 500 ms.
 
 ## Related notes
 
