@@ -12,12 +12,12 @@ tags: [gayak, hardware, wiring]
 | A0 | MQ-2 analog output |
 | A4 / A5 | I2C SDA / SCL for LCD (commonly address `0x27`) |
 | A4 / A5 | Shared I2C SDA / SCL for GY-521 / MPU-6050 (address `0x68`) |
-| D8 | 5V active buzzer for smoke and the first shaking phase |
-| D9 | 5V active buzzer for heat warnings and the first shaking phase |
-| D10 | Active fire buzzer (SFM-27), also used for the second shaking phase |
+| D8 | 5V active buzzer adds sound for smoke and the first shaking phase |
+| D9 | 5V active buzzer for the first shaking phase |
+| D10 | SFM-27 active buzzer output for all alarms, including HI Danger and the second shaking phase |
 | D11 | Alert acknowledgment / LCD panel button; connect between D11 and GND, using `INPUT_PULLUP` |
 | D0 / D1 | Reserved for USB serial |
 
 Press D11 to acknowledge all currently active alerts, silence their buzzer patterns, and clear their LCD/LED indications. Sensor readings remain live. Alerts return after 30 seconds if a source remains active, and also re-arm after clearing and triggering again. When no new alert needs acknowledgment, the button advances the LCD panel. No external pull-up resistor is needed.
 
-Share ground and confirm module voltage and signal polarity. The sketch's prototype buzzer wiring uses series resistors; properly rated transistor/MOSFET drivers are recommended. Interpret MQ-2 as relative response. Do not treat simulated piezo connections as physical active-buzzer driver circuits. Use USB power for initial tests; battery/charger wiring requires correctly protected, regulated design. See [[GITHUB-VS-WORKSPACE]].
+Share ground and confirm module voltage and signal polarity. D8, D9, and D10 are driver-control signals; use correctly rated transistor/MOSFET drivers for physical active buzzers and do not power a buzzer directly from an Arduino pin. HI Danger uses a siren-style on/off cadence; the active SFM-27 cannot sweep pitch. Interpret MQ-2 as relative response. Do not treat simulated piezo connections as physical active-buzzer driver circuits. Use USB power for initial tests; battery/charger wiring requires correctly protected, regulated design. See [[GITHUB-VS-WORKSPACE]].
