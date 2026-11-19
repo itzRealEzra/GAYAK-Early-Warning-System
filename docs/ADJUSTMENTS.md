@@ -68,10 +68,12 @@ GAYAK classifies **filtered, gravity-compensated local acceleration** as STABLE 
 
 Edit the `*_PATTERN` step arrays. The physical Arduino sketch uses `{ buzzer mask, duration in ms }`; combine `BUZZER_MASK_*` values to sound multiple buzzers together, and use `BUZZER_MASK_NONE` for silence. Wokwi keeps one piezo pin per step. Both patterns are non-blocking and advance with `millis()`.
 
-- **Smoke:** one short D8 pulse each second.
+- **Smoke:** physical hardware pulses D8 + D10 together once per second; Wokwi sequences a short D8 pulse followed by a short D10 pulse because `tone()` supports one channel.
 - **Fire:** three short D10 pulses, then a pause.
 - **Shaking (physical hardware):** D8 + D9 together for 500 ms, D10 SFM for 500 ms, then pause for 150 ms. Wokwi approximates the first phase with its D9 piezo, then plays D10.
-- **Fire + smoke:** two fast D10 pulses followed by a longer D8 pulse.
+- **Fire + smoke:** two fast D10 pulses followed by a longer D8 + D10 pulse. Wokwi sequences D8 then D10 for that final phase.
+- **HI Danger (41–<52°C):** repeating siren-style on/off cadence on D10. The active SFM-27 has a fixed tone, so it cannot perform a pitch sweep.
+- **HI Extreme Danger (≥52°C):** repeating triple-pulse warning on D10.
 
 When changing durations, preserve a distinct rhythm for each condition. Wokwi `tone()` drives piezo elements; physical active buzzers use DC drivers and cannot be made louder by changing a `tone()` frequency.
 
