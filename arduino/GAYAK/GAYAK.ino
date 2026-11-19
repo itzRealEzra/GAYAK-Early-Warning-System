@@ -603,8 +603,8 @@ void updateLeds(unsigned long now) {
   } else if (mq2State == MQ2_CALIBRATING) {
     setLeds(false, true, false);
   } else if (sensorOK && heatIndexTenths >= 520) {
-    bool blinkOn = ((now / EXTREME_HEAT_LED_BLINK_MS) % 2UL) == 0UL;
-    setLeds(false, blinkOn, !blinkOn);
+    bool yellowPhaseOn = ((now / EXTREME_HEAT_LED_BLINK_MS) % 2UL) == 0UL;
+    setLeds(false, yellowPhaseOn, !yellowPhaseOn);
   } else if (sensorOK && heatIndexTenths >= 410) {
     setLeds(false, false, true);
   } else if (sensorOK && heatIndexTenths >= 330) {
