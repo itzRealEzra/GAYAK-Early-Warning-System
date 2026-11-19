@@ -204,7 +204,7 @@ float quakePeakG = 0.0f;
 // Flame sensor settings
 // Auto-learn reads the pin at boot (no flame in view) and treats that
 // level as "no fire". Fire = the pin leaving that level.
-const bool FLAME_AUTO_LEARN = true;
+const bool FLAME_AUTO_LEARN = false;
 
 // Used only when FLAME_AUTO_LEARN is false.
 // true = OUT goes LOW on fire, false = OUT goes HIGH on fire.
@@ -1362,7 +1362,7 @@ void setup() {
   Wire.begin();  // I2C shared by LCD + GY-521
 
   pinMode(MQ2_PIN, INPUT);
-  pinMode(FLAME_PIN, INPUT);
+ pinMode(FLAME_PIN, INPUT_PULLUP);
   pinMode(PANEL_BUTTON_PIN, INPUT_PULLUP);
   panelButtonLastReading = digitalRead(PANEL_BUTTON_PIN);
   panelButtonStableState = panelButtonLastReading;
